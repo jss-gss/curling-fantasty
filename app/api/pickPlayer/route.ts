@@ -50,14 +50,43 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 5. Insert the pick
-  await supabase.from("fantasy_picks").insert({
-    fantasy_event_id: eventId,
-    user_id: userId,
-    player_id: playerId,
-  })
+  // 5. Count how many picks this user already has
+  const { data: userPicks } = await supabase
+    .from("fantasy_picks")
+    .select("position_id")
+    .eq("fantasy_event_id", eventId)
+    .eq("user_id", userId)
 
-  // 6. Advance to next pick
+  const pickCount = userPicks?.length ?? 0
+
+  if (pickCount >= 4) {
+    return NextResponse.json(
+      { error: "You already have all 4 positions filled" },
+      { status: 400 }
+    )
+  }
+
+  // 6. Determine next position_id based on pick order
+  const nextPositionId = pickCount + 1 // 1=lead, 2=second, 3=vice, 4=skip
+
+  // 7. Insert the pick
+  const { error: insertError } = await supabase
+    .from("fantasy_picks")
+    .insert({
+      fantasy_event_id: eventId,
+      user_id: userId,
+      player_id: playerId,
+      position_id: nextPositionId,
+    })
+
+  if (insertError) {
+    return NextResponse.json(
+      { error: insertError.message },
+      { status: 400 }
+    )
+  }
+
+  // 8. Advance to next pick
   const nextPick =
     event.current_pick >= safeUsers.length ? 1 : event.current_pick + 1
 

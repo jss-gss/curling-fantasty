@@ -77,7 +77,7 @@ export default function DashboardHome() {
 
         {/* LEFT SIDEBAR — ALWAYS RENDERS */}
         <div className="w-1/5 flex flex-col gap-6">
-          <aside className="bg-white shadow-md rounded-lg p-4 h-fit sticky top-24">
+          <aside className="bg-white shadow-md p-4 h-fit sticky top-24">
             <h2 className="text-xl font-semibold mb-3">Curling Favorites</h2>
 
             <ul className="space-y-2 text-gray-700">
@@ -94,20 +94,20 @@ export default function DashboardHome() {
         </div>
 
         {/* MAIN CONTENT */}
-        <main className="flex-1 bg-white shadow-md rounded-lg p-8 min-h-[500px]">
+        <main className="flex-1 bg-white shadow-md p-8 min-h-[500px]">
           {loading ? (
             <p>Loading...</p>
           ) : (
             <>
               <h1 className="text-3xl font-bold mb-4">
-                Welcome back, {displayName}
+                Welcome back, Hustler.
               </h1>
 
               <p className="text-gray-700 mb-6">
-                Here’s what’s happening in your league today.
+                Here’s what’s happening around the rings today.
               </p>
 
-              <div className="bg-blue-100 border border-blue-300 p-4 rounded-md">
+              <div className="bg-blue-100 border border-blue-300 p-4">
                 <h3 className="text-lg font-semibold mb-2">League Update</h3>
                 <p className="text-gray-700">
                   New events have been added. Make sure to submit your picks before the deadline.

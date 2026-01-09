@@ -35,9 +35,9 @@ export default function NavBar() {
 
   const tabs = [
     { name: "Home", href: "/home" },
-    { name: "My Picks", href: "/picks" },
-    { name: "Pickup Leagues", href: "/league" },
-    { name: "Scoring Leaders", href: "/standings" },
+    { name: "My Teams", href: "/picks" },
+    { name: "League Play", href: "/league" },
+    { name: "Leaderboard", href: "/leaderboard" },
   ]
 
   const displayName =
