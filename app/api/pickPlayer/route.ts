@@ -5,7 +5,32 @@ import { supabase } from "@/lib/supabaseClient"
 export async function POST(req: NextRequest) {
   const { eventId, playerId, userId } = await req.json()
 
-  // 1. Check if player is already drafted
+  // 1. Ensure player belongs to the same curling event as the fantasy event
+  const { data: fantasyEvent } = await supabase
+    .from("fantasy_events")
+    .select("id, current_pick, curling_event_id")
+    .eq("id", eventId)
+    .single()
+
+  if (!fantasyEvent) {
+    return NextResponse.json({ error: "Event not found" }, { status: 404 })
+  }
+
+  const { data: playerAssignment } = await supabase
+    .from("player_event_teams")
+    .select("id")
+    .eq("player_id", playerId)
+    .eq("curling_event_id", fantasyEvent.curling_event_id)
+    .maybeSingle()
+
+  if (!playerAssignment) {
+    return NextResponse.json(
+      { error: "Player is not part of this curling event" },
+      { status: 400 }
+    )
+  }
+
+  // 2. Check if player already drafted
   const { data: existingPick } = await supabase
     .from("fantasy_picks")
     .select("id")
@@ -20,18 +45,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 2. Load event
-  const { data: event } = await supabase
-    .from("fantasy_events")
-    .select("id, current_pick")
-    .eq("id", eventId)
-    .single()
-
-  if (!event) {
-    return NextResponse.json({ error: "Event not found" }, { status: 404 })
-  }
-
-  // 3. Load users in draft order
+  // 3. Get users in draft order
   const { data: users } = await supabase
     .from("fantasy_event_users")
     .select("user_id, draft_position")
@@ -39,10 +53,9 @@ export async function POST(req: NextRequest) {
     .order("draft_position")
 
   const safeUsers = users ?? []
-  const currentIndex = (event.current_pick ?? 1) - 1
+  const currentIndex = (fantasyEvent.current_pick ?? 1) - 1
   const currentUser = safeUsers[currentIndex]
 
-  // 4. Check if it's the user's turn
   if (!currentUser || currentUser.user_id !== userId) {
     return NextResponse.json(
       { error: "Not your turn" },
@@ -50,7 +63,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 5. Count how many picks this user already has
+  // 4. Count user's existing picks
   const { data: userPicks } = await supabase
     .from("fantasy_picks")
     .select("position_id")
@@ -66,10 +79,9 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 6. Determine next position_id based on pick order
-  const nextPositionId = pickCount + 1 // 1=lead, 2=second, 3=vice, 4=skip
+  const nextPositionId = pickCount + 1
 
-  // 7. Insert the pick
+  // 5. Insert pick
   const { error: insertError } = await supabase
     .from("fantasy_picks")
     .insert({
@@ -86,14 +98,37 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 8. Advance to next pick
+  // 6. Advance draft pick
   const nextPick =
-    event.current_pick >= safeUsers.length ? 1 : event.current_pick + 1
+    fantasyEvent.current_pick >= safeUsers.length
+      ? 1
+      : fantasyEvent.current_pick + 1
 
   await supabase
     .from("fantasy_events")
     .update({ current_pick: nextPick })
     .eq("id", eventId)
 
-  return NextResponse.json({ ok: true })
+  // 7. Check if draft is finished
+  const { data: allPicks } = await supabase
+    .from("fantasy_picks")
+    .select("id")
+    .eq("fantasy_event_id", eventId)
+
+  const totalPicks = allPicks?.length ?? 0
+  const totalRequiredPicks = safeUsers.length * 4
+
+  if (totalPicks >= totalRequiredPicks) {
+    await supabase
+      .from("fantasy_events")
+      .update({
+        status: "closed",
+        current_pick: null 
+      })
+      .eq("id", eventId)
+
+    return NextResponse.json({ ok: true, draftFinished: true })
+  }
+
+  return NextResponse.json({ ok: true, draftFinished: false })
 }

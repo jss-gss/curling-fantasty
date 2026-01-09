@@ -23,40 +23,41 @@ export default function LeaguesPage() {
 
       setUser(userData.user)
 
-      const { data: leagueData, error } = await supabase
+      // Load leagues WITH curling event info
+      const { data: leagueData } = await supabase
         .from("fantasy_events")
-        .select("*")
-        .order("start_date", { ascending: true })
+        .select(`
+          *,
+          curling_events:curling_events(*)
+        `)
+        .order("draft_date", { ascending: true })
 
-      if (error || !leagueData) {
+      if (!leagueData) {
+        setLeagues([])
         setLoading(false)
         return
       }
 
       const leagueIds = leagueData.map((l) => l.id)
 
+      // Load memberships for this user
       const { data: memberships } = await supabase
         .from("fantasy_event_users")
         .select("fantasy_event_id")
         .eq("user_id", userData.user.id)
         .in("fantasy_event_id", leagueIds)
 
-      const joinedSet = new Set(memberships?.map((m) => m.fantasy_event_id))
+      const enrolledSet = new Set(
+        memberships?.map((m) => m.fantasy_event_id)
+      )
 
-      const now = new Date()
+      // Merge status + enrollment
+      const processed = leagueData.map((l) => ({
+        ...l,
+        enrolled: enrolledSet.has(l.id),
+      }))
 
-      const leaguesWithStatus = leagueData.map((l) => {
-        const isFull = l.num_users >= l.max_users
-        const isPastSignup = new Date(l.draft_date) < now
-
-        return {
-          ...l,
-          joined: joinedSet.has(l.id),
-          locked: isFull || isPastSignup,
-        }
-      })
-
-      setLeagues(leaguesWithStatus)
+      setLeagues(processed)
       setLoading(false)
     }
 
@@ -81,7 +82,7 @@ export default function LeaguesPage() {
     setLeagues((prev) =>
       prev.map((l) =>
         l.id === id
-          ? { ...l, joined: true, num_users: l.num_users + 1 }
+          ? { ...l, enrolled: true, num_users: l.num_users + 1 }
           : l
       )
     )
@@ -106,15 +107,20 @@ export default function LeaguesPage() {
     setLeagues((prev) =>
       prev.map((l) =>
         l.id === id
-          ? { ...l, joined: false, num_users: l.num_users - 1 }
+          ? { ...l, enrolled: false, num_users: l.num_users - 1 }
           : l
       )
     )
   }
 
-  const currentLeagues = leagues.filter((l) => l.joined)
-  const availableLeagues = leagues.filter((l) => !l.joined && !l.locked)
-  const lockedLeagues = leagues.filter((l) => !l.joined && l.locked)
+  // FILTERS
+  const yourLeagues = leagues.filter((l) => l.enrolled)
+  const availableLeagues = leagues.filter(
+    (l) => !l.enrolled && l.status === "open"
+  )
+  const lockedLeagues = leagues.filter(
+    (l) => !l.enrolled && l.status === "closed"
+  )
 
   function LeagueCard({ league }: any) {
     return (
@@ -127,25 +133,32 @@ export default function LeaguesPage() {
           )}
 
           <p className="text-sm text-gray-600 mt-3">
-            <strong>Draft:</strong> {new Date(league.draft_date).toLocaleString()} •{" "}
-            <strong>Starts:</strong> {new Date(league.start_date).toLocaleDateString()} •{" "}
-            <strong>Players:</strong> {league.num_users} / {league.max_users}
+            <strong>Draft:</strong>{" "}
+            {new Date(league.draft_date).toLocaleString()} •{" "}
+            <strong>Starts:</strong>{" "}
+            {league.curling_events
+              ? new Date(
+                  league.curling_events.start_date
+                ).toLocaleDateString()
+              : "TBD"}{" "}
+            • <strong>Players:</strong> {league.num_users} /{" "}
+            {league.max_users}
           </p>
         </div>
 
-        {league.joined ? (
+        {league.enrolled ? (
           <button
             onClick={() => leaveLeague(league.id)}
             className="bg-red-500 text-white px-6 py-2 rounded-md hover:bg-red-600 transition"
           >
             Leave
           </button>
-        ) : league.locked ? (
+        ) : league.status === "closed" ? (
           <button
             disabled
             className="bg-gray-300 text-gray-600 px-6 py-2 rounded-md cursor-not-allowed"
           >
-            Locked
+            Closed
           </button>
         ) : (
           <button
@@ -169,19 +182,19 @@ export default function LeaguesPage() {
 
         {loading && <p>Loading leagues...</p>}
 
-        {/* CURRENT LEAGUES */}
-        {currentLeagues.length > 0 && (
+        {/* YOUR LEAGUES */}
+        {yourLeagues.length > 0 && (
           <>
             <h2 className="text-2xl font-semibold mb-4">Your Leagues</h2>
             <div className="flex flex-col gap-6 mb-10">
-              {currentLeagues.map((league) => (
+              {yourLeagues.map((league) => (
                 <LeagueCard key={league.id} league={league} />
               ))}
             </div>
           </>
         )}
 
-        {/* AVAILABLE LEAGUES */}
+        {/* AVAILABLE */}
         <h2 className="text-2xl font-semibold mb-4">Available Leagues</h2>
         <div className="flex flex-col gap-6 mb-10">
           {availableLeagues.map((league) => (
@@ -190,7 +203,7 @@ export default function LeaguesPage() {
           {availableLeagues.length === 0 && <p>No available leagues.</p>}
         </div>
 
-        {/* LOCKED LEAGUES */}
+        {/* LOCKED */}
         <h2 className="text-2xl font-semibold mb-4">Locked Leagues</h2>
         <div className="flex flex-col gap-6">
           {lockedLeagues.map((league) => (
