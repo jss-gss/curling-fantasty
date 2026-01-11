@@ -67,7 +67,7 @@ export default function NavBar() {
         </div>
 
         {/* RIGHT SIDE — NAV TABS */}
-        <div className="flex gap-12 text-sm font-medium items-center">
+        <div className="flex gap-12 text-lg font-medium items-center">
 
           {tabs.map((tab) => {
             const active = pathname === tab.href
@@ -78,8 +78,8 @@ export default function NavBar() {
                 href={tab.href}
                 className={`pb-1 transition-all ${
                   active
-                    ? "border-b-2 border-blue-600 text-blue-700"
-                    : "text-black hover:border-b-2 hover:border-[#162a4a]"
+                    ? "border-b-2 border-[#1f4785] text-[#1f4785]"
+                    : "text-[#1f4785] hover:border-b-2 hover:border-[#ac0000]"
                 }`}
               >
                 {tab.name}
@@ -92,13 +92,13 @@ export default function NavBar() {
             <div className="relative">
               <button
                 onClick={() => setOpen(!open)}
-                className="text-black hover:text-gray-800 font-medium"
+                className="text-[#1f4785] hover:text-gray-800 font-medium"
               >
                 {displayName}
               </button>
 
               {open && (
-                <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md p-2 text-black z-50">
+                <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md p-2 text-[#1f4785] z-50">
                   <button className="block w-full text-left px-3 py-2 hover:bg-gray-100">
                     Settings
                   </button>

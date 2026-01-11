@@ -23,7 +23,7 @@ export default function LeaguesPage() {
 
       setUser(userData.user)
 
-      // Load leagues WITH curling event info
+      // Load all leagues + curling event info
       const { data: leagueData } = await supabase
         .from("fantasy_events")
         .select(`
@@ -47,11 +47,9 @@ export default function LeaguesPage() {
         .eq("user_id", userData.user.id)
         .in("fantasy_event_id", leagueIds)
 
-      const enrolledSet = new Set(
-        memberships?.map((m) => m.fantasy_event_id)
-      )
+      const enrolledSet = new Set(memberships?.map((m) => m.fantasy_event_id))
 
-      // Merge status + enrollment
+      // Merge enrollment flag
       const processed = leagueData.map((l) => ({
         ...l,
         enrolled: enrolledSet.has(l.id),
@@ -113,16 +111,36 @@ export default function LeaguesPage() {
     )
   }
 
-  // FILTERS
-  const yourLeagues = leagues.filter((l) => l.enrolled)
-  const availableLeagues = leagues.filter(
-    (l) => !l.enrolled && l.status === "open"
-  )
-  const lockedLeagues = leagues.filter(
-    (l) => !l.enrolled && l.status === "closed"
+  // -----------------------------
+  // ⭐ NEW FILTER STRUCTURE
+  // -----------------------------
+
+  const myLeagues = leagues.filter((l) => l.enrolled)
+  const notMyLeagues = leagues.filter((l) => !l.enrolled)
+
+  // My Leagues
+  const myActiveLeagues = myLeagues.filter((l) => l.status === "closed")
+  const myUpcomingDrafts = myLeagues.filter(
+    (l) => l.status === "open" || l.status === "locked"
   )
 
+  // Find a League
+  const findAvailableLeagues = notMyLeagues.filter(
+    (l) =>
+      (l.status === "open" || l.status === "locked") &&
+      l.num_users < l.max_users
+  )
+
+  const findClosedLeagues = notMyLeagues.filter(
+    (l) => l.status === "closed" || l.num_users >= l.max_users
+  )
+
+  // -----------------------------
+  // League Card Component
+  // -----------------------------
   function LeagueCard({ league }: any) {
+    const isFull = league.num_users >= league.max_users
+
     return (
       <div className="flex items-center justify-between bg-white shadow-md rounded-lg p-6 border border-gray-200">
         <div className="flex flex-col">
@@ -137,23 +155,30 @@ export default function LeaguesPage() {
             {new Date(league.draft_date).toLocaleString()} •{" "}
             <strong>Starts:</strong>{" "}
             {league.curling_events
-              ? new Date(
-                  league.curling_events.start_date
-                ).toLocaleDateString()
+              ? new Date(league.curling_events.start_date).toLocaleDateString()
               : "TBD"}{" "}
-            • <strong>Players:</strong> {league.num_users} /{" "}
-            {league.max_users}
+            • <strong>Players:</strong> {league.num_users} / {league.max_users}
           </p>
         </div>
 
+        {/* BUTTON LOGIC */}
         {league.enrolled ? (
-          <button
-            onClick={() => leaveLeague(league.id)}
-            className="bg-red-500 text-white px-6 py-2 rounded-md hover:bg-red-600 transition"
-          >
-            Leave
-          </button>
-        ) : league.status === "closed" ? (
+          league.status === "closed" ? (
+            <button
+              disabled
+              className="bg-gray-300 text-gray-600 px-6 py-2 rounded-md cursor-not-allowed"
+            >
+              Locked In
+            </button>
+          ) : (
+            <button
+              onClick={() => leaveLeague(league.id)}
+              className="bg-red-500 text-white px-6 py-2 rounded-md hover:bg-red-600 transition"
+            >
+              Leave
+            </button>
+          )
+        ) : isFull || league.status === "closed" ? (
           <button
             disabled
             className="bg-gray-300 text-gray-600 px-6 py-2 rounded-md cursor-not-allowed"
@@ -163,7 +188,7 @@ export default function LeaguesPage() {
         ) : (
           <button
             onClick={() => joinLeague(league.id)}
-            className="bg-[#162a4a] text-white px-6 py-2 rounded-md hover:bg-[#1d355f] transition"
+            className="bg-[#1f4785] text-white px-6 py-2 rounded-md hover:bg-[#1d355f] transition"
           >
             Join
           </button>
@@ -178,38 +203,66 @@ export default function LeaguesPage() {
       <LoggedInNavBar />
 
       <div className="max-w-6xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold mb-6">Leagues</h1>
+        <h1 className="text-3xl font-bold mb-8">Leagues</h1>
 
         {loading && <p>Loading leagues...</p>}
 
-        {/* YOUR LEAGUES */}
-        {yourLeagues.length > 0 && (
-          <>
-            <h2 className="text-2xl font-semibold mb-4">Your Leagues</h2>
-            <div className="flex flex-col gap-6 mb-10">
-              {yourLeagues.map((league) => (
-                <LeagueCard key={league.id} league={league} />
-              ))}
-            </div>
-          </>
-        )}
+        {/* ----------------------------- */}
+        {/* ⭐ MY LEAGUES */}
+        {/* ----------------------------- */}
+        <h2 className="text-2xl font-semibold mb-4">My Leagues</h2>
 
-        {/* AVAILABLE */}
-        <h2 className="text-2xl font-semibold mb-4">Available Leagues</h2>
-        <div className="flex flex-col gap-6 mb-10">
-          {availableLeagues.map((league) => (
-            <LeagueCard key={league.id} league={league} />
-          ))}
-          {availableLeagues.length === 0 && <p>No available leagues.</p>}
+        {/* Active */}
+        <h3 className="text-xl font-semibold mb-2">Active Leagues</h3>
+        <div className="flex flex-col gap-6 mb-8">
+          {myActiveLeagues.length > 0 ? (
+            myActiveLeagues.map((league) => (
+              <LeagueCard key={league.id} league={league} />
+            ))
+          ) : (
+            <p className="text-gray-600">No active leagues.</p>
+          )}
         </div>
 
-        {/* LOCKED */}
-        <h2 className="text-2xl font-semibold mb-4">Locked Leagues</h2>
+        {/* Upcoming Drafts */}
+        <h3 className="text-xl font-semibold mb-2">Upcoming Drafts</h3>
+        <div className="flex flex-col gap-6 mb-12">
+          {myUpcomingDrafts.length > 0 ? (
+            myUpcomingDrafts.map((league) => (
+              <LeagueCard key={league.id} league={league} />
+            ))
+          ) : (
+            <p className="text-gray-600">No upcoming drafts.</p>
+          )}
+        </div>
+
+        {/* ----------------------------- */}
+        {/* ⭐ FIND A LEAGUE */}
+        {/* ----------------------------- */}
+        <h2 className="text-2xl font-semibold mb-4">Find a League</h2>
+
+        {/* Available */}
+        <h3 className="text-xl font-semibold mb-2">Available Leagues</h3>
+        <div className="flex flex-col gap-6 mb-8">
+          {findAvailableLeagues.length > 0 ? (
+            findAvailableLeagues.map((league) => (
+              <LeagueCard key={league.id} league={league} />
+            ))
+          ) : (
+            <p className="text-gray-600">No leagues available.</p>
+          )}
+        </div>
+
+        {/* Closed / Full */}
+        <h3 className="text-xl font-semibold mb-2">Closed / Full Leagues</h3>
         <div className="flex flex-col gap-6">
-          {lockedLeagues.map((league) => (
-            <LeagueCard key={league.id} league={league} />
-          ))}
-          {lockedLeagues.length === 0 && <p>No locked leagues.</p>}
+          {findClosedLeagues.length > 0 ? (
+            findClosedLeagues.map((league) => (
+              <LeagueCard key={league.id} league={league} />
+            ))
+          ) : (
+            <p className="text-gray-600">No closed leagues.</p>
+          )}
         </div>
       </div>
     </>

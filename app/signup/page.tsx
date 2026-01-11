@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
+import LoggedOutNavBar from "@/components/LoggedOutNavBar"
+import GameTicker from "@/components/GameTicker"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -13,32 +16,46 @@ export default function SignupPage() {
   const [lastName, setLastName] = useState("")
   const [username, setUsername] = useState("")
   const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState("")
 
   async function handleSignup() {
     setLoading(true)
+    setErrorMsg("")
 
-    // 1. Create the user in Supabase Auth
+    // 1. Check if username is taken
+    const { data: existingUser } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .maybeSingle()
+
+    if (existingUser) {
+      setErrorMsg("That username is already taken.")
+      setLoading(false)
+      return
+    }
+
+    // 2. Create user in Supabase Auth
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     })
 
     if (error) {
-      alert(error.message)
+      setErrorMsg(error.message)
       setLoading(false)
       return
     }
 
     const user = data.user
 
-    // If email confirmation is ON, user will be null until they click the link
     if (!user) {
-      alert("Check your email to confirm your account before logging in.")
+      setErrorMsg("Check your email to confirm your account before logging in.")
       setLoading(false)
       return
     }
 
-    // 2. Create the matching profile row
+    // 3. Create profile row
     const { error: profileError } = await supabase.from("profiles").insert({
       id: user.id,
       first_name: firstName,
@@ -47,54 +64,95 @@ export default function SignupPage() {
     })
 
     if (profileError) {
-      alert(profileError.message)
+      setErrorMsg(profileError.message)
       setLoading(false)
       return
     }
 
-    // 3. Redirect to home page
+    // 4. Redirect
     router.push("/home")
     setLoading(false)
   }
 
   return (
-    <div style={{ padding: 40 }}>
-      <h1>Create Account</h1>
+    <>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 font-sans px-4">
+        <main className="flex w-full max-w-xl flex-col items-center py-12 px-10 bg-white shadow-md">
 
-      <input
-        type="email"
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-      /><br/>
+          {/* Logo */}
+          <Image
+            src="/webpage/hh-cards-logo.png"
+            alt="House Hustlers Logo"
+            width={300}
+            height={300}
+            className="mb-6 object-contain"
+          />
 
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-      /><br/>
+          <h1 className="text-2xl font-bold text-black mb-2">
+            Create Your Account
+          </h1>
 
-      <input
-        placeholder="First Name"
-        onChange={(e) => setFirstName(e.target.value)}
-      /><br/>
+          <p className="text-gray-700 mb-6 text-center">
+            Join the competition and start building your fantasy curling legacy.
+          </p>
 
-      <input
-        placeholder="Last Name"
-        onChange={(e) => setLastName(e.target.value)}
-      /><br/>
+          {/* Error Message */}
+          {errorMsg && (
+            <p className="text-red-600 mb-4 text-center">{errorMsg}</p>
+          )}
 
-      <input
-        placeholder="Username"
-        onChange={(e) => setUsername(e.target.value)}
-      /><br/>
+          {/* Form */}
+          <div className="w-full flex flex-col gap-4">
 
-      <button onClick={handleSignup} disabled={loading}>
-        {loading ? "Creating account..." : "Sign Up"}
-      </button>
+            <input
+              type="email"
+              placeholder="Email"
+              className="border px-4 py-2"
+              onChange={(e) => setEmail(e.target.value)}
+            />
 
-      <p style={{ marginTop: 20 }}>
-        Already have an account? <a href="/login">Log in</a>
-      </p>
-    </div>
+            <input
+              type="password"
+              placeholder="Password"
+              className="border px-4 py-2"
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <input
+              placeholder="First Name"
+              className="border px-4 py-2"
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+
+            <input
+              placeholder="Last Name"
+              className="border px-4 py-2"
+              onChange={(e) => setLastName(e.target.value)}
+            />
+
+            <input
+              placeholder="Username"
+              className="border px-4 py-2"
+              onChange={(e) => setUsername(e.target.value)}
+            />
+
+            <button
+              onClick={handleSignup}
+              disabled={loading}
+              className="mt-4 px-6 py-3 bg-[#1f4785] text-white text-lg hover:bg-[#162a4a] transition disabled:bg-gray-400"
+            >
+              {loading ? "Creating account..." : "Sign Up"}
+            </button>
+          </div>
+
+          <p className="mt-6 text-gray-700">
+            Already have an account?{" "}
+            <a href="/" className="text-[#1f4785] underline">
+              Log in
+            </a>
+          </p>
+        </main>
+      </div>
+    </>
   )
 }

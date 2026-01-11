@@ -52,7 +52,7 @@ export default function NextMajorEvent() {
 
   return (
     <div className="bg-white shadow-md rounded-lg p-3 mt-4 w-full text-center">
-      <h3 className="text-sm font-bold text-[#162a4a] mb-2">
+      <h3 className="text-sm font-bold text-[#1f4785] mb-2">
         NEXT MAJOR EVENT
       </h3>
 

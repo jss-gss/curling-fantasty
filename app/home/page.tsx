@@ -41,9 +41,10 @@ export default function DashboardHome() {
 
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<any>(null)
-  const [fantasyEventId, setFantasyEventId] = useState<string | null>(null)
-  const [fantasyEvent, setFantasyEvent] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+
+  const [upcomingDrafts, setUpcomingDrafts] = useState<any[]>([])
+  const nextDraft = upcomingDrafts[0] ?? null
 
   function goToDraft(eventId: string) {
     router.push(`/draft/${eventId}`)
@@ -59,6 +60,7 @@ export default function DashboardHome() {
 
       setUser(userData.user)
 
+      // Load profile
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
@@ -66,73 +68,26 @@ export default function DashboardHome() {
         .single()
       setProfile(profileData)
 
-      const { data: league } = await supabase
-        .from("fantasy_event_users")
-        .select("fantasy_event_id")
-        .eq("user_id", userData.user.id)
-        .order("joined_at", { ascending: false })
-        .limit(1)
+      // Load upcoming drafts (locked leagues the user is in)
+      const { data: drafts } = await supabase
+        .from("fantasy_events")
+        .select(`
+          id,
+          name,
+          draft_date,
+          status,
+          fantasy_event_users!inner ( user_id )
+        `)
+        .eq("fantasy_event_users.user_id", userData.user.id)
+        .eq("status", "locked")
+        .order("draft_date", { ascending: true })
 
-      const eventId = league?.[0]?.fantasy_event_id ?? null
-      setFantasyEventId(eventId)
-
-      if (eventId) {
-        const { data: eventData } = await supabase
-          .from("fantasy_events")
-          .select("*")
-          .eq("id", eventId)
-          .single()
-        setFantasyEvent(eventData)
-      }
-
+      setUpcomingDrafts(drafts ?? [])
       setLoading(false)
     }
 
     load()
   }, [router])
-
-  useEffect(() => {
-    if (!fantasyEventId) return
-
-    const channel = supabase
-      .channel(`dashboard-${fantasyEventId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "fantasy_events",
-          filter: `id=eq.${fantasyEventId}`,
-        },
-        (payload) => setFantasyEvent(payload.new)
-      )
-      .subscribe()
-
-    return () => 
-    {
-      supabase.removeChannel(channel)
-    }
-  }, [fantasyEventId])
-
-  let computedStatus: "locked" | "open" | "closed" | "archived" | null = null
-
-  if (fantasyEvent) {
-    const now = new Date()
-    const draftTime = new Date(fantasyEvent.draft_date)
-    const eventEnd = new Date(fantasyEvent.curling_event_end_date)
-
-    if (fantasyEvent.status === "closed") {
-      computedStatus = "closed"
-    } else if (now < draftTime) {
-      computedStatus = "locked"
-    } else {
-      computedStatus = "open"
-    }
-
-    if (now >= eventEnd) {
-      computedStatus = "archived"
-    }
-  }
 
   return (
     <>
@@ -140,6 +95,7 @@ export default function DashboardHome() {
       <LoggedInNavBar />
 
       <div className="flex w-full max-w-7xl ml-12 gap-6 py-10 px-6 mt-0">
+        {/* LEFT SIDEBAR */}
         <div className="w-1/5 flex flex-col gap-6">
           <aside className="bg-white shadow-md p-4 h-fit sticky top-24">
             <h2 className="text-xl font-semibold mb-3">Curling Favorites</h2>
@@ -156,6 +112,7 @@ export default function DashboardHome() {
           </div>
         </div>
 
+        {/* MAIN CONTENT */}
         <main className="flex-1 bg-white shadow-md p-8 min-h-[500px]">
           {loading ? (
             <p>Loading...</p>
@@ -164,41 +121,76 @@ export default function DashboardHome() {
               <h1 className="text-3xl font-bold mb-4">Welcome back, Hustler.</h1>
               <p className="text-gray-700 mb-6">Here’s what’s happening around the rings today.</p>
 
-              <div className="bg-blue-100 border border-blue-300 p-4">
+              {/* League Update */}
+              <div className="bg-blue-100 border border-blue-300 p-4 mb-6">
                 <h3 className="text-lg font-semibold mb-2">League Update</h3>
-                <p className="text-gray-700">New events have been added. Make sure to submit your picks before the deadline.</p>
+                <p className="text-gray-700">
+                  New events have been added. Make sure to submit your picks before the deadline.
+                </p>
               </div>
 
-              {fantasyEvent && (
-                <div className="mt-6">
-                  {computedStatus === "locked" && (
-                    <button disabled className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md">
-                      Draft Locked — <Countdown target={new Date(fantasyEvent.draft_date)} />
-                    </button>
-                  )}
+              {/* UPCOMING DRAFT CARD */}
+              <div className="bg-white p-4 flex items-center justify-between">
+                {/* LEFT SIDE */}
+                <div>
+                  <h2 className="text-lg font-semibold mb-1">Your Upcoming Drafts</h2>
 
-                  {computedStatus === "open" && (
-                    <button
-                      onClick={() => goToDraft(fantasyEventId!)}
-                      className="bg-[#162a4a] text-white px-4 py-2 rounded-md"
-                    >
-                      Join Draft Room
-                    </button>
-                  )}
-
-                  {computedStatus === "closed" && (
-                    <button disabled className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md">
-                      Draft Closed — Waiting for Event Start
-                    </button>
-                  )}
-
-                  {computedStatus === "archived" && (
-                    <button disabled className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md">
-                      Event Finished — Archived
-                    </button>
+                  {!nextDraft ? (
+                    <p className="text-gray-600">
+                      No upcoming drafts - {" "}
+                      <a href="/league" className="text-[#ac0000] underline">
+                        find a league
+                      </a>
+                    </p>
+                  ) : (
+                    <p className="text-gray-700">{nextDraft.name}</p>
                   )}
                 </div>
-              )}
+
+                {/* RIGHT SIDE */}
+                <div>
+                  {nextDraft && (
+                    <>
+                      {nextDraft.status === "locked" && (
+                        <button
+                          disabled
+                          className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md"
+                        >
+                          Draft Locked —{" "}
+                          <Countdown target={new Date(nextDraft.draft_date)} />
+                        </button>
+                      )}
+
+                      {nextDraft.status === "open" && (
+                        <button
+                          onClick={() => goToDraft(nextDraft.id)}
+                          className="bg-[#1f4785] text-white px-4 py-2 rounded-md"
+                        >
+                          Join Draft Room
+                        </button>
+                      )}
+
+                      {nextDraft.status === "closed" && (
+                        <button
+                          disabled
+                          className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md"
+                        >
+                          Draft Closed — Waiting for Event Start
+                        </button>
+                      )}
+
+                      {nextDraft.status === "archived" && (
+                        <button
+                          disabled
+                          className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md"
+                        >
+                          Event Finished — Archived
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
             </>
           )}
         </main>
