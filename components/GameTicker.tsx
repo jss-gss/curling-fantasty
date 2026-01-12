@@ -14,7 +14,7 @@ export default function GameTicker() {
   if (!games.length) return null
 
   return (
-  <div className="w-full bg-white border-y border-gray-200 py-2">
+  <div className="w-full bg-[#f3f4f6] border-y border-gray-200 py-2">
       <div className="max-w-screen-xl mx-auto flex items-center gap-6 px-4 overflow-x-auto whitespace-nowrap">
 
         {/* LEFT LABEL */}

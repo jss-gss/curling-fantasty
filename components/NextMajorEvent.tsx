@@ -51,7 +51,7 @@ export default function NextMajorEvent() {
   if (!event) return null
 
   return (
-    <div className="bg-white shadow-md p-3 mt-4 w-full text-center">
+    <div className="bg-white shadow-md p-3 mt-4 w-full text-center rounded-lg">
       <h3 className="text-sm font-bold text-[#1f4785] mb-2">
         NEXT MAJOR EVENT
       </h3>
@@ -62,14 +62,14 @@ export default function NextMajorEvent() {
 
       <div className="flex gap-3 justify-center">
         <div className="flex flex-col items-center">
-          <div className="bg-gray-100 border border-gray-300 px-3 py-2 text-xl font-bold">
+          <div className="bg-gray-100 border border-gray-300 px-3 py-2 text-xl font-bold rounded-lg">
             {timeLeft.days}
           </div>
           <span className="text-[11px] text-gray-700 mt-1">days</span>
         </div>
 
         <div className="flex flex-col items-center">
-          <div className="bg-gray-100 border border-gray-300 px-3 py-2 text-xl font-bold">
+          <div className="bg-gray-100 border border-gray-300 px-3 py-2 text-xl font-bold rounded-lg">
             {timeLeft.hours}
           </div>
           <span className="text-[11px] text-gray-700 mt-1">hours</span>

@@ -91,13 +91,12 @@ export default function DashboardHome() {
 
   return (
     <>
-      <GameTicker />
       <LoggedInNavBar />
 
       <div className="flex w-full max-w-7xl ml-12 gap-6 py-10 px-6 mt-0">
         {/* LEFT SIDEBAR */}
         <div className="w-1/5 flex flex-col gap-6">
-          <aside className="bg-white shadow-md p-4 h-fit sticky top-24">
+          <aside className="bg-white shadow-md p-4 h-fit sticky top-24 rounded-lg">
             <h2 className="text-xl font-semibold mb-3">Curling Favorites</h2>
             <ul className="space-y-2 text-gray-700">
               <li><a href="https://worldcurling.org" target="_blank">World Curling Federation ↗</a></li>
@@ -113,12 +112,12 @@ export default function DashboardHome() {
         </div>
 
         {/* MAIN CONTENT */}
-        <main className="flex-1 bg-white shadow-md p-8 min-h-[500px]">
+        <main className="flex-1 bg-white shadow-md p-8 min-h-[500px] rounded-lg">
           {loading ? (
             <p>Loading...</p>
           ) : (
             <>
-              <h1 className="text-3xl font-bold mb-4">Welcome back, Hustler.</h1>
+              <h1 className="text-3xl font-bold mb-4">Welcome back, {profile?.username}.</h1>
               <p className="text-gray-700 mb-6">Here’s what’s happening around the rings today.</p>
 
               {/* League Update */}
@@ -128,7 +127,7 @@ export default function DashboardHome() {
               </p>
 
               {/* UPCOMING DRAFT CARD */}
-              <div className="bg-blue-100 border border-blue-300 p-4 flex items-center justify-between">
+              <div className="bg-blue-100 border border-blue-300 p-4 flex items-center justify-between rounded-lg">
                 {/* LEFT SIDE */}
                 <div>
                   <h2 className="text-lg font-semibold mb-1">Your Upcoming Draft</h2>
@@ -153,7 +152,7 @@ export default function DashboardHome() {
                       {nextDraft.draft_status === "open" && (
                         <button
                           disabled
-                          className="bg-gray-300 text-gray-600 px-4 py-2"
+                          className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md"
                         >
                           Draft live in <Countdown target={new Date(nextDraft.draft_date)} />
                         </button>
@@ -163,7 +162,7 @@ export default function DashboardHome() {
                       {nextDraft.draft_status === "closed" && (
                         <button
                           onClick={() => goToDraft(nextDraft.id)}
-                          className="bg-[#1f4785] text-white px-4 py-2"
+                          className="bg-[#1f4785] text-white px-4 py-2 rounded-md"
                         >
                           Enter Draft Room
                         </button>

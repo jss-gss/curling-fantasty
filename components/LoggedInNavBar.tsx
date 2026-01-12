@@ -35,26 +35,25 @@ export default function NavBar() {
   }, [])
 
   const tabs = [
-    { name: "Home", href: "/home" },
+    { name: "The Pin", href: "/thepin" },
     { name: "My Rinks", href: "/myrinks" },
     { name: "League Play", href: "/leagues" },
     { name: "Leaderboard", href: "/leaderboard" },
   ]
 
-  const displayName =
-    profile?.username ? profile?.username : ""
+  const displayName = profile?.username ? profile.username : ""
 
   return (
     <div
-      className="w-full border-b border-gray-300 h-16 flex items-center"
-      style={{ backgroundColor: "#f2f2f2" }}
+      className="w-full border-b border-[#1B3C53] h-16 flex items-center"
+      style={{ backgroundColor: "#234C6A" }}
     >
       <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 w-full relative">
         
-        {/* LEFT SIDE — LOGO (not clickable) */}
+        {/* LEFT SIDE — LOGO */}
         <div className="flex items-center gap-2">
           <Image
-            src="/webpage/hh-cards-logo.png"
+            src="/webpage/button-main-logo.png"
             alt="House Hustlers Logo"
             width={200}
             height={200}
@@ -74,8 +73,8 @@ export default function NavBar() {
                 href={tab.href}
                 className={`pb-1 transition-all ${
                   active
-                    ? "border-b-2 border-[#1f4785] text-[#1f4785]"
-                    : "text-[#1f4785] hover:border-b-2 hover:border-[#ac0000]"
+                    ? "border-b-2 border-[#AA2B1D] text-white"
+                    : "text-white hover:border-b-2 hover:border-[#AA2B1D]"
                 }`}
               >
                 {tab.name}
@@ -88,22 +87,22 @@ export default function NavBar() {
             <div className="relative">
               <button
                 onClick={() => setOpen((prev) => !prev)}
-                className="text-[#1f4785] hover:text-gray-800 font-medium"
+                className="text-white hover:text-[#E3E3E3] font-medium"
               >
                 {displayName}
               </button>
 
               {open && (
-                <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md p-2 text-[#1f4785] z-50">
+                <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
                   <button
-                    className="block w-full text-left px-3 py-2 hover:bg-gray-100"
+                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
                     onClick={() => router.push("/profile")}
                   >
                     Profile
                   </button>
 
                   <button
-                    className="block w-full text-left px-3 py-2 hover:bg-gray-100"
+                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
                     onClick={async () => {
                       await supabase.auth.signOut()
                       window.location.href = "/"

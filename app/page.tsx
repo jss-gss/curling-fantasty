@@ -16,9 +16,9 @@ export default function LandingPage() {
     async function checkUser() {
       const { data } = await supabase.auth.getUser()
 
-      // If logged in → redirect to /home
+      // If logged in → redirect to /thepin
       if (data.user) {
-        router.replace("/home")
+        router.replace("/thepin")
         return
       }
 
@@ -31,7 +31,6 @@ export default function LandingPage() {
 
   return (
     <>
-    <GameTicker />
     <LoggedOutNavBar />
       <h1 className="text-3xl font-bold mb-6">Welcome to the House</h1>
     </>
