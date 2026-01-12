@@ -247,7 +247,7 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     }
 
   if (data.userFinished || data.draftFinished) {
-    router.push("/home")
+    router.push("/pick")
     return
   }
 

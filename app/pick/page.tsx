@@ -42,10 +42,21 @@ export default function PicksPage() {
 
     const { data: memberships } = await supabase
       .from("fantasy_event_users")
-      .select("fantasy_event_id")
+      .select("fantasy_event_id, points, rank")
       .eq("user_id", currentUser.id)
 
     const membershipEventIds = memberships?.map((m) => m.fantasy_event_id) ?? []
+
+    const pointsMap: AnyMap<number> = {}
+    const ranksMap: AnyMap<number | string> = {}
+
+    for (const m of memberships ?? []) {
+      pointsMap[m.fantasy_event_id] = m.points ?? 0
+      ranksMap[m.fantasy_event_id] = m.rank ?? "-"
+    }
+
+    setPointsByEvent(pointsMap)
+    setRanksByEvent(ranksMap)
 
     const { data: picks } = await supabase
       .from("fantasy_picks")
@@ -58,6 +69,7 @@ export default function PicksPage() {
           last_name,
           position,
           player_picture,
+          total_player_fantasy_pts,
           teams (
             id,
             team_name,
@@ -166,26 +178,44 @@ export default function PicksPage() {
 
     setRecentByPlayer(recentMap)
 
+    const { data: nextDraws } = await supabase
+      .from("games")
+      .select(`
+        id,
+        game_datetime,
+        team1_id,
+        team2_id,
+        team1:teams!games_team1_id_fkey ( team_name ),
+        team2:teams!games_team2_id_fkey ( team_name )
+      `)
+      .gt("game_datetime", new Date().toISOString())
+      .order("game_datetime", { ascending: true })
+
+    const safeNextDraws = nextDraws ?? []
     const nextMap: AnyMap<any> = {}
 
     for (const p of picks ?? []) {
-      const player = p.players?.[0]
-      const team = player?.teams?.[0]
+      const rawPlayer = p.players as any
+
+      const player = Array.isArray(rawPlayer) ? rawPlayer[0] : rawPlayer
+      if (!player) continue
+
+      const rawTeam = player.teams as any
+      const team = Array.isArray(rawTeam) ? rawTeam[0] : rawTeam
       const teamId = team?.id
       if (!teamId) continue
 
-      const futureGames = allGames.filter(
-        (g) =>
-          (g.team1_id === teamId || g.team2_id === teamId) &&
-          new Date(g.game_datetime) > new Date()
+      const nextGame = safeNextDraws.find(
+        (g: any) => g.team1_id === teamId || g.team2_id === teamId
       )
 
-      if (futureGames.length > 0) {
-        nextMap[p.player_id] = futureGames[0]
+      if (nextGame) {
+        nextMap[p.player_id] = nextGame
       }
     }
 
     setNextByPlayer(nextMap)
+
     setLoading(false)
   }
 
@@ -211,7 +241,6 @@ export default function PicksPage() {
                   const picks = userPicksByEvent[ev.id] ?? []
                   const totalPoints = pointsByEvent[ev.id] ?? 0
                   const rank = ranksByEvent[ev.id] ?? "-"
-
                   return (
                     <div key={ev.id} className="space-y-4">
 
@@ -249,7 +278,6 @@ export default function PicksPage() {
                             <th className="py-2 px-3 text-left bg-blue-200">Fantasy Pts</th>
                             <th className="py-2 px-3 text-left">Next Game</th>
                             <th className="py-2 px-3 text-left">Total Fantasy Pts</th>
-                            <th className="py-2 px-3 text-left">Pos Rank</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -261,7 +289,6 @@ export default function PicksPage() {
                             const teamId = team?.id
 
                             const recent = recentByPlayer[p.player_id]
-                            const next = nextByPlayer[p.player_id]
 
                             let recentOpponent = "N/A"
                             if (recent?.game) {
@@ -271,6 +298,8 @@ export default function PicksPage() {
                                 ? g.team2?.team_name
                                 : g.team1?.team_name
                             }
+
+                            const next = nextByPlayer[p.player_id]
 
                             let nextOpponent = "N/A"
                             if (next) {
@@ -325,16 +354,21 @@ export default function PicksPage() {
                                   {recent?.fantasy_pts ?? "N/A"}
                                 </td>
 
-                                <td className="py-2 px-3">
-                                  {next?.game_datetime ? (
+                               <td className="py-2 px-3">
+                                  {next ? (
                                     <>
-                                      {new Date(next.game_datetime).toLocaleString()}
-                                      <br />
-                                      vs {nextOpponent}
+                                      <div className="font-medium">
+                                        {new Date(next.game_datetime).toLocaleString()}
+                                      </div>
+                                      <div className="text-gray-600 text-xs">vs {nextOpponent}</div>
                                     </>
                                   ) : (
-                                    "N/A"
+                                    <div className="text-gray-500">N/A</div>
                                   )}
+                                </td>
+                                
+                                <td className="py-2 px-3">
+                                  {player?.total_player_fantasy_pts ?? "-"}
                                 </td>
                               </tr>
                             )
