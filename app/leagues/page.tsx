@@ -131,7 +131,7 @@ export default function LeaguesPage() {
       !isFull
 
     return (
-      <div className="flex items-center justify-between bg-white shadow-md rounded-lg p-6 border border-gray-200">
+      <div className="flex items-center justify-between bg-white shadow-md p-6 border border-gray-200">
         <div className="flex flex-col">
           <h2 className="text-xl font-semibold">{league.name}</h2>
 
@@ -155,28 +155,28 @@ export default function LeaguesPage() {
           league.draft_status === "closed" ? (
             <button
               disabled
-              className="bg-gray-300 text-gray-600 px-6 py-2 rounded-md cursor-not-allowed"
+              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed"
             >
               Draft In Progress
             </button>
           ) : league.draft_status === "locked" ? (
             <button
               disabled
-              className="bg-gray-300 text-gray-600 px-6 py-2 rounded-md cursor-not-allowed"
+              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed"
             >
               Event Live
             </button>
           ) : league.draft_status === "archived" ? (
             <button
               disabled
-              className="bg-gray-300 text-gray-600 px-6 py-2 rounded-md cursor-not-allowed"
+              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed"
             >
               Archived
             </button>
           ) : (
             <button
               onClick={() => leaveLeague(league.id)}
-              className="bg-red-500 text-white px-6 py-2 rounded-md hover:bg-red-600 transition"
+              className="bg-red-500 text-white px-6 py-2 hover:bg-red-600 transition"
             >
               Leave
             </button>
@@ -184,7 +184,7 @@ export default function LeaguesPage() {
         ) : isFull || league.draft_status === "closed" ? (
           <button
             disabled
-            className="bg-gray-300 text-gray-600 px-6 py-2 rounded-md cursor-not-allowed"
+            className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed"
           >
             Closed
           </button>
@@ -192,7 +192,7 @@ export default function LeaguesPage() {
           <button
             disabled={!isJoinable}
             onClick={() => isJoinable && joinLeague(league.id)}
-            className={`px-4 py-2 rounded-md text-white ${
+            className={`px-4 py-2 text-white ${
               isJoinable
                 ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
                 : "bg-gray-400 cursor-not-allowed"

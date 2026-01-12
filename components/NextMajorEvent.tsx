@@ -10,7 +10,7 @@ export default function NextMajorEvent() {
   useEffect(() => {
     async function loadEvent() {
       const { data } = await supabase
-        .from("events")
+        .from("curling_events")
         .select("*")
         .gt("start_date", new Date().toISOString())
         .order("start_date", { ascending: true })
@@ -51,25 +51,25 @@ export default function NextMajorEvent() {
   if (!event) return null
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-3 mt-4 w-full text-center">
+    <div className="bg-white shadow-md p-3 mt-4 w-full text-center">
       <h3 className="text-sm font-bold text-[#1f4785] mb-2">
         NEXT MAJOR EVENT
       </h3>
 
       <p className="text-xs text-gray-800 font-medium mb-3">
-        {event.name}
+        {event.year} {event.name} in {event.location}
       </p>
 
       <div className="flex gap-3 justify-center">
         <div className="flex flex-col items-center">
-          <div className="bg-gray-100 border border-gray-300 rounded-md px-3 py-2 text-xl font-bold">
+          <div className="bg-gray-100 border border-gray-300 px-3 py-2 text-xl font-bold">
             {timeLeft.days}
           </div>
           <span className="text-[11px] text-gray-700 mt-1">days</span>
         </div>
 
         <div className="flex flex-col items-center">
-          <div className="bg-gray-100 border border-gray-300 rounded-md px-3 py-2 text-xl font-bold">
+          <div className="bg-gray-100 border border-gray-300 px-3 py-2 text-xl font-bold">
             {timeLeft.hours}
           </div>
           <span className="text-[11px] text-gray-700 mt-1">hours</span>

@@ -122,18 +122,16 @@ export default function DashboardHome() {
               <p className="text-gray-700 mb-6">Here’s what’s happening around the rings today.</p>
 
               {/* League Update */}
-              <div className="bg-blue-100 border border-blue-300 p-4 mb-6">
-                <h3 className="text-lg font-semibold mb-2">League Update</h3>
-                <p className="text-gray-700">
-                  New events have been added. Make sure to submit your picks before the deadline.
-                </p>
-              </div>
+              <h3 className="text-lg font-semibold mb-2">League Update</h3>
+              <p className="text-gray-700">
+                New events have been added. Make sure to submit your picks before the deadline.
+              </p>
 
               {/* UPCOMING DRAFT CARD */}
-              <div className="bg-white p-4 flex items-center justify-between">
+              <div className="bg-blue-100 border border-blue-300 p-4 flex items-center justify-between">
                 {/* LEFT SIDE */}
                 <div>
-                  <h2 className="text-lg font-semibold mb-1">Your Upcoming Drafts</h2>
+                  <h2 className="text-lg font-semibold mb-1">Your Upcoming Draft</h2>
 
                   {!nextDraft ? (
                     <p className="text-gray-600">
@@ -151,43 +149,23 @@ export default function DashboardHome() {
                 <div>
                   {nextDraft && (
                     <>
-                      {/* LOCKED — Event is happening */}
-                      {nextDraft.draft_status === "locked" && (
-                        <button
-                          disabled
-                          className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md"
-                        >
-                          Event Live — <Countdown target={new Date(nextDraft.draft_date)} />
-                        </button>
-                      )}
-
-                      {/* OPEN — Users can join or leave */}
+                      {/* OPEN — Countdown and users can join or leave */}
                       {nextDraft.draft_status === "open" && (
                         <button
-                          onClick={() => goToDraft(nextDraft.id)}
-                          className="bg-[#1f4785] text-white px-4 py-2 rounded-md"
+                          disabled
+                          className="bg-gray-300 text-gray-600 px-4 py-2"
                         >
-                          Join League
+                          Draft live in <Countdown target={new Date(nextDraft.draft_date)} />
                         </button>
                       )}
 
-                      {/* CLOSED — Draft happening or league full */}
+                      {/* CLOSED — Draft happening - enter draft */}
                       {nextDraft.draft_status === "closed" && (
                         <button
                           onClick={() => goToDraft(nextDraft.id)}
-                          className="bg-[#1f4785] text-white px-4 py-2 rounded-md"
+                          className="bg-[#1f4785] text-white px-4 py-2"
                         >
                           Enter Draft Room
-                        </button>
-                      )}
-
-                      {/* ARCHIVED — Event finished */}
-                      {nextDraft.draft_status === "archived" && (
-                        <button
-                          disabled
-                          className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md"
-                        >
-                          Event Finished — Archived
                         </button>
                       )}
                     </>

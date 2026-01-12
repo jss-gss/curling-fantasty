@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import type { User } from "@supabase/supabase-js"
 
 export default function NavBar() {
+  const router = useRouter()
   const pathname = usePathname()
 
   const [user, setUser] = useState<User | null>(null)
@@ -86,7 +87,7 @@ export default function NavBar() {
           {user && (
             <div className="relative">
               <button
-                onClick={() => setOpen(!open)}
+                onClick={() => setOpen((prev) => !prev)}
                 className="text-[#1f4785] hover:text-gray-800 font-medium"
               >
                 {displayName}
@@ -94,9 +95,13 @@ export default function NavBar() {
 
               {open && (
                 <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md p-2 text-[#1f4785] z-50">
-                  <button className="block w-full text-left px-3 py-2 hover:bg-gray-100">
-                    Settings
+                  <button
+                    className="block w-full text-left px-3 py-2 hover:bg-gray-100"
+                    onClick={() => router.push("/profile")}
+                  >
+                    Profile
                   </button>
+
                   <button
                     className="block w-full text-left px-3 py-2 hover:bg-gray-100"
                     onClick={async () => {
@@ -110,7 +115,6 @@ export default function NavBar() {
               )}
             </div>
           )}
-
         </div>
       </div>
     </div>
