@@ -70,17 +70,17 @@ export default function DashboardHome() {
 
       // Load upcoming drafts (locked leagues the user is in)
       const { data: drafts } = await supabase
-        .from("fantasy_events")
-        .select(`
-          id,
-          name,
-          draft_date,
-          status,
-          fantasy_event_users!inner ( user_id )
-        `)
-        .eq("fantasy_event_users.user_id", userData.user.id)
-        .eq("status", "locked")
-        .order("draft_date", { ascending: true })
+      .from("fantasy_events")
+      .select(`
+        id,
+        name,
+        draft_date,
+        draft_status,
+        fantasy_event_users!inner ( user_id )
+      `)
+      .eq("fantasy_event_users.user_id", userData.user.id)
+      .in("draft_status", ["open", "closed"])
+      .order("draft_date", { ascending: true })
 
       setUpcomingDrafts(drafts ?? [])
       setLoading(false)
@@ -151,35 +151,38 @@ export default function DashboardHome() {
                 <div>
                   {nextDraft && (
                     <>
-                      {nextDraft.status === "locked" && (
+                      {/* LOCKED — Event is happening */}
+                      {nextDraft.draft_status === "locked" && (
                         <button
                           disabled
                           className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md"
                         >
-                          Draft Locked —{" "}
-                          <Countdown target={new Date(nextDraft.draft_date)} />
+                          Event Live — <Countdown target={new Date(nextDraft.draft_date)} />
                         </button>
                       )}
 
-                      {nextDraft.status === "open" && (
+                      {/* OPEN — Users can join or leave */}
+                      {nextDraft.draft_status === "open" && (
                         <button
                           onClick={() => goToDraft(nextDraft.id)}
                           className="bg-[#1f4785] text-white px-4 py-2 rounded-md"
                         >
-                          Join Draft Room
+                          Join League
                         </button>
                       )}
 
-                      {nextDraft.status === "closed" && (
+                      {/* CLOSED — Draft happening or league full */}
+                      {nextDraft.draft_status === "closed" && (
                         <button
-                          disabled
-                          className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md"
+                          onClick={() => goToDraft(nextDraft.id)}
+                          className="bg-[#1f4785] text-white px-4 py-2 rounded-md"
                         >
-                          Draft Closed — Waiting for Event Start
+                          Enter Draft Room
                         </button>
                       )}
 
-                      {nextDraft.status === "archived" && (
+                      {/* ARCHIVED — Event finished */}
+                      {nextDraft.draft_status === "archived" && (
                         <button
                           disabled
                           className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md"

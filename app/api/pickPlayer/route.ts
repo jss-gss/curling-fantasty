@@ -5,38 +5,93 @@ import { supabase } from "@/lib/supabaseClient"
 export async function POST(req: NextRequest) {
   const { eventId, playerId, userId } = await req.json()
 
-  // 1. Ensure player belongs to the same curling event as the fantasy event
-  const { data: fantasyEvent } = await supabase
+  if (!eventId || !playerId || !userId) {
+    return NextResponse.json(
+      { error: "Missing eventId, playerId, or userId" },
+      { status: 400 }
+    )
+  }
+
+  //
+  // 1. Load fantasy event
+  //
+  const { data: fantasyEvent, error: eventErr } = await supabase
     .from("fantasy_events")
-    .select("id, current_pick, curling_event_id")
+    .select("id, current_pick, curling_event_id, draft_status")
     .eq("id", eventId)
     .single()
 
-  if (!fantasyEvent) {
+  if (eventErr || !fantasyEvent) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 })
   }
 
-  const { data: playerAssignment } = await supabase
-    .from("player_event_teams")
-    .select("id")
-    .eq("player_id", playerId)
-    .eq("curling_event_id", fantasyEvent.curling_event_id)
-    .maybeSingle()
+  // Enforce draft is active
+  if (fantasyEvent.draft_status !== "closed") {
+    return NextResponse.json(
+      { error: "Draft is not currently active" },
+      { status: 400 }
+    )
+  }
 
-  if (!playerAssignment) {
+  //
+  // 2. Load player and their team_id
+  //
+  const { data: playerRow, error: playerErr } = await supabase
+    .from("players")
+    .select("id, first_name, last_name, position, team_id")
+    .eq("id", playerId)
+    .single()
+
+  if (playerErr || !playerRow) {
+    return NextResponse.json({ error: "Player not found" }, { status: 404 })
+  }
+
+  if (!playerRow.team_id) {
+    return NextResponse.json(
+      { error: "Player is not assigned to a team" },
+      { status: 400 }
+    )
+  }
+
+  //
+  // 3. Load team and validate curling_event_id matches the fantasy event
+  //
+  const { data: teamRow, error: teamErr } = await supabase
+    .from("teams")
+    .select("id, curling_event_id")
+    .eq("id", playerRow.team_id)
+    .single()
+
+  if (teamErr || !teamRow) {
+    return NextResponse.json(
+      { error: "Team not found for this player" },
+      { status: 400 }
+    )
+  }
+
+  if (teamRow.curling_event_id !== fantasyEvent.curling_event_id) {
     return NextResponse.json(
       { error: "Player is not part of this curling event" },
       { status: 400 }
     )
   }
 
-  // 2. Check if player already drafted
-  const { data: existingPick } = await supabase
+  //
+  // 4. Check if this player is already drafted in this fantasy event
+  //
+  const { data: existingPick, error: existingErr } = await supabase
     .from("fantasy_picks")
     .select("id")
     .eq("fantasy_event_id", eventId)
     .eq("player_id", playerId)
     .maybeSingle()
+
+  if (existingErr) {
+    return NextResponse.json(
+      { error: existingErr.message },
+      { status: 400 }
+    )
+  }
 
   if (existingPick) {
     return NextResponse.json(
@@ -45,14 +100,30 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 3. Get users in draft order
-  const { data: users } = await supabase
+  //
+  // 5. Load users in draft order and validate turn
+  //
+  const { data: users, error: usersErr } = await supabase
     .from("fantasy_event_users")
     .select("user_id, draft_position")
     .eq("fantasy_event_id", eventId)
     .order("draft_position")
 
+  if (usersErr) {
+    return NextResponse.json(
+      { error: usersErr.message },
+      { status: 400 }
+    )
+  }
+
   const safeUsers = users ?? []
+  if (!safeUsers.length) {
+    return NextResponse.json(
+      { error: "No users in this fantasy event" },
+      { status: 400 }
+    )
+  }
+
   const currentIndex = (fantasyEvent.current_pick ?? 1) - 1
   const currentUser = safeUsers[currentIndex]
 
@@ -63,32 +134,40 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 4. Count user's existing picks
-  const { data: userPicks } = await supabase
+  //
+  // 6. Count THIS user's existing picks (max 4)
+  //
+  const { data: userPicks, error: userPicksErr } = await supabase
     .from("fantasy_picks")
-    .select("position_id")
+    .select("id")
     .eq("fantasy_event_id", eventId)
     .eq("user_id", userId)
+
+  if (userPicksErr) {
+    return NextResponse.json(
+      { error: userPicksErr.message },
+      { status: 400 }
+    )
+  }
 
   const pickCount = userPicks?.length ?? 0
 
   if (pickCount >= 4) {
     return NextResponse.json(
-      { error: "You already have all 4 positions filled" },
+      { error: "You already drafted 4 players" },
       { status: 400 }
     )
   }
 
-  const nextPositionId = pickCount + 1
-
-  // 5. Insert pick
+  //
+  // 7. Insert pick
+  //
   const { error: insertError } = await supabase
     .from("fantasy_picks")
     .insert({
       fantasy_event_id: eventId,
       user_id: userId,
       player_id: playerId,
-      position_id: nextPositionId,
     })
 
   if (insertError) {
@@ -98,36 +177,102 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 6. Advance draft pick
-  const nextPick =
-    fantasyEvent.current_pick >= safeUsers.length
-      ? 1
-      : fantasyEvent.current_pick + 1
+  const userJustFinished = pickCount + 1 >= 4
 
-  await supabase
-    .from("fantasy_events")
-    .update({ current_pick: nextPick })
-    .eq("id", eventId)
-
-  // 7. Check if draft is finished
-  const { data: allPicks } = await supabase
+  //
+  // 8. Check if EVERY user is done (global draft end)
+  //
+  const { data: allUserPicks, error: allUserPicksErr } = await supabase
     .from("fantasy_picks")
-    .select("id")
+    .select("user_id")
     .eq("fantasy_event_id", eventId)
 
-  const totalPicks = allPicks?.length ?? 0
-  const totalRequiredPicks = safeUsers.length * 4
+  if (allUserPicksErr) {
+    return NextResponse.json(
+      { error: allUserPicksErr.message },
+      { status: 400 }
+    )
+  }
 
-  if (totalPicks >= totalRequiredPicks) {
-    await supabase
+  const pickMap = new Map<string, number>()
+  allUserPicks?.forEach((p: { user_id: string }) => {
+    pickMap.set(p.user_id, (pickMap.get(p.user_id) ?? 0) + 1)
+  })
+
+  const everyoneDone = safeUsers.every(
+    (u) => (pickMap.get(u.user_id) ?? 0) >= 4
+  )
+
+  if (everyoneDone) {
+    const { error: lockErr } = await supabase
       .from("fantasy_events")
       .update({
-        status: "closed",
-        current_pick: null 
+        draft_status: "locked",
+        current_pick: null,
       })
       .eq("id", eventId)
 
+    if (lockErr) {
+      return NextResponse.json(
+        { error: lockErr.message },
+        { status: 400 }
+      )
+    }
+
     return NextResponse.json({ ok: true, draftFinished: true })
+  }
+
+  //
+  // 9. Advance draft pick — skip users who already have 4 picks
+  //
+  let nextPickIndex: number | null = currentIndex
+
+  // We know at least one user still needs picks (everyoneDone === false),
+  // so this loop will always find someone.
+  while (true) {
+    nextPickIndex = (nextPickIndex + 1) % safeUsers.length
+    const nextUser = safeUsers[nextPickIndex]
+
+    const { data: nextUserPicks, error: nextUserPicksErr } = await supabase
+      .from("fantasy_picks")
+      .select("id")
+      .eq("fantasy_event_id", eventId)
+      .eq("user_id", nextUser.user_id)
+
+    if (nextUserPicksErr) {
+      return NextResponse.json(
+        { error: nextUserPicksErr.message },
+        { status: 400 }
+      )
+    }
+
+    const nextUserPickCount = nextUserPicks?.length ?? 0
+
+    if (nextUserPickCount < 4) {
+      break
+    }
+    // No need for loop‑around detection here, because everyoneDone === false
+    // guarantees at least one user has < 4 picks.
+  }
+
+  const { error: updateEventErr } = await supabase
+    .from("fantasy_events")
+    .update({ current_pick: nextPickIndex + 1 })
+    .eq("id", eventId)
+
+  if (updateEventErr) {
+    return NextResponse.json(
+      { error: updateEventErr.message },
+      { status: 400 }
+    )
+  }
+
+  //
+  // 10. Response flags for the frontend
+  //
+  if (userJustFinished) {
+    // This user finished their 4 picks, but draft continues for others
+    return NextResponse.json({ ok: true, userFinished: true })
   }
 
   return NextResponse.json({ ok: true, draftFinished: false })

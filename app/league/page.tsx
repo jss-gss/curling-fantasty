@@ -23,12 +23,12 @@ export default function LeaguesPage() {
 
       setUser(userData.user)
 
-      // Load all leagues + curling event info
       const { data: leagueData } = await supabase
         .from("fantasy_events")
         .select(`
           *,
-          curling_events:curling_events(*)
+          curling_events:curling_events(*),
+          fantasy_event_users ( user_id )
         `)
         .order("draft_date", { ascending: true })
 
@@ -38,21 +38,11 @@ export default function LeaguesPage() {
         return
       }
 
-      const leagueIds = leagueData.map((l) => l.id)
-
-      // Load memberships for this user
-      const { data: memberships } = await supabase
-        .from("fantasy_event_users")
-        .select("fantasy_event_id")
-        .eq("user_id", userData.user.id)
-        .in("fantasy_event_id", leagueIds)
-
-      const enrolledSet = new Set(memberships?.map((m) => m.fantasy_event_id))
-
-      // Merge enrollment flag
       const processed = leagueData.map((l) => ({
         ...l,
-        enrolled: enrolledSet.has(l.id),
+        enrolled: l.fantasy_event_users?.some(
+          (u: any) => u.user_id === userData.user.id
+        ),
       }))
 
       setLeagues(processed)
@@ -70,17 +60,17 @@ export default function LeaguesPage() {
       user_id: user.id,
     })
 
-    const league = leagues.find((l) => l.id === id)
-
-    await supabase
-      .from("fantasy_events")
-      .update({ num_users: league.num_users + 1 })
-      .eq("id", id)
-
     setLeagues((prev) =>
       prev.map((l) =>
         l.id === id
-          ? { ...l, enrolled: true, num_users: l.num_users + 1 }
+          ? {
+              ...l,
+              enrolled: true,
+              fantasy_event_users: [
+                ...(l.fantasy_event_users ?? []),
+                { user_id: user.id },
+              ],
+            }
           : l
       )
     )
@@ -95,51 +85,50 @@ export default function LeaguesPage() {
       .eq("fantasy_event_id", id)
       .eq("user_id", user.id)
 
-    const league = leagues.find((l) => l.id === id)
-
-    await supabase
-      .from("fantasy_events")
-      .update({ num_users: league.num_users - 1 })
-      .eq("id", id)
-
     setLeagues((prev) =>
       prev.map((l) =>
         l.id === id
-          ? { ...l, enrolled: false, num_users: l.num_users - 1 }
+          ? {
+              ...l,
+              enrolled: false,
+              fantasy_event_users: l.fantasy_event_users?.filter(
+                (u: any) => u.user_id !== user.id
+              ),
+            }
           : l
       )
     )
   }
 
-  // -----------------------------
-  // ⭐ NEW FILTER STRUCTURE
-  // -----------------------------
-
   const myLeagues = leagues.filter((l) => l.enrolled)
   const notMyLeagues = leagues.filter((l) => !l.enrolled)
 
-  // My Leagues
-  const myActiveLeagues = myLeagues.filter((l) => l.status === "closed")
+  const myActiveLeagues = myLeagues.filter((l) => l.draft_status === "locked")
+
   const myUpcomingDrafts = myLeagues.filter(
-    (l) => l.status === "open" || l.status === "locked"
+    (l) => l.draft_status === "open" || l.draft_status === "closed"
   )
 
-  // Find a League
   const findAvailableLeagues = notMyLeagues.filter(
     (l) =>
-      (l.status === "open" || l.status === "locked") &&
-      l.num_users < l.max_users
+      (l.draft_status === "open" || l.draft_status === "closed") &&
+      (l.fantasy_event_users?.length ?? 0) < l.max_users
   )
 
-  const findClosedLeagues = notMyLeagues.filter(
-    (l) => l.status === "closed" || l.num_users >= l.max_users
+  const findClosedLeagues = notMyLeagues.filter((l) =>
+    l.draft_status === "locked" ||
+    l.draft_status === "archived" ||
+    (
+      (l.draft_status === "open" || l.draft_status === "closed") &&
+      (l.fantasy_event_users?.length ?? 0) >= l.max_users
+    )
   )
 
-  // -----------------------------
-  // League Card Component
-  // -----------------------------
   function LeagueCard({ league }: any) {
-    const isFull = league.num_users >= league.max_users
+    const isFull = (league.fantasy_event_users?.length ?? 0) >= league.max_users
+    const isJoinable =
+      (league.draft_status === "open" || league.draft_status === "closed") &&
+      !isFull
 
     return (
       <div className="flex items-center justify-between bg-white shadow-md rounded-lg p-6 border border-gray-200">
@@ -157,18 +146,32 @@ export default function LeaguesPage() {
             {league.curling_events
               ? new Date(league.curling_events.start_date).toLocaleDateString()
               : "TBD"}{" "}
-            • <strong>Players:</strong> {league.num_users} / {league.max_users}
+            • <strong>Players:</strong> {league.fantasy_event_users.length} / {league.max_users}
           </p>
         </div>
 
         {/* BUTTON LOGIC */}
         {league.enrolled ? (
-          league.status === "closed" ? (
+          league.draft_status === "closed" ? (
             <button
               disabled
               className="bg-gray-300 text-gray-600 px-6 py-2 rounded-md cursor-not-allowed"
             >
-              Locked In
+              Draft In Progress
+            </button>
+          ) : league.draft_status === "locked" ? (
+            <button
+              disabled
+              className="bg-gray-300 text-gray-600 px-6 py-2 rounded-md cursor-not-allowed"
+            >
+              Event Live
+            </button>
+          ) : league.draft_status === "archived" ? (
+            <button
+              disabled
+              className="bg-gray-300 text-gray-600 px-6 py-2 rounded-md cursor-not-allowed"
+            >
+              Archived
             </button>
           ) : (
             <button
@@ -178,7 +181,7 @@ export default function LeaguesPage() {
               Leave
             </button>
           )
-        ) : isFull || league.status === "closed" ? (
+        ) : isFull || league.draft_status === "closed" ? (
           <button
             disabled
             className="bg-gray-300 text-gray-600 px-6 py-2 rounded-md cursor-not-allowed"
@@ -187,10 +190,15 @@ export default function LeaguesPage() {
           </button>
         ) : (
           <button
-            onClick={() => joinLeague(league.id)}
-            className="bg-[#1f4785] text-white px-6 py-2 rounded-md hover:bg-[#1d355f] transition"
+            disabled={!isJoinable}
+            onClick={() => isJoinable && joinLeague(league.id)}
+            className={`px-4 py-2 rounded-md text-white ${
+              isJoinable
+                ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
           >
-            Join
+            {isFull ? "Full" : "Join"}
           </button>
         )}
       </div>
@@ -207,9 +215,7 @@ export default function LeaguesPage() {
 
         {loading && <p>Loading leagues...</p>}
 
-        {/* ----------------------------- */}
-        {/* ⭐ MY LEAGUES */}
-        {/* ----------------------------- */}
+        {/* MY LEAGUES */}
         <h2 className="text-2xl font-semibold mb-4">My Leagues</h2>
 
         {/* Active */}
@@ -236,9 +242,7 @@ export default function LeaguesPage() {
           )}
         </div>
 
-        {/* ----------------------------- */}
-        {/* ⭐ FIND A LEAGUE */}
-        {/* ----------------------------- */}
+        {/* FIND A LEAGUE */}
         <h2 className="text-2xl font-semibold mb-4">Find a League</h2>
 
         {/* Available */}
