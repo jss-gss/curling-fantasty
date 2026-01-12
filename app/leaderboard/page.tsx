@@ -8,7 +8,17 @@ import GameTicker from "@/components/GameTicker"
 type League = {
   id: string
   name: string
-  status: "closed" | "archived"
+  draft_status: string
+  curling_events?: {
+    id: string
+    name: string
+    year: number
+    location: string
+    start_date: string
+    end_date: string
+    link: string | null
+  }[] | null
+  members?: string[]
 }
 
 type LeaderboardRow = {
@@ -24,65 +34,154 @@ type LeaderboardRow = {
 
 export default function LeagueLeaderboardPage() {
   const [leagues, setLeagues] = useState<League[]>([])
-  const [selectedLeague, setSelectedLeague] = useState<string | null>(null)
-  const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([])
-  const [filter, setFilter] = useState<"current" | "past">("current")
+  const [leaderboards, setLeaderboards] = useState<Record<string, LeaderboardRow[]>>({})
+  const [activeTab, setActiveTab] = useState<"current" | "top" | "past">("current")
   const [loading, setLoading] = useState(true)
+  const [events, setEvents] = useState<any[]>([])
+  const [topCurlers, setTopCurlers] = useState<Record<string, Record<string, any[]>>>({})
+  const positions = ["Lead", "Second", "Vice Skip", "Skip"]
+  const [filterEvent, setFilterEvent] = useState("ALL")
+  const [filterPosition, setFilterPosition] = useState("ALL")
+  const [filterLeagueScope, setFilterLeagueScope] = useState<"ALL" | "MINE">("ALL")  
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => { 
+    supabase.auth.getUser().
+    then(({ data }) => 
+      { 
+        setUserId(data.user?.id ?? null) 
+      }) 
+    }, [])
 
   useEffect(() => {
-    async function loadLeagues() {
-      const { data } = await supabase
-        .from("fantasy_events")
-        .select("id, name, status")
-        .in("status", ["closed", "archived"])
-        .order("draft_date", { ascending: false })
-
-      setLeagues((data as League[]) ?? [])
-      setLoading(false)
-    }
-
-    loadLeagues()
+    loadCurrentLeagues()
   }, [])
 
-  async function loadLeaderboard(leagueId: string) {
-    setLeaderboard([])
+  async function loadCurrentLeagues() {
+  setLoading(true)
 
-    const { data: totals } = await supabase.rpc("get_league_totals_by_event", {
-      event_id: leagueId,
-    })
+    const { data: leagueRows } = await supabase
+      .from("fantasy_events")
+      .select(`
+        id,
+        name,
+        draft_status,
+        curling_events:curling_events!fantasy_events_curling_event_id_fkey (
+          id,
+          name,
+          year,
+          location,
+          start_date,
+          end_date,
+          link
+        )
+      `)
+      .eq("draft_status", "locked")
+      .order("draft_date", { ascending: false })
 
-    if (!totals) return
+    const normalized = leagueRows?.map(l => ({
+      ...l,
+      curling_events: Array.isArray(l.curling_events)
+        ? l.curling_events
+        : l.curling_events
+        ? [l.curling_events]
+        : []
+    })) ?? []
 
-    const userIds = totals.map((t: any) => t.user_id)
+    const leagueIds = normalized.map(l => l.id)
 
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, username, first_name, last_name")
-      .in("id", userIds)
+    const { data: memberRows } = await supabase
+      .from("fantasy_event_users")
+      .select("fantasy_event_id, user_id")
+      .in("fantasy_event_id", leagueIds)
 
-    const profileMap = Object.fromEntries(
-      profiles!.map((p) => [p.id, p])
-    )
+    const membersByLeague: Record<string, string[]> = {}
 
-    const rows: LeaderboardRow[] = totals
-      .map((t: any) => ({
-        user_id: t.user_id,
-        total_points: t.total_points,
-        profile: profileMap[t.user_id],
-      }))
-      .sort((a: { total_points: number }, b: { total_points: number }) => b.total_points - a.total_points)
+    for (const row of memberRows ?? []) {
+      if (!membersByLeague[row.fantasy_event_id]) {
+        membersByLeague[row.fantasy_event_id] = []
+      }
+      membersByLeague[row.fantasy_event_id].push(row.user_id)
+    }
 
-    setLeaderboard(rows)
+    const leaguesWithMembers: League[] = normalized.map(league => ({
+      ...league,
+      members: membersByLeague[league.id] ?? []
+    }))
+
+    setLeagues(leaguesWithMembers)
+
+    const results: Record<string, LeaderboardRow[]> = {}
+
+    for (const league of leaguesWithMembers ?? []) {
+      const { data: totals } = await supabase.rpc("get_league_totals_by_event", {
+        event_id: league.id
+      })
+
+      if (!totals) continue
+
+      const userIds = totals.map((t: any) => t.user_id)
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username, first_name, last_name")
+        .in("id", userIds)
+
+      const profileMap = Object.fromEntries(
+        (profiles ?? []).map((p) => [p.id, p])
+      )
+
+      const rows: LeaderboardRow[] = totals
+        .map((t: any) => ({
+          user_id: t.user_id,
+          total_points: t.total_points,
+          profile: profileMap[t.user_id]
+        }))
+        .sort((a: LeaderboardRow, b: LeaderboardRow) => b.total_points - a.total_points)
+
+      results[league.id] = rows
+    }
+
+    setLeaderboards(results)
+    setLoading(false)
   }
 
-  function handleLeagueSelect(id: string) {
-    setSelectedLeague(id)
-    loadLeaderboard(id)
-  }
+  useEffect(() => {
+    if (activeTab === "top") {
+      loadTopCurlers()
+    }
+  }, [activeTab])
 
-  const filteredLeagues = leagues.filter((l) =>
-    filter === "current" ? l.status === "closed" : l.status === "archived"
-  )
+    async function loadTopCurlers() {
+    setLoading(true)
+
+    const { data: eventRows } = await supabase
+      .from("curling_events")
+      .select("*")
+      .order("start_date", { ascending: true })
+
+    const results: Record<string, Record<string, any[]>> = {}
+
+    for (const event of eventRows ?? []) {
+      results[event.id] = {}
+
+      for (const pos of positions) {
+        const { data: rows } = await supabase.rpc(
+          "get_top_curlers_by_event_and_position",
+          {
+            event_id: event.id,
+            pos: pos
+          }
+        )
+
+        results[event.id][pos] = rows ?? []
+      }
+    }
+
+    setTopCurlers(results)
+    setEvents(eventRows ?? [])
+    setLoading(false)
+  }
 
   return (
     <>
@@ -90,76 +189,300 @@ export default function LeagueLeaderboardPage() {
       <LoggedInNavBar />
 
       <div className="max-w-5xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold mb-6">League Leaderboards</h1>
+        <h1 className="text-3xl font-bold mb-6">Leaderboards</h1>
 
-        {/* FILTER BUTTONS */}
-        <div className="flex gap-4 mb-6">
-          <button
-            onClick={() => setFilter("current")}
-            className={`px-4 py-2 rounded-md ${
-              filter === "current"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
-          >
-            Current Leagues
-          </button>
-
-          <button
-            onClick={() => setFilter("past")}
-            className={`px-4 py-2 rounded-md ${
-              filter === "past"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
-          >
-            Past Leagues
-          </button>
+       <div className="flex items-center justify-between mb-8">
+        {/* LEFT: Tabs */}
+        <div className="flex gap-4">
+          {[
+            { key: "current", label: "Current Leagues" },
+            { key: "top", label: "Top Curlers" },
+            { key: "past", label: "Past Event Results" }
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as any)}
+              className={`px-4 py-2 ${
+                activeTab === tab.key
+                  ? "bg-[#1f4785] text-white border-blue-600"
+                  : "bg-gray-100 text-gray-700 border-gray-300"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        {/* LEAGUE SELECTOR */}
-        <select
-          className="border p-2 rounded-md mb-6 w-full"
-          onChange={(e) => handleLeagueSelect(e.target.value)}
-        >
-          <option value="">Select a league...</option>
-          {filteredLeagues.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.name}
-            </option>
-          ))}
-        </select>
+        {/* RIGHT: Filters (only visible on TOP tab) */}
+        {activeTab === "top" && (
+          <div className="flex items-center gap-4 text-gray-700">
 
-        {/* LEADERBOARD TABLE */}
-        {selectedLeague && (
-          <>
-            <h2 className="text-2xl font-semibold mb-4">
-              {leagues.find((l) => l.id === selectedLeague)?.name} — Leaderboard
-            </h2>
+            {/* Divider */}
+            <div className="h-6 w-px bg-gray-300" />
 
-            <table className="w-full border-collapse shadow-md">
-              <thead>
-                <tr className="bg-gray-100 text-left">
-                  <th className="p-3">Rank</th>
-                  <th className="p-3">Username</th>
-                  <th className="p-3">First</th>
-                  <th className="p-3">Last</th>
-                  <th className="p-3">Total Points</th>
-                </tr>
-              </thead>
+            <span className="font-medium">Filter By:</span>
 
-              <tbody>
-                {leaderboard.map((row, i) => (
-                  <tr key={row.user_id} className="border-b">
-                    <td className="p-3 font-bold">{i + 1}</td>
-                    <td className="p-3">{row.profile?.username}</td>
-                    <td className="p-3">{row.profile?.first_name}</td>
-                    <td className="p-3">{row.profile?.last_name}</td>
-                    <td className="p-3">{row.total_points}</td>
-                  </tr>
+            {/* Event Filter */}
+            <div className="relative">
+              <select
+                value={filterEvent}
+                onChange={(e) => setFilterEvent(e.target.value)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 font-medium appearance-none pr-8"
+              >
+                <option value="ALL">Event</option>
+                {events.map((ev) => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.year} {ev.name}
+                  </option>
                 ))}
-              </tbody>
-            </table>
+              </select>
+
+              {/* Custom arrow */}
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                ⌵
+              </div>
+            </div>
+
+            {/* Position Filter */}
+            <div className="relative">
+              <select
+                value={filterPosition}
+                onChange={(e) => setFilterPosition(e.target.value)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 font-medium appearance-none pr-8"
+              >
+                <option value="ALL">Position</option>
+                {positions.map((pos) => (
+                  <option key={pos} value={pos}>
+                    {pos}
+                  </option>
+                ))}
+              </select>
+
+              {/* Custom arrow */}
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                ⌵
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab == "current" && (
+          <div className="flex items-center gap-4 text-gray-700">
+            {/* Divider */}
+            <div className="h-6 w-px bg-gray-300" />
+
+            <span className="font-medium">Filter By:</span>
+
+            {/* League Scope Filter */}
+            <div className="relative">
+              <select
+                value={filterLeagueScope}
+                onChange={(e) => setFilterLeagueScope(e.target.value as "ALL" | "MINE")}
+                className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 font-medium appearance-none pr-8"
+              >
+                <option value="ALL">All Leagues</option>
+                <option value="MINE">My Leagues</option>
+              </select>
+
+              {/* Custom arrow (optional) */}
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                ⌵
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+        {activeTab === "current" && (
+          <>
+            {loading && <p>Loading...</p>}
+
+            {!loading && leagues.length === 0 && (
+              <p className="text-gray-600">No current leagues.</p>
+            )}
+
+            <div className="space-y-8">
+              {leagues
+                .filter((league) => {
+                  if (filterLeagueScope === "ALL") return true
+                  if (filterLeagueScope === "MINE") {
+                    if (!userId) return false
+                    return league.members?.includes(userId)
+                  }
+                  return true
+                })
+                .map((league) => (
+                  <div
+                    key={league.id}
+                    className="bg-white shadow-md p-6"
+                  >
+                  <h2 className="text-xl font-semibold mb-1">
+                    {league.name}
+                  </h2>
+
+                  {league.curling_events && league.curling_events.length > 0 && (
+                    <div className="text-gray-700 mb-4 flex items-center justify-between">
+                      <div className="font-medium">
+                        {league.curling_events[0].year} {league.curling_events[0].name} in {league.curling_events[0].location}
+                      </div>
+
+                      <div className="text-sm text-gray-600">
+                        {new Date(league.curling_events[0].start_date).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric"
+                        })}{" "}
+                        –{" "}
+                        {new Date(league.curling_events[0].end_date).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric"
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <table className="w-full border-collapse text-sm">
+                    <thead className="bg-gray-100 text-gray-700">
+                      <tr>
+                        <th className="py-2 px-3 text-left">Rank</th>
+                        <th className="py-2 px-3 text-left"></th>
+                        <th className="py-2 px-3 text-left">Username</th>
+                        <th className="py-2 px-3 text-left">Name</th>
+                        <th className="py-2 px-3 text-left">Total Points</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {leaderboards[league.id]?.map((row, idx) => {
+                        const profile = row.profile
+
+                        return (
+                          <tr
+                            key={row.user_id}
+                            className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                          >
+                            <td className="py-2 px-3 font-medium">{idx + 1}</td>
+
+                            <td className="py-2 px-3">
+                              <div className="w-8 h-8 bg-gray-300 rounded-full" />
+                            </td>
+
+                            <td className="py-2 px-3 font-medium">
+                              {profile?.username ?? "Unknown"}
+                            </td>
+
+                            <td className="py-2 px-3">
+                              {`${profile?.first_name ?? "-"} ${profile?.last_name ?? "-"}`}
+                            </td>
+
+                            <td className="py-2 px-3 font-semibold">
+                              {row.total_points}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {activeTab === "top" && (
+          <>
+            {loading && <p>Loading...</p>}
+
+            {!loading && leagues.length === 0 && (
+              <p className="text-gray-600">No current curlers.</p>
+            )}
+
+            {events
+              .filter(ev => filterEvent === "ALL" || ev.id === filterEvent)
+              .map(event =>
+                positions
+                  .filter(pos => filterPosition === "ALL" || pos === filterPosition)
+                  .map(position => {
+                    const leaderboard = topCurlers[event.id]?.[position] ?? []
+
+                return (
+                  <div
+                    key={`${event.id}-${position}`}
+                    className="bg-white shadow-md p-6 mb-8"
+                  >
+                    <h2 className="text-xl font-semibold mb-1">
+                      {position}
+                    </h2>
+
+                    <div className="text-gray-700 mb-4 flex items-center justify-between">
+                      <div className="font-medium">
+                        {event.year} {event.name} at {event.location}
+                      </div>
+
+                      <div className="text-sm text-gray-600">
+                        {new Date(event.start_date).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric"
+                        })}{" "}
+                        –{" "}
+                        {new Date(event.end_date).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric"
+                        })}
+                      </div>
+                    </div>
+
+                    <table className="w-full border-collapse text-sm">
+                      <thead className="bg-gray-100 text-gray-700">
+                        <tr>
+                          <th className="py-2 px-3 text-left">Rank</th>
+                          <th className="py-2 px-3 text-left"></th>
+                          <th className="py-2 px-3 text-left">Name</th>
+                          <th className="py-2 px-3 text-left">Team</th>
+                          <th className="py-2 px-3 text-left">Total Points</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {leaderboard.map((row, idx) => (
+                          <tr
+                            key={row.curler_id}
+                            className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                          >
+                            <td className="py-2 px-3 font-medium">{idx + 1}</td>
+
+                            <td className="py-2 px-3">
+                              <div className="w-8 h-8 bg-gray-300 rounded-full" />
+                            </td>
+
+                          <td className="py-2 px-3 font-medium">
+                            {row.first_name} {row.last_name}
+                          </td>
+
+                            <td className="py-2 px-3">
+                              {row.team_name}
+                            </td>
+
+                            <td className="py-2 px-3 font-semibold">
+                              {row.total_points}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              })
+            )}
+          </>
+        )}
+
+        {activeTab === "past" && (
+          <>
+            {loading && <p>Loading...</p>}
+
+            {!loading && leagues.length === 0 && (
+              <p className="text-gray-600">No past events.</p>
+            )}
           </>
         )}
       </div>

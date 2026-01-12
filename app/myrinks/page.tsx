@@ -268,7 +268,7 @@ export default function PicksPage() {
                         <thead className="bg-gray-100 text-gray-700">
                           <tr>
                             <th className="py-2 px-3 text-left">Position</th>
-                            <th className="py-2 px-3 text-left">Pic</th>
+                            <th className="py-2 px-3 text-left"></th>
                             <th className="py-2 px-3 text-left">Name</th>
                             <th className="py-2 px-3 text-left">Team</th>
                             <th className="py-2 px-3 text-left bg-blue-200">Recent Game</th>

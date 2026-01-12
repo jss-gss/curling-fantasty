@@ -102,7 +102,7 @@ export default function DashboardHome() {
             <ul className="space-y-2 text-gray-700">
               <li><a href="https://worldcurling.org" target="_blank">World Curling Federation ↗</a></li>
               <li><a href="https://www.curlingzone.com" target="_blank">CurlingZone ↗</a></li>
-              <li><a href="https://www.curling.ca/2026scotties" target="_blank">2026 Scotties TOH ↗</a></li>
+              <li><a href="https://curling.gg/" target="_blank">curling.gg ↗</a></li>
               <li><a href="https://www.olympics.com/en/milano-cortina-2026/schedule/cur" target="_blank">2026 Milan Olympics ↗</a></li>
             </ul>
           </aside>
@@ -138,7 +138,7 @@ export default function DashboardHome() {
                   {!nextDraft ? (
                     <p className="text-gray-600">
                       No upcoming drafts - {" "}
-                      <a href="/league" className="text-[#ac0000] underline">
+                      <a href="/leagues" className="text-[#ac0000] underline">
                         find a league
                       </a>
                     </p>

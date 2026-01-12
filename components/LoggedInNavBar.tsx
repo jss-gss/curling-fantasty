@@ -35,18 +35,13 @@ export default function NavBar() {
 
   const tabs = [
     { name: "Home", href: "/home" },
-    { name: "My Teams", href: "/pick" },
-    { name: "League Play", href: "/league" },
+    { name: "My Rinks", href: "/myrinks" },
+    { name: "League Play", href: "/leagues" },
     { name: "Leaderboard", href: "/leaderboard" },
   ]
 
   const displayName =
-    profile?.username ||
-    (profile?.first_name && profile?.last_name
-      ? `${profile.first_name} ${profile.last_name}`
-      : profile?.first_name ||
-        profile?.last_name ||
-        user?.email)
+    profile?.username ? profile?.username : ""
 
   return (
     <div
