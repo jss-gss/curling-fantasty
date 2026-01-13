@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
+import Image from "next/image"
 import LoggedInNavBar from "@/components/LoggedInNavBar"
 import GameTicker from "@/components/GameTicker"
 
@@ -29,6 +30,7 @@ type LeaderboardRow = {
     username: string
     first_name: string
     last_name: string
+    avatar_url: string
   }
 }
 
@@ -124,7 +126,7 @@ export default function LeagueLeaderboardPage() {
 
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, username, first_name, last_name")
+        .select("id, username, first_name, last_name, avatar_url")
         .in("id", userIds)
 
       const profileMap = Object.fromEntries(
@@ -345,7 +347,6 @@ export default function LeagueLeaderboardPage() {
                           <th className="py-2 px-3 text-left">Rank</th>
                           <th className="py-2 px-3 text-left"></th>
                           <th className="py-2 px-3 text-left">Username</th>
-                          <th className="py-2 px-3 text-left">Name</th>
                           <th className="py-2 px-3 text-left">Total Points</th>
                         </tr>
                       </thead>
@@ -362,15 +363,23 @@ export default function LeagueLeaderboardPage() {
                               <td className="py-2 px-3 font-medium">{idx + 1}</td>
 
                               <td className="py-2 px-3">
-                                <div className="w-8 h-8 bg-gray-300 rounded-full" />
+                                {profile?.avatar_url ? (
+                                  <Image
+                                    src={profile.avatar_url}
+                                    alt={`${profile.username} avatar`}
+                                    width={32}
+                                    height={32}
+                                    className="rounded-full object-cover border border-gray-300"
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                                    {profile?.username?.charAt(0)?.toUpperCase() ?? "?"}
+                                  </div>
+                                )}
                               </td>
 
                               <td className="py-2 px-3 font-medium">
                                 {profile?.username ?? "Unknown"}
-                              </td>
-
-                              <td className="py-2 px-3">
-                                {`${profile?.first_name ?? "-"} ${profile?.last_name ?? "-"}`}
                               </td>
 
                               <td className="py-2 px-3 font-semibold">

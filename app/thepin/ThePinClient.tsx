@@ -93,16 +93,51 @@ export default function DashboardHome() {
     <>
       <LoggedInNavBar />
 
-      <div className="flex w-full max-w-7xl ml-12 gap-6 py-10 px-6 mt-0">
+    <div className="flex w-full max-w-[1450px] mx-auto gap-6 py-10 px-6 mt-0">
         {/* LEFT SIDEBAR */}
         <div className="w-1/5 flex flex-col gap-6">
           <aside className="bg-white shadow-md p-4 h-fit sticky top-24 rounded-lg">
             <h2 className="text-xl font-semibold mb-3">Curling Favorites</h2>
             <ul className="space-y-2 text-gray-700">
-              <li><a href="https://worldcurling.org" target="_blank">World Curling Federation ↗</a></li>
-              <li><a href="https://www.curlingzone.com" target="_blank">CurlingZone ↗</a></li>
-              <li><a href="https://curling.gg/" target="_blank">curling.gg ↗</a></li>
-              <li><a href="https://www.olympics.com/en/milano-cortina-2026/schedule/cur" target="_blank">2026 Milan Olympics ↗</a></li>
+              <li>
+                <a
+                  href="https://worldcurling.org"
+                  target="_blank"
+                  className="hover:underline hover:text-[#AA2B1D] transition"
+                >
+                  World Curling Federation ↗
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="https://www.curlingzone.com"
+                  target="_blank"
+                  className="hover:underline hover:text-[#AA2B1D] transition"
+                >
+                  CurlingZone ↗
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="https://curling.gg/"
+                  target="_blank"
+                  className="hover:underline hover:text-[#AA2B1D] transition"
+                >
+                  curling.gg ↗
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="https://www.olympics.com/en/milano-cortina-2026/schedule/cur"
+                  target="_blank"
+                  className="hover:underline hover:text-[#AA2B1D] transition"
+                >
+                  2026 Milan Olympics ↗
+                </a>
+              </li>
             </ul>
           </aside>
 
