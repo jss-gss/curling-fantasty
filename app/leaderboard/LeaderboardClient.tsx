@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import Image from "next/image"
+import Link from "next/link"
 import LoggedInNavBar from "@/components/LoggedInNavBar"
-import GameTicker from "@/components/GameTicker"
 
 type League = {
   id: string
@@ -31,6 +31,7 @@ type LeaderboardRow = {
     first_name: string
     last_name: string
     avatar_url: string
+    is_public: boolean
   }
 }
 
@@ -126,7 +127,7 @@ export default function LeagueLeaderboardPage() {
 
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, username, first_name, last_name, avatar_url")
+        .select("id, username, first_name, last_name, avatar_url, is_public")
         .in("id", userIds)
 
       const profileMap = Object.fromEntries(
@@ -379,7 +380,16 @@ export default function LeagueLeaderboardPage() {
                               </td>
 
                               <td className="py-2 px-3 font-medium">
-                                {profile?.username ?? "Unknown"}
+                                {profile?.is_public ? (
+                                  <Link
+                                    href={`/profile/${profile.username}`}
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {profile.username}
+                                  </Link>
+                                ) : (
+                                  <span className="text-gray-500">{profile.username}</span>
+                                )}
                               </td>
 
                               <td className="py-2 px-3 font-semibold">
