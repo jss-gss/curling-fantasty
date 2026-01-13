@@ -1,9 +1,10 @@
-export const metadata = {
-  title: "The Pin | BUTTON",
-}
-
-import ThePinClient from "./ThePinClient"
+import { Suspense } from "react";
+import ThePinClient from "./ThePinClient";
 
 export default function Page() {
-  return <ThePinClient />
+  return (
+    <Suspense fallback={null}>
+      <ThePinClient />
+    </Suspense>
+  );
 }

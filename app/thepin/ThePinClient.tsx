@@ -8,7 +8,6 @@ import { useSearchParams } from "next/navigation"
 import LoggedInNavBar from "@/components/LoggedInNavBar"
 import NextMajorEvent from "@/components/NextMajorEvent"
 import WelcomeModal from "@/components/WelcomeModal"
-import GameTicker from "@/components/GameTicker"
 
 function Countdown({ target }: { target: Date }) {
   const [timeLeft, setTimeLeft] = useState("")
@@ -38,9 +37,9 @@ function Countdown({ target }: { target: Date }) {
   return <span>{timeLeft}</span>
 }
 
-export default function DashboardHome() {
+export default function ThePinClient() {
   const router = useRouter()
-
+  const params = useSearchParams();
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -48,11 +47,10 @@ export default function DashboardHome() {
   const [upcomingDrafts, setUpcomingDrafts] = useState<any[]>([])
   const nextDraft = upcomingDrafts[0] ?? null
 
-  const searchParams = useSearchParams();
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    const welcome = searchParams.get("welcome");
+    const welcome = params.get("welcome");
 
     if (welcome === "true") {
       const timer = setTimeout(() => {
@@ -61,7 +59,7 @@ export default function DashboardHome() {
 
       return () => clearTimeout(timer);
     }
-  }, [searchParams]);
+  }, [params]);
 
   function goToDraft(eventId: string) {
     router.push(`/draft/${eventId}`)
