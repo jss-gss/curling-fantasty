@@ -64,18 +64,18 @@ export default function SignupPage() {
       return
     }
 
-    router.push("/thepin")
+    router.push("/thepin/?welcome=true");
     setLoading(false)
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#E3E3E3] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat px-4" style={{ backgroundImage: "url('/webpage/signup-page.png')" }} >
       <main className="w-full max-w-lg bg-white shadow-xl rounded-xl p-10">
 
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <Image
-            src="/webpage/button-main-logo.png"
+            src="/webpage/button-home-logo.png"
             alt="BUTTON Logo"
             width={220}
             height={220}

@@ -45,7 +45,7 @@ export default function NavBar() {
 
   return (
     <div
-      className="w-full border-b border-[#1B3C53] h-16 flex items-center"
+      className="w-full border-b border-[#1B3C53] h-16 flex items-center sticky top-0 z-50"
       style={{ backgroundColor: "#234C6A" }}
     >
       <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 w-full relative">

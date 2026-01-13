@@ -6,6 +6,8 @@ import type { User } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import GameTicker from "@/components/GameTicker"
+import HomeNavBar from "@/components/HomeNavBar"
+
 
 export default function LandingPage() {
   const [user, setUser] = useState<User | null>(null)
@@ -28,19 +30,8 @@ export default function LandingPage() {
 
   return (
     <>
+      <HomeNavBar />
       <main className="w-full flex flex-col items-center text-center px-6 mt-16">
-
-        {/* LOGO */}
-        <div className="mt-12">
-          <Image
-            src="/webpage/button-home-logo.png"
-            alt="House Hustlers Logo"
-            width={200}
-            height={200}
-            className="object-contain"
-          />
-        </div>
-
         {/* HERO SECTION */}
         <section className="max-w-4xl">
           <h1 className="text-5xl font-extrabold text-[#1f4785] mb-4">
@@ -51,13 +42,6 @@ export default function LandingPage() {
             Build your dream rink. Draft your favorite curlers. Compete with friends.
             The ultimate curling fantasy experience starts here.
           </p>
-
-          <button
-            onClick={() => router.push("/signup")}
-            className="bg-[#1f4785] text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-[#16345f] transition"
-          >
-            Get Started
-          </button>
         </section>
 
         {/* GAME TICKER */}

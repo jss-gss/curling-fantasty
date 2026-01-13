@@ -4,9 +4,11 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import type { User } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
-import GameTicker from "@/components/GameTicker"
+import { useSearchParams } from "next/navigation"
 import LoggedInNavBar from "@/components/LoggedInNavBar"
 import NextMajorEvent from "@/components/NextMajorEvent"
+import WelcomeModal from "@/components/WelcomeModal"
+import GameTicker from "@/components/GameTicker"
 
 function Countdown({ target }: { target: Date }) {
   const [timeLeft, setTimeLeft] = useState("")
@@ -46,6 +48,21 @@ export default function DashboardHome() {
   const [upcomingDrafts, setUpcomingDrafts] = useState<any[]>([])
   const nextDraft = upcomingDrafts[0] ?? null
 
+  const searchParams = useSearchParams();
+  const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    const welcome = searchParams.get("welcome");
+
+    if (welcome === "true") {
+      const timer = setTimeout(() => {
+        setShowModal(true);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
+
   function goToDraft(eventId: string) {
     router.push(`/draft/${eventId}`)
   }
@@ -53,6 +70,7 @@ export default function DashboardHome() {
   useEffect(() => {
     async function load() {
       const { data: userData } = await supabase.auth.getUser()
+
       if (!userData.user) {
         router.push("/login")
         return
@@ -60,27 +78,26 @@ export default function DashboardHome() {
 
       setUser(userData.user)
 
-      // Load profile
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userData.user.id)
         .single()
+
       setProfile(profileData)
 
-      // Load upcoming drafts (locked leagues the user is in)
       const { data: drafts } = await supabase
-      .from("fantasy_events")
-      .select(`
-        id,
-        name,
-        draft_date,
-        draft_status,
-        fantasy_event_users!inner ( user_id )
-      `)
-      .eq("fantasy_event_users.user_id", userData.user.id)
-      .in("draft_status", ["open", "closed"])
-      .order("draft_date", { ascending: true })
+        .from("fantasy_events")
+        .select(`
+          id,
+          name,
+          draft_date,
+          draft_status,
+          fantasy_event_users!inner ( user_id )
+        `)
+        .eq("fantasy_event_users.user_id", userData.user.id)
+        .in("draft_status", ["open", "closed"])
+        .order("draft_date", { ascending: true })
 
       setUpcomingDrafts(drafts ?? [])
       setLoading(false)
@@ -91,12 +108,21 @@ export default function DashboardHome() {
 
   return (
     <>
+      {showModal && (
+        <WelcomeModal
+          onClose={() => setShowModal(false)}
+          username={profile?.username}
+        />
+      )}
+
       <LoggedInNavBar />
 
-    <div className="flex w-full max-w-[1450px] mx-auto gap-6 py-10 px-6 mt-0">
+      <div className="flex w-full max-w-[1450px] mx-auto gap-6 py-10 px-6 mt-0">
         {/* LEFT SIDEBAR */}
         <div className="w-1/5 flex flex-col gap-6">
-          <aside className="bg-white shadow-md p-4 h-fit sticky top-24 rounded-lg">
+
+          {/* CARD 1 — Curling Favorites */}
+          <aside className="bg-white shadow-md p-4 rounded-lg">
             <h2 className="text-xl font-semibold mb-3">Curling Favorites</h2>
             <ul className="space-y-2 text-gray-700">
               <li>
@@ -141,9 +167,20 @@ export default function DashboardHome() {
             </ul>
           </aside>
 
-          <div className="w-full">
+          {/* CARD 2 — Next Major Event */}
+          <div className="bg-white shadow-md p-4 rounded-lg">
             <NextMajorEvent />
           </div>
+
+          {/* CARD 3 — Featured Image */}
+          <div className="bg-white shadow-md p-4 rounded-lg">
+            <img
+              src="/webpage/featured-image.jpg"
+              alt="Sidebar Image"
+              className="w-full h-auto object-contain rounded-md"
+            />
+          </div>
+
         </div>
 
         {/* MAIN CONTENT */}
@@ -152,14 +189,8 @@ export default function DashboardHome() {
             <p>Loading...</p>
           ) : (
             <>
-              <h1 className="text-3xl font-bold mb-4">Welcome back, {profile?.username}.</h1>
+              <h1 className="text-3xl font-bold mb-4">Hi, {profile?.username}!</h1>
               <p className="text-gray-700 mb-6">Here’s what’s happening around the rings today.</p>
-
-              {/* League Update */}
-              <h3 className="text-lg font-semibold mb-2">League Update</h3>
-              <p className="text-gray-700">
-                New events have been added. Make sure to submit your picks before the deadline.
-              </p>
 
               {/* UPCOMING DRAFT CARD */}
               <div className="bg-blue-100 border border-blue-300 p-4 flex items-center justify-between rounded-lg">

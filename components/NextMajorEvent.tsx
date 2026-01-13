@@ -51,7 +51,7 @@ export default function NextMajorEvent() {
   if (!event) return null
 
   return (
-    <div className="bg-white shadow-md p-3 mt-4 w-full text-center rounded-lg">
+    <div className="w-full text-center">
       <h3 className="text-sm font-bold text-[#1f4785] mb-2">
         NEXT MAJOR EVENT
       </h3>
