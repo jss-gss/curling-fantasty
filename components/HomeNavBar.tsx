@@ -11,8 +11,8 @@ export default function HomeNavBar() {
         {/* LEFT — LOGO */}
         <div className="flex items-center">
           <Image
-            src="/webpage/button-home-logo.png"
-            alt="House Hustlers Home Logo"
+            src="/logos/button-home-logo.png"
+            alt="BUTTON Logo"
             width={180}
             height={180}
             className="object-contain"

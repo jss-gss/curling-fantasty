@@ -222,168 +222,167 @@ export default function PicksPage() {
   return (
     <>
       <LoggedInNavBar />
+        <div className="w-full px-6 py-10 flex justify-center">
+          <main className="w-full max-w-screen-xl bg-white shadow-md p-8 min-h-[500px] rounded-lg">
+            {loading ? (
+              <p>Loading...</p>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold mb-6">Your leagues</h1>
 
-      <div className="w-full px-6 py-10 flex justify-center">
-        <main className="w-full max-w-screen-xl bg-white shadow-md p-8 min-h-[500px] rounded-lg">
-          {loading ? (
-            <p>Loading...</p>
-          ) : (
-            <>
-              <h1 className="text-3xl font-bold mb-6">Your leagues</h1>
+                {closedEvents.length === 0 && (
+                  <div className="text-gray-600">You have no current teams.</div>
+                )}
 
-              {closedEvents.length === 0 && (
-                <div className="text-gray-600">You have no current teams.</div>
-              )}
+                <div className="space-y-10">
+                  {closedEvents.map((ev: any) => {
+                    const picks = userPicksByEvent[ev.id] ?? []
+                    const totalPoints = pointsByEvent[ev.id] ?? 0
+                    const rank = ranksByEvent[ev.id] ?? "-"
+                    return (
+                      <div key={ev.id} className="space-y-4">
 
-              <div className="space-y-10">
-                {closedEvents.map((ev: any) => {
-                  const picks = userPicksByEvent[ev.id] ?? []
-                  const totalPoints = pointsByEvent[ev.id] ?? 0
-                  const rank = ranksByEvent[ev.id] ?? "-"
-                  return (
-                    <div key={ev.id} className="space-y-4">
+                        {/* League Header */}
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h2 className="text-2xl font-semibold">{ev.name}</h2>
+                            <div className="text-gray-500 text-sm">
+                              {ev.curling_events?.name ?? "Unknown Event"} •{" "}
+                              {ev.curling_events?.start_date
+                                ? new Date(ev.curling_events.start_date).toLocaleDateString()
+                                : "No date"}
+                            </div>
+                          </div>
 
-                      {/* League Header */}
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h2 className="text-2xl font-semibold">{ev.name}</h2>
-                          <div className="text-gray-500 text-sm">
-                            {ev.curling_events?.name ?? "Unknown Event"} •{" "}
-                            {ev.curling_events?.start_date
-                              ? new Date(ev.curling_events.start_date).toLocaleDateString()
-                              : "No date"}
+                          <div className="text-right">
+                            <div className="text-gray-500 text-sm">Total Points</div>
+                            <div className="text-xl font-bold">{totalPoints}</div>
+                            <div className="text-gray-500 text-sm">Rank: {rank}</div>
                           </div>
                         </div>
 
-                        <div className="text-right">
-                          <div className="text-gray-500 text-sm">Total Points</div>
-                          <div className="text-xl font-bold">{totalPoints}</div>
-                          <div className="text-gray-500 text-sm">Rank: {rank}</div>
+                        {/* Player Table */}
+                        <div className="overflow-hidden rounded-lg"> 
+                          <table className="w-full border-collapse text-sm">
+                            <thead className="bg-gray-100 text-gray-700">
+                              <tr>
+                                <th className="py-2 px-3 text-left">Position</th>
+                                <th className="py-2 px-3 text-left"></th>
+                                <th className="py-2 px-3 text-left">Name</th>
+                                <th className="py-2 px-3 text-left">Team</th>
+                                <th className="py-2 px-3 text-left bg-blue-200">Recent Game</th>
+                                <th className="py-2 px-3 text-left bg-blue-200">Indv %</th>
+                                <th className="py-2 px-3 text-left bg-blue-200">W/L</th>
+                                <th className="py-2 px-3 text-left bg-blue-200">Score Diff</th>
+                                <th className="py-2 px-3 text-left bg-blue-200">Fantasy Pts</th>
+                                <th className="py-2 px-3 text-left">Next Game</th>
+                                <th className="py-2 px-3 text-left">Total Fantasy Pts</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {picks.map((p: any, idx: number) => {
+                                const player = p.players
+                                if (!player) return null
+
+                                const team = player.teams
+                                const teamId = team?.id
+
+                                const recent = recentByPlayer[p.player_id]
+
+                                let recentOpponent = "N/A"
+                                if (recent?.game) {
+                                  const g = recent.game
+                                  const isTeam1 = g.team1_id === teamId
+                                  recentOpponent = isTeam1
+                                    ? g.team2?.team_name
+                                    : g.team1?.team_name
+                                }
+
+                                const next = nextByPlayer[p.player_id]
+
+                                let nextOpponent = "N/A"
+                                if (next) {
+                                  const isTeam1 = next.team1_id === teamId
+                                  nextOpponent = isTeam1
+                                    ? next.team2?.team_name
+                                    : next.team1?.team_name
+                                }
+
+                                return (
+                                  <tr key={player.id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                    <td className="py-2 px-3">{player.position ?? "N/A"}</td>
+
+                                    <td className="py-2 px-3">
+                                      <div className="w-8 h-8 bg-gray-300 rounded-full" />
+                                    </td>
+
+                                    <td className="py-2 px-3 font-medium">
+                                      {player.first_name} {player.last_name}
+                                    </td>
+
+                                    <td className="py-2 px-3">
+                                      {team?.team_name ?? "N/A"}
+                                    </td>
+
+                                    <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                      {recent?.game ? (
+                                        <>
+                                          <div className="font-medium">
+                                            {new Date(recent.game.game_datetime).toLocaleString()}
+                                          </div>
+                                          <div className="text-gray-600 text-xs">vs {recentOpponent}</div>
+                                        </>
+                                      ) : (
+                                        <div className="text-gray-500">N/A</div>
+                                      )}
+                                    </td>
+
+                                    <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                      {recent?.indv_pct ?? "N/A"}
+                                    </td>
+
+                                    <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                      {recent ? (recent.won ? "W" : "L") : "N/A"}
+                                    </td>
+
+                                    <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                      {recent?.score_diff ?? "N/A"}
+                                    </td>
+
+                                    <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                      {recent?.fantasy_pts ?? "N/A"}
+                                    </td>
+
+                                  <td className="py-2 px-3">
+                                      {next ? (
+                                        <>
+                                          <div className="font-medium">
+                                            {new Date(next.game_datetime).toLocaleString()}
+                                          </div>
+                                          <div className="text-gray-600 text-xs">vs {nextOpponent}</div>
+                                        </>
+                                      ) : (
+                                        <div className="text-gray-500">N/A</div>
+                                      )}
+                                    </td>
+                                    
+                                    <td className="py-2 px-3">
+                                      {player?.total_player_fantasy_pts ?? "-"}
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
-
-                      {/* Player Table */}
-                      <div className="overflow-hidden rounded-lg"> 
-                        <table className="w-full border-collapse text-sm">
-                          <thead className="bg-gray-100 text-gray-700">
-                            <tr>
-                              <th className="py-2 px-3 text-left">Position</th>
-                              <th className="py-2 px-3 text-left"></th>
-                              <th className="py-2 px-3 text-left">Name</th>
-                              <th className="py-2 px-3 text-left">Team</th>
-                              <th className="py-2 px-3 text-left bg-blue-200">Recent Game</th>
-                              <th className="py-2 px-3 text-left bg-blue-200">Indv %</th>
-                              <th className="py-2 px-3 text-left bg-blue-200">W/L</th>
-                              <th className="py-2 px-3 text-left bg-blue-200">Score Diff</th>
-                              <th className="py-2 px-3 text-left bg-blue-200">Fantasy Pts</th>
-                              <th className="py-2 px-3 text-left">Next Game</th>
-                              <th className="py-2 px-3 text-left">Total Fantasy Pts</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {picks.map((p: any, idx: number) => {
-                              const player = p.players
-                              if (!player) return null
-
-                              const team = player.teams
-                              const teamId = team?.id
-
-                              const recent = recentByPlayer[p.player_id]
-
-                              let recentOpponent = "N/A"
-                              if (recent?.game) {
-                                const g = recent.game
-                                const isTeam1 = g.team1_id === teamId
-                                recentOpponent = isTeam1
-                                  ? g.team2?.team_name
-                                  : g.team1?.team_name
-                              }
-
-                              const next = nextByPlayer[p.player_id]
-
-                              let nextOpponent = "N/A"
-                              if (next) {
-                                const isTeam1 = next.team1_id === teamId
-                                nextOpponent = isTeam1
-                                  ? next.team2?.team_name
-                                  : next.team1?.team_name
-                              }
-
-                              return (
-                                <tr key={player.id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                                  <td className="py-2 px-3">{player.position ?? "N/A"}</td>
-
-                                  <td className="py-2 px-3">
-                                    <div className="w-8 h-8 bg-gray-300 rounded-full" />
-                                  </td>
-
-                                  <td className="py-2 px-3 font-medium">
-                                    {player.first_name} {player.last_name}
-                                  </td>
-
-                                  <td className="py-2 px-3">
-                                    {team?.team_name ?? "N/A"}
-                                  </td>
-
-                                  <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
-                                    {recent?.game ? (
-                                      <>
-                                        <div className="font-medium">
-                                          {new Date(recent.game.game_datetime).toLocaleString()}
-                                        </div>
-                                        <div className="text-gray-600 text-xs">vs {recentOpponent}</div>
-                                      </>
-                                    ) : (
-                                      <div className="text-gray-500">N/A</div>
-                                    )}
-                                  </td>
-
-                                  <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
-                                    {recent?.indv_pct ?? "N/A"}
-                                  </td>
-
-                                  <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
-                                    {recent ? (recent.won ? "W" : "L") : "N/A"}
-                                  </td>
-
-                                  <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
-                                    {recent?.score_diff ?? "N/A"}
-                                  </td>
-
-                                  <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
-                                    {recent?.fantasy_pts ?? "N/A"}
-                                  </td>
-
-                                <td className="py-2 px-3">
-                                    {next ? (
-                                      <>
-                                        <div className="font-medium">
-                                          {new Date(next.game_datetime).toLocaleString()}
-                                        </div>
-                                        <div className="text-gray-600 text-xs">vs {nextOpponent}</div>
-                                      </>
-                                    ) : (
-                                      <div className="text-gray-500">N/A</div>
-                                    )}
-                                  </td>
-                                  
-                                  <td className="py-2 px-3">
-                                    {player?.total_player_fantasy_pts ?? "-"}
-                                  </td>
-                                </tr>
-                              )
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </>
-          )}
-        </main>
-      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+          </main>
+        </div>
     </>
   )
 }

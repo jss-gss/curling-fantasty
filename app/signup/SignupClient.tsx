@@ -75,7 +75,7 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <Image
-            src="/webpage/button-home-logo.png"
+            src="/logos/button-home-logo.png"
             alt="BUTTON Logo"
             width={220}
             height={220}

@@ -53,8 +53,8 @@ export default function NavBar() {
         {/* LEFT SIDE — LOGO */}
         <div className="flex items-center gap-2">
           <Image
-            src="/webpage/button-main-logo.png"
-            alt="House Hustlers Logo"
+            src="/logos/button-main-logo.png"
+            alt="BUTTON Logo"
             width={200}
             height={200}
             className="object-contain"

@@ -35,8 +35,8 @@ export default function WelcomeModal({
         <h1 className="text-2xl font-bold text-[#234C6A] mb-2 flex items-center justify-center gap-2">
           Welcome to the
           <Image
-            src="/webpage/button-home-logo.png"
-            alt="Button Logo"
+            src="/logos/button-home-logo.png"
+            alt="BUTTON Logo"
             width={125}
             height={125}
             className="inline-block object-contain"

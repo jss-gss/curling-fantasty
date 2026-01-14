@@ -61,7 +61,7 @@ export default function LeagueLeaderboardPage() {
   }, [])
 
   async function loadCurrentLeagues() {
-  setLoading(true)
+    setLoading(true)
 
     const { data: leagueRows } = await supabase
       .from("fantasy_events")
@@ -155,7 +155,7 @@ export default function LeagueLeaderboardPage() {
     }
   }, [activeTab])
 
-    async function loadTopCurlers() {
+  async function loadTopCurlers() {
     setLoading(true)
 
     const { data: eventRows } = await supabase
@@ -186,12 +186,12 @@ export default function LeagueLeaderboardPage() {
     setLoading(false)
   }
 
+
   return (
     <>
       <LoggedInNavBar />
 
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold mb-6">Leaderboards</h1>
+      <div className="pt-16 max-w-5xl mx-auto px-6 py-10">
 
        <div className="flex items-center justify-between mb-8">
         {/* LEFT: Tabs */}
