@@ -4,10 +4,21 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import type { User } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
-import GameTicker from "@/components/GameTicker"
 import LoggedInNavBar from "@/components/LoggedInNavBar"
 
 type AnyMap<T = any> = Record<string, T>
+
+function toET(dateString: string) {
+  return new Date(dateString).toLocaleString("en-US", {
+    timeZone: "America/New_York",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  }) + " ET";
+}
 
 export default function PicksPage() {
   const router = useRouter()
@@ -100,13 +111,15 @@ export default function PicksPage() {
         curling_events (
           id,
           name,
+          year,
+          location,
           start_date
         )
       `)
       .in("id", eventIds)
 
     const closed = (events ?? []).filter(
-      (e) => e.draft_status === "locked" || e.draft_status === "archived"
+      (e) => e.draft_status === "locked"|| e.draft_status == "closed" || e.draft_status === "archived"
     )
 
     const picksByEvent: AnyMap<any[]> = {}
@@ -246,7 +259,7 @@ export default function PicksPage() {
                           <div>
                             <h2 className="text-2xl font-semibold">{ev.name}</h2>
                             <div className="text-gray-500 text-sm">
-                              {ev.curling_events?.name ?? "Unknown Event"} •{" "}
+                              {ev.curling_events?.year ?? ""} {ev.curling_events?.name ?? "Unknown Event"} in {ev.curling_events?.location ?? ""} •{" "}
                               {ev.curling_events?.start_date
                                 ? new Date(ev.curling_events.start_date).toLocaleDateString()
                                 : "No date"}
@@ -327,7 +340,7 @@ export default function PicksPage() {
                                       {recent?.game ? (
                                         <>
                                           <div className="font-medium">
-                                            {new Date(recent.game.game_datetime).toLocaleString()}
+                                            {toET(recent.game.game_datetime)}
                                           </div>
                                           <div className="text-gray-600 text-xs">vs {recentOpponent}</div>
                                         </>
@@ -356,7 +369,7 @@ export default function PicksPage() {
                                       {next ? (
                                         <>
                                           <div className="font-medium">
-                                            {new Date(next.game_datetime).toLocaleString()}
+                                            {toET(next.game_datetime)}
                                           </div>
                                           <div className="text-gray-600 text-xs">vs {nextOpponent}</div>
                                         </>

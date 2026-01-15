@@ -45,9 +45,15 @@ export default function CreateLeagueModal({
       setEventId(league.curling_event_id);
       setName(league.name);
       setDescription(league.description || "");
-      setDraftDate(league.draft_date?.slice(0, 16)); // format for datetime-local
-      setIsPublic(league.is_public);
-      setUsernames(""); // optional: load invited usernames if stored
+      
+      const localET = new Date(league.draft_date)
+        .toLocaleString("sv-SE", { timeZone: "America/New_York" })
+        .replace(" ", "T")
+        .slice(0, 16)
+      setDraftDate(localET)
+
+      setIsPublic(league.is_public)
+      setUsernames("")
     }
 
     if (isNew) {
@@ -71,7 +77,14 @@ export default function CreateLeagueModal({
 
     const selectedEvent = events.find((ev) => ev.id === eventId);
     if (selectedEvent && draftDate) {
-      const draft = new Date(draftDate);
+      function parseLocalDateTime(dt: string) {
+        const [datePart, timePart] = dt.split("T");
+        const [year, month, day] = datePart.split("-").map(Number);
+        const [hour, minute] = timePart.split(":").map(Number);
+        return new Date(year, month - 1, day, hour, minute);
+      }
+
+      const draft = parseLocalDateTime(draftDate);
       const start = new Date(selectedEvent.start_date);
       const now = new Date();
 
@@ -152,18 +165,29 @@ export default function CreateLeagueModal({
         </div>
 
         {/* Event Dropdown */}
-        <select
-          value={eventId}
-          onChange={(e) => setEventId(e.target.value)}
-          className="w-full border p-2 rounded mb-3"
-        >
-          <option value="">Select Event</option>
-          {events.map((ev) => (
-            <option key={ev.id} value={ev.id}>
-              {ev.year} {ev.name} in {ev.location}
-            </option>
-          ))}
-        </select>
+        {isNew ? (
+          <select
+            value={eventId}
+            onChange={(e) => setEventId(e.target.value)}
+            className="w-full border p-2 rounded mb-3"
+          >
+            <option value="">Select Event</option>
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.year} {ev.name} in {ev.location}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="mb-3">
+            <div className="p-2 text-lg roundedtext-gray-700">
+              {(() => {
+                const ev = events.find((e) => e.id === eventId)
+                return ev ? `${ev.year} ${ev.name} in ${ev.location}` : "Unknown Event"
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* League Name */}
         <input
@@ -184,7 +208,7 @@ export default function CreateLeagueModal({
 
         {/* Draft Date */}
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Draft Date
+          Draft Date <span className="text-gray-500 text-xs italic">in Eastern Time (ET)</span>
         </label>
 
         <input

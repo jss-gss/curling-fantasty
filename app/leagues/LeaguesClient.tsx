@@ -33,13 +33,13 @@ export default function LeaguesPage() {
   const myUpcomingDrafts = leagues.filter(
     (l) =>
       (l.enrolled || l.created_by === user?.id) &&
-      (l.draft_status === "open" || l.draft_status === "closed")
+      (l.draft_status === "open")
   )
 
   const findAvailableLeagues = leagues.filter(
     (l) =>
       !l.enrolled &&
-      (l.draft_status === "open" || l.draft_status === "closed") &&
+      (l.draft_status === "open") &&
       (l.fantasy_event_users?.length ?? 0) < l.max_users
   )
 
@@ -50,7 +50,7 @@ export default function LeaguesPage() {
         l.draft_status === "locked" ||
         l.draft_status === "archived" ||
         (
-          (l.draft_status === "open" || l.draft_status === "closed") &&
+          (l.draft_status === "open") &&
           (l.fantasy_event_users?.length ?? 0) >= l.max_users
         )
       )
@@ -63,8 +63,6 @@ export default function LeaguesPage() {
   
   // ui
   const [activeTab, setActiveTab] = useState<"mine" | "explore" >("mine")
-  const [myFilter, setMyFilter] = useState("all")
-  const [exploreFilter, setExploreFilter] = useState("all")
 
   useEffect(() => {
     async function loadLeagues() {
@@ -122,6 +120,7 @@ export default function LeaguesPage() {
     loadEvents();
   }, []);
 
+
   async function joinLeague(id: string) {
     if (!user) return
 
@@ -171,82 +170,90 @@ export default function LeaguesPage() {
     )
   }
 
-function LeagueCard({ league, commissionerView, invitedView }: any) {
-  const isCommissioner = commissionerView || league.created_by === user?.id;
+  function LeagueCard({ league, commissionerView, invitedView }: any) {
+    const isCommissioner = commissionerView || league.created_by === user?.id;
 
-  const isInvited =
-    invitedView ||
-    (!league.is_public &&
-      !league.enrolled &&
-      league.fantasy_event_users?.some((u: any) => u.user_id === user?.id));
+    const isInvited =
+      invitedView ||
+      (!league.is_public &&
+        !league.enrolled &&
+        league.fantasy_event_users?.some((u: any) => u.user_id === user?.id));
 
-  const isOpen = league.draft_status === "open";
-  const isFull = (league.fantasy_event_users?.length ?? 0) >= league.max_users;
-  const isJoinable = isOpen && !isFull;
+    const isOpen = league.draft_status === "open";
+    const isFull = (league.fantasy_event_users?.length ?? 0) >= league.max_users;
+    const isJoinable = isOpen && !isFull;
+    const hasEventStarted = league.curling_events && new Date() >= new Date(league.curling_events.start_date)
 
-  return (
-    <div className="flex relative items-center justify-between bg-white shadow-md p-6 border border-gray-200 rounded-lg">
-      <div className="flex flex-col">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-semibold">{league.name}</h2>
+    return (
+      <div className="flex relative items-center justify-between bg-white shadow-md p-6 border border-gray-200 rounded-lg">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold">{league.name}</h2>
 
-          {isCommissioner && (
-            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-              commissioner
-            </span>
+            {isCommissioner && (
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                commissioner
+              </span>
+            )}
+          </div>
+
+          {league.description && (
+            <p className="text-gray-700 text-sm mt-1 italic">{league.description}</p>
           )}
+
+          <p className="text-md text-gray mt-3">
+            {league.curling_events.year} {league.curling_events.name} in {league.curling_events.location}
+          </p>
+
+          <p className="text-sm text-gray-600 mt-3">
+            <strong>Created By:</strong>{" "}
+            {league.users?.is_public ? (
+              <a
+                href={`/profile/${league.users.username}`}
+                className="text-blue-600 hover:underline"
+              >
+                {league.users.username}
+              </a>
+            ) : (
+              <span>{league.users?.username}</span>
+            )}
+            <strong> • Draft:</strong> {new Date(league.draft_date).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" })} ET •{" "}
+            <strong>Event Starts:</strong>{" "}
+            {league.curling_events
+              ? new Date(league.curling_events.start_date).toLocaleDateString()
+              : "TBD"}{" "}
+            <strong> • Players:</strong> {(league.fantasy_event_users?.length ?? 0)} / {league.max_users}
+          </p>
         </div>
 
-        {league.description && (
-          <p className="text-gray-700 text-sm mt-1 italic">{league.description}</p>
+        {league.is_public ? (
+          <span className="absolute top-5 right-5 text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+            public
+          </span>
+        ) : (
+          <span className="absolute top-5 right-5 text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700 flex items-center gap-1">
+            private
+          </span>
         )}
 
-        <p className="text-md text-gray mt-3">
-          {league.curling_events.year} {league.curling_events.name} in {league.curling_events.location}
-        </p>
-
-        <p className="text-sm text-gray-600 mt-3">
-          <strong>Created By:</strong>{" "}
-          {league.users?.is_public ? (
-            <a
-              href={`/profile/${league.users.username}`}
-              className="text-blue-600 hover:underline"
-            >
-              {league.users.username}
-            </a>
-          ) : (
-            <span>{league.users?.username}</span>
-          )}
-          <strong> • Draft:</strong> {new Date(league.draft_date).toLocaleString()} •{" "}
-          <strong>Event Starts:</strong>{" "}
-          {league.curling_events
-            ? new Date(league.curling_events.start_date).toLocaleDateString()
-            : "TBD"}{" "}
-          <strong> • Players:</strong> {(league.fantasy_event_users?.length ?? 0)} / {league.max_users}
-        </p>
-      </div>
-
-      {league.is_public ? (
-        <span className="absolute top-5 right-5 text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-          public
-        </span>
-      ) : (
-        <span className="absolute top-5 right-5 text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700 flex items-center gap-1">
-          private
-        </span>
-      )}
-
-      <div className="flex flex-col items-end gap-3">
+        <div className="flex flex-col items-end gap-3">
         {isCommissioner ? (
           isOpen ? (
             <button
               onClick={() => {
-                setEditingLeague(league);
-                setShowModal(true);
+                setEditingLeague(league)
+                setShowModal(true)
               }}
               className="bg-[#1f4785] text-white px-6 py-2 rounded-md hover:bg-[#163766] transition"
             >
               Edit
+            </button>
+          ) : !hasEventStarted ? (
+            <button
+              disabled
+              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+            >
+              Picks Locked
             </button>
           ) : (
             <button
@@ -256,77 +263,85 @@ function LeagueCard({ league, commissionerView, invitedView }: any) {
               Event Live
             </button>
           )
-        ) : isInvited ? (
-          isOpen ? (
-            <button
-              onClick={() => joinLeague(league.id)}
-              className="bg-[#234C6A] text-white px-6 py-2 rounded-md hover:bg-[#1B3C53] transition"
-            >
-              Join
-            </button>
-          ) : (
+          ) : isInvited ? (
+            isOpen ? (
+              <button
+                onClick={() => joinLeague(league.id)}
+                className="bg-[#234C6A] text-white px-6 py-2 rounded-md hover:bg-[#1B3C53] transition"
+              >
+                Join
+              </button>
+            ) : (
+              <button
+                disabled
+                className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+              >
+                Closed
+              </button>
+            )
+          ) : league.enrolled ? (
+            league.draft_status === "closed" ? (
+              <button
+                disabled
+                className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+              >
+                Draft In Progress
+              </button>
+            ) : league.draft_status === "locked" ? (
+              !hasEventStarted ? (
+                <button
+                  disabled
+                  className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+                >
+                  Picks Locked
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+                >
+                  Event Live
+                </button>
+              )
+            ) : league.draft_status === "archived" ? (
+              <button
+                disabled
+                className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+              >
+                Archived
+              </button>
+            ) : (
+              <button
+                onClick={() => leaveLeague(league.id)}
+                className="bg-[#AA2B1D] text-white px-6 py-2 hover:bg-[#8A1F15] transition rounded-md"
+              >
+                Leave
+              </button>
+            )
+          ) : isFull || league.draft_status === "closed" ? (
             <button
               disabled
               className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
             >
               Closed
             </button>
-          )
-        ) : league.enrolled ? (
-          league.draft_status === "closed" ? (
-            <button
-              disabled
-              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-            >
-              Draft In Progress
-            </button>
-          ) : league.draft_status === "locked" ? (
-            <button
-              disabled
-              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-            >
-              Event Live
-            </button>
-          ) : league.draft_status === "archived" ? (
-            <button
-              disabled
-              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-            >
-              Archived
-            </button>
           ) : (
             <button
-              onClick={() => leaveLeague(league.id)}
-              className="bg-[#AA2B1D] text-white px-6 py-2 hover:bg-[#8A1F15] transition rounded-md"
+              disabled={!isJoinable}
+              onClick={() => isJoinable && joinLeague(league.id)}
+              className={`px-4 py-2 text-white rounded-md ${
+                isJoinable
+                  ? "bg-[#234C6A] hover:bg-[#1B3C53] cursor-pointer"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
             >
-              Leave
+              {isFull ? "Full" : "Join"}
             </button>
-          )
-        ) : isFull || league.draft_status === "closed" ? (
-          <button
-            disabled
-            className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-          >
-            Closed
-          </button>
-        ) : (
-          <button
-            disabled={!isJoinable}
-            onClick={() => isJoinable && joinLeague(league.id)}
-            className={`px-4 py-2 text-white rounded-md ${
-              isJoinable
-                ? "bg-[#234C6A] hover:bg-[#1B3C53] cursor-pointer"
-                : "bg-gray-400 cursor-not-allowed"
-            }`}
-          >
-            {isFull ? "Full" : "Join"}
-          </button>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
-
+    );
+  }
 
   function generateBaseSlug(leagueName: string) {
     return leagueName
@@ -358,19 +373,19 @@ function LeagueCard({ league, commissionerView, invitedView }: any) {
   async function handleCreateLeague(payload: any) {
     if (!user) return;
 
-    const {
-      eventId,
-      name,
-      description,
-      draftDate,
-      isPublic,
-      usernames
-    } = payload;
+    const { eventId, name, description, draftDate, isPublic, usernames } = payload;
 
-    const session = await supabase.auth.getSession();
-    const baseSlug = generateBaseSlug(name); 
+    function parseLocalDateTime(dt: string) {
+      const [datePart, timePart] = dt.split("T");
+      const [year, month, day] = datePart.split("-").map(Number);
+      const [hour, minute] = timePart.split(":").map(Number);
+      return new Date(year, month - 1, day, hour, minute);
+    }
+
+    const utcDraftDate = new Date(draftDate).toISOString();
+    const baseSlug = generateBaseSlug(name);
     const slug = await generateUniqueSlug(baseSlug, supabase);
-    
+
     const { data: newLeague, error } = await supabase
       .from("fantasy_events")
       .insert({
@@ -378,7 +393,7 @@ function LeagueCard({ league, commissionerView, invitedView }: any) {
         name,
         description,
         curling_event_id: eventId,
-        draft_date: draftDate,
+        draft_date: utcDraftDate,
         created_by: user.id,
         is_public: isPublic,
         draft_status: "open",
@@ -392,17 +407,10 @@ function LeagueCard({ league, commissionerView, invitedView }: any) {
       `)
       .single();
 
-
-    if (error) {
-      console.error(error);
-      return;
-    }
+    if (error) return;
 
     if (!isPublic && usernames.trim() !== "") {
-      const usernameList = usernames
-        .split(",")
-        .map((u: string) => u.trim())
-        .filter(Boolean);
+      const usernameList = usernames.split(",").map((u: string) => u.trim()).filter(Boolean);
 
       const { data: profiles } = await supabase
         .from("profiles")
@@ -424,7 +432,7 @@ function LeagueCard({ league, commissionerView, invitedView }: any) {
       user_id: user.id
     });
 
-    setLeagues((prev) => [
+    setLeagues(prev => [
       ...prev,
       {
         ...newLeague,
@@ -441,14 +449,23 @@ function LeagueCard({ league, commissionerView, invitedView }: any) {
 
     const { eventId, name, description, draftDate, isPublic } = payload;
 
+    const utcDraftDate = new Date(draftDate).toISOString();
+
+    let slug = editingLeague.slug;
+    if (name !== editingLeague.name) {
+      const baseSlug = generateBaseSlug(name);
+      slug = await generateUniqueSlug(baseSlug, supabase);
+    }
+
     const { data, error } = await supabase
       .from("fantasy_events")
       .update({
         curling_event_id: eventId,
         name,
         description,
-        draft_date: draftDate,
-        is_public: isPublic
+        draft_date: utcDraftDate,
+        is_public: isPublic,
+        slug
       })
       .eq("id", editingLeague.id)
       .select()

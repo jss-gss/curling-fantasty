@@ -23,6 +23,7 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
   const [curlingEvent, setCurlingEvent] = useState<any>(null)
   const [myPickNumber, setMyPickNumber] = useState<number | null>(null)
   const [teams, setTeams] = useState<any[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   async function loadAll() {
     setLoading(true)
@@ -32,66 +33,66 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     setUser(authUser)
 
     if (!authUser) {
-        setLoading(false)
-        return
+      setLoading(false)
+      return
     }
 
     const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", authUser.id)
-        .single()
+      .from("profiles")
+      .select("*")
+      .eq("id", authUser.id)
+      .single()
 
     setProfile(profileData ?? null)
 
     const { data: e } = await supabase
-        .from("fantasy_events")
-        .select("*")
-        .eq("slug", slug)
-        .single()
+      .from("fantasy_events")
+      .select("*")
+      .eq("slug", slug)
+      .single()
 
     setEvent(e)
 
     if (!e) {
-        setLoading(false)
-        return
+      setLoading(false)
+      return
     }
 
     if (e.curling_event_id) {
-        const { data: ce } = await supabase
+      const { data: ce } = await supabase
         .from("curling_events")
         .select("*")
         .eq("id", e.curling_event_id)
         .single()
 
-        setCurlingEvent(ce ?? null)
+      setCurlingEvent(ce ?? null)
 
-        const { data: teamsData } = await supabase
+      const { data: teamsData } = await supabase
         .from("teams")
         .select("id, team_name")
         .eq("curling_event_id", e.curling_event_id)
 
-        setTeams(teamsData ?? [])
+      setTeams(teamsData ?? [])
 
-        const teamIds = teamsData?.map(t => t.id) ?? []
+      const teamIds = teamsData?.map(t => t.id) ?? []
 
-        const { data: playerRows } = await supabase
+      const { data: playerRows } = await supabase
         .from("players")
         .select("*")
         .in("team_id", teamIds)
 
-        setPlayers(playerRows ?? [])
+      setPlayers(playerRows ?? [])
     } else {
-        setCurlingEvent(null)
-        setTeams([])
-        setPlayers([])
+      setCurlingEvent(null)
+      setTeams([])
+      setPlayers([])
     }
 
     const { data: u } = await supabase
-        .from("fantasy_event_users")
-        .select("user_id, draft_position, profiles(username)")
-        .eq("fantasy_event_id", e.id)
-        .order("draft_position")
+      .from("fantasy_event_users")
+      .select("user_id, draft_position, profiles(username)")
+      .eq("fantasy_event_id", e.id)
+      .order("draft_position")
 
     setUsers(u ?? [])
 
@@ -99,23 +100,23 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     setMyPickNumber(myRow?.draft_position ?? null)
 
     const { data: pk } = await supabase
-        .from("fantasy_picks")
-        .select(`
+      .from("fantasy_picks")
+      .select(`
         id,
         player_id,
         user_id,
         players (
-            first_name,
-            last_name,
-            position
+          first_name,
+          last_name,
+          position
         )
-        `)
-        .eq("fantasy_event_id", e.id)
+      `)
+      .eq("fantasy_event_id", e.id)
 
     setPicks(pk ?? [])
 
     setLoading(false)
-    }
+  }
 
   useEffect(() => {
     loadAll()
@@ -129,22 +130,19 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "UPDATE",
           schema: "public",
           table: "fantasy_events",
           filter: `id=eq.${event.id}`,
         },
-        (payload) => setEvent(payload.new)
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "fantasy_picks",
-          filter: `fantasy_event_id=eq.${event.id}`,
-        },
-        () => loadAll()
+        (payload) => {
+          const newPick = payload.new.current_pick
+          const oldPick = payload.old.current_pick
+
+          if (newPick !== oldPick) {
+            window.location.reload()
+          }
+        }
       )
       .subscribe()
 
@@ -197,10 +195,41 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
   const teamMap = useMemo(() => {
     const map: Record<string, string> = {}
     teams.forEach(t => {
-        map[t.id] = t.team_name
+      map[t.id] = t.team_name
     })
     return map
-    }, [teams])
+  }, [teams])
+
+  async function handleConfirm() {
+    if (!user || !selectedPlayer) return
+    setIsSubmitting(true)
+    setShowModal(false)
+    setPlayers(prev => prev.filter(p => p.id !== selectedPlayer.id))
+
+    const res = await fetch("/api/pickPlayer", {
+      method: "POST",
+      body: JSON.stringify({
+        eventId: event.id,
+        playerId: selectedPlayer.id,
+        userId: user.id,
+      }),
+    })
+
+    const data = await res.json()
+
+    setSelectedPlayer(null)
+    setIsSubmitting(false)
+
+    if (!res.ok) {
+      alert(`Error: ${data.error ?? "Unknown error"}`)
+      return
+    }
+
+    if (data.userFinished || data.draftFinished) {
+      router.push("/myrinks")
+      return
+    }
+  }
 
   function slot(position: string) {
     const pick = picks.find(
@@ -210,36 +239,6 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     return `${pick.players.first_name} ${pick.players.last_name}`
   }
 
-  async function confirmPick() {
-    if (!user || !selectedPlayer) return
-
-    const res = await fetch("/api/pickPlayer", {
-        method: "POST",
-        body: JSON.stringify({
-        eventId: event.id,
-        playerId: selectedPlayer.id,
-        userId: user.id,
-        }),
-    })
-
-    const data = await res.json()
-
-    if (!res.ok) {
-        alert(`Error: ${data.error ?? "Unknown error"}`)
-        return
-    }
-
-    if (data.userFinished || data.draftFinished) {
-        router.push("/myrinks")
-        return
-    }
-
-    setShowModal(false)
-    setSelectedPlayer(null)
-
-    router.refresh()
-    }
-
   if (loading || !event) {
     return (
       <div className="p-6">
@@ -247,7 +246,8 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
       </div>
     )
   }
-    return (
+
+  return (
     <div className="p-6 flex flex-col gap-6">
         <header className="bg-white shadow-md p-6 border border-gray-200 text-center rounded-lg">
         <h1 className="text-4xl font-bold">
@@ -343,34 +343,36 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
             )}
         </div>
         </div>
-
-        {showModal && selectedPlayer && (
+      {showModal && selectedPlayer && (
         <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white p-6 shadow-xl rounded-lg w-96 border border-gray-200">
+          <div className="bg-white p-6 shadow-xl rounded-lg w-96 border border-gray-200">
             <h3 className="text-xl font-semibold mb-4">Add Player</h3>
             <p className="mb-2 text-lg font-medium">
-                {selectedPlayer.first_name} {selectedPlayer.last_name}
+              {selectedPlayer.first_name} {selectedPlayer.last_name}
             </p>
             <p className="text-gray-600 mb-6">
-                from <strong>{teamMap[selectedPlayer.team_id]}</strong>
+              from <strong>{teamMap[selectedPlayer.team_id]}</strong>
             </p>
             <div className="flex justify-end gap-4">
-                <button
+              <button
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
-                >
+              >
                 Cancel
-                </button>
-                <button
-                onClick={confirmPick}
-                className="px-4 py-2 rounded-md bg-[#162a4a] text-white hover:bg-[#1d355f]"
-                >
-                Confirm
-                </button>
+              </button>
+              <button
+                disabled={isSubmitting}
+                onClick={handleConfirm}
+                className={`w-full py-2 rounded-md text-white 
+                  ${isSubmitting ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}
+                `}
+              >
+                {isSubmitting ? "Submitting..." : "Confirm Pick"}
+              </button>
             </div>
-            </div>
+          </div>
         </div>
-        )}
+      )}
     </div>
-    )
+  )
 }
