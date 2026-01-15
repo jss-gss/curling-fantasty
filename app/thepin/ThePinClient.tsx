@@ -41,7 +41,9 @@ export default function ThePinClient() {
   const router = useRouter()
   const params = useSearchParams();
   const [user, setUser] = useState<User | null>(null)
+  const [dismissedInvites, setDismissedInvites] = useState<string[]>([]);
   const [profile, setProfile] = useState<any>(null)
+  const [leagues, setLeagues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true)
 
   const [upcomingDrafts, setUpcomingDrafts] = useState<any[]>([])
@@ -90,23 +92,95 @@ export default function ThePinClient() {
           id,
           slug,
           name,
+          description,
           draft_date,
           draft_status,
+          max_users,
+          created_by,
+          users:profiles ( id, username, is_public ),
+          curling_events ( * ),
           fantasy_event_users!inner ( user_id )
         `)
         .eq("fantasy_event_users.user_id", userData.user.id)
         .in("draft_status", ["open", "closed"])
         .order("draft_date", { ascending: true })
 
-      setUpcomingDrafts(drafts ?? [])
+      const processedDrafts = (drafts ?? [])
+        .filter(Boolean)
+        .map((d) => ({
+          ...d,
+          is_commissioner: d.created_by === userData.user.id
+        }))
+
+      setUpcomingDrafts(processedDrafts)
+
+      const { data: leagueData } = await supabase
+        .from("fantasy_events")
+        .select(`
+          *,
+          fantasy_event_users ( user_id ),
+          fantasy_event_user_invites ( id, user_id )
+        `)
+
+      if (leagueData) {
+        const processedLeagues = leagueData
+          .filter(Boolean)
+          .map((l: any) => ({
+            ...l,
+            enrolled: l.fantasy_event_users?.some(
+              (u: { user_id: string }) => u.user_id === userData.user.id
+            ),
+            invited: l.fantasy_event_user_invites?.some(
+              (inv: { user_id: string }) => inv.user_id === userData.user.id
+            ),
+            is_commissioner: l.created_by === userData.user.id
+          }))         
+
+        setLeagues(processedLeagues)
+      }
+
       setLoading(false)
     }
 
     load()
   }, [router])
 
+  useEffect(() => {
+    const stored = localStorage.getItem("dismissedInvites");
+    if (stored) {
+      setDismissedInvites(JSON.parse(stored));
+    }
+  }, []);
+
+  function dismissInvite(inviteId: string) {
+    const updated = [...dismissedInvites, inviteId];
+    setDismissedInvites(updated);
+    localStorage.setItem("dismissedInvites", JSON.stringify(updated));
+  }
+
+  function formatDate(dateString: string) {
+    const [year, month, day] = dateString.split("-")
+    return `${month}/${day}/${year}`
+  }
+
+  const privateInvites = leagues.filter((l) => {
+    const invite = l.fantasy_event_user_invites?.find(
+      (inv: { id: string; user_id: string }) => inv.user_id === user?.id
+    )
+
+    if (!invite) return false;
+
+    return (
+      !l.is_public &&
+      !l.enrolled &&
+      l.created_by !== user?.id &&
+      !dismissedInvites.includes(invite.id)
+    )
+  })
+
   return (
-    <>
+  <>
+    <div className="w-full min-h-screen bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/webpage/pin-page.png')" }} >
       {showModal && (
         <WelcomeModal
           onClose={() => setShowModal(false)}
@@ -115,56 +189,24 @@ export default function ThePinClient() {
       )}
 
       <LoggedInNavBar />
-      <div className="w-full min-h-screen bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/webpage/pin-page.png')" }}>
-        <div className="flex w-full max-w-[1450px] mx-auto gap-6 py-10 px-6 mt-0">
+
+
+        {/* PAGE WRAPPER */}
+        <div className="flex w-full max-w-[1450px] mx-auto gap-6 py-10 px-6">
+
           {/* LEFT SIDEBAR */}
-          <div className="w-1/5 flex flex-col gap-6">
+          <aside className="w-1/5 flex flex-col gap-6">
 
             {/* CARD 1 — Curling Favorites */}
-            <aside className="bg-white shadow-md p-4 rounded-lg">
+            <div className="bg-white shadow-md p-4 rounded-lg">
               <h2 className="text-xl font-semibold mb-3">Curling Favorites</h2>
               <ul className="space-y-2 text-gray-700">
-                <li>
-                  <a
-                    href="https://worldcurling.org"
-                    target="_blank"
-                    className="hover:underline hover:text-[#AA2B1D] transition"
-                  >
-                    World Curling Federation ↗
-                  </a>
-                </li>
-
-                <li>
-                  <a
-                    href="https://www.curlingzone.com"
-                    target="_blank"
-                    className="hover:underline hover:text-[#AA2B1D] transition"
-                  >
-                    CurlingZone ↗
-                  </a>
-                </li>
-
-                <li>
-                  <a
-                    href="https://curling.gg/"
-                    target="_blank"
-                    className="hover:underline hover:text-[#AA2B1D] transition"
-                  >
-                    curling.gg ↗
-                  </a>
-                </li>
-
-                <li>
-                  <a
-                    href="https://www.olympics.com/en/milano-cortina-2026/schedule/cur"
-                    target="_blank"
-                    className="hover:underline hover:text-[#AA2B1D] transition"
-                  >
-                    2026 Milan Olympics ↗
-                  </a>
-                </li>
+                <li><a href="https://worldcurling.org" target="_blank" className="hover:text-[#AA2B1D] underline">World Curling Federation ↗</a></li>
+                <li><a href="https://www.curlingzone.com" target="_blank" className="hover:text-[#AA2B1D] underline">CurlingZone ↗</a></li>
+                <li><a href="https://curling.gg/" target="_blank" className="hover:text-[#AA2B1D] underline">curling.gg ↗</a></li>
+                <li><a href="https://www.olympics.com/en/milano-cortina-2026/schedule/cur" target="_blank" className="hover:text-[#AA2B1D] underline">2026 Milan Olympics ↗</a></li>
               </ul>
-            </aside>
+            </div>
 
             {/* CARD 2 — Next Major Event */}
             <div className="bg-white shadow-md p-4 rounded-lg">
@@ -179,68 +221,133 @@ export default function ThePinClient() {
                 className="w-full h-auto object-contain rounded-md"
               />
             </div>
+          </aside>
 
-          </div>
+          {/* RIGHT COLUMN (MAIN CONTENT + OPTIONAL DRAFT CARD) */}
+          <div className="flex flex-col flex-1 justify-between">
 
-          {/* MAIN CONTENT */}
-          <main className="flex-1 bg-white shadow-md p-8 min-h-[500px] rounded-lg">
-            {loading ? (
-              <p>Loading...</p>
-            ) : (
-              <>
-                <h1 className="text-3xl font-bold mb-4">Hi, {profile?.username}!</h1>
-                <p className="text-gray-700 mb-6">Here’s what’s happening around the rings today.</p>
+            {/* MAIN CONTENT CARD */}
+            <main className="bg-white shadow-md p-8 rounded-lg flex-grow">
 
-                {/* UPCOMING DRAFT CARD */}
-                <div className="bg-blue-100 border border-blue-300 p-4 flex items-center justify-between rounded-lg">
-                  {/* LEFT SIDE */}
-                  <div>
-                    <h2 className="text-lg font-semibold mb-1">Your Upcoming Draft</h2>
+              {loading ? (
+                <p>Loading...</p>
+              ) : (
+                <>
+                  {/* GREETING */}
+                  <h1 className="text-3xl font-bold mb-4">Hi, {profile?.username}!</h1>
+                  <p className="text-gray-700 mb-6">Here’s what’s happening around the rings today.</p>
 
-                    {!nextDraft ? (
+                  {/* INVITES */}
+                  {privateInvites.length > 0 && (
+                    <div className="mb-6">
+                      <h2 className="text-xl font-semibold mb-3">You’ve Been Invited!</h2>
+
+                      <div className="space-y-4">
+                        {privateInvites.map((league) => {
+                          const invite = league.fantasy_event_user_invites.find(
+                            (inv: { id: string; user_id: string }) => inv.user_id === user?.id
+                          );
+
+                          return (
+                            <div
+                              key={league.id}
+                              className="border p-4 rounded-lg bg-yellow-50 flex justify-between items-center"
+                            >
+                              <div>
+                                <p className="font-semibold">{league.name}</p>
+                                <p className="text-sm text-gray-600">Private League Invite</p>
+                              </div>
+
+                              <div className="flex gap-3">
+                                <button
+                                  onClick={() => dismissInvite(invite.id)}
+                                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md"
+                                >
+                                  Ignore
+                                </button>
+                                <button
+                                  onClick={() => router.push(`/leagues/${league.id}`)}
+                                  className="bg-[#1f4785] text-white px-4 py-2 rounded-md"
+                                >
+                                  Join
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* UPCOMING DRAFT SECTION (INSIDE MAIN CARD) */}
+                  <section>
+                    {!nextDraft && (
                       <p className="text-gray-600">
-                        No upcoming drafts - {" "}
+                        No upcoming drafts —{" "}
                         <a href="/leagues" className="text-[#ac0000] underline">
                           find a league
                         </a>
                       </p>
+                    )}
+                  </section>
+                </>
+              )}
+            </main>
+
+            {/* UPCOMING DRAFT CARD (OUTSIDE MAIN, BELOW IT) */}
+            {nextDraft && (
+              <div className="bg-white shadow-md p-6 rounded-lg mt-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold mb-1">Your Upcoming Draft on {new Date(nextDraft.draft_date).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" })} ET</h2>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-md mt-1 font-semibold">{nextDraft.name}</h3>
+
+                    {nextDraft.is_public ? (
+                      <span className="text-xs mt-2 font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                        public
+                      </span>
                     ) : (
-                      <p className="text-gray-700">{nextDraft.name}</p>
+                      <span className="text-xs mt-2 font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                        private
+                      </span>
+                    )}
+
+                    {nextDraft.is_commissioner && (
+                      <span className="text-xs mt-2 font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                        commissioner
+                      </span>
                     )}
                   </div>
 
-                  {/* RIGHT SIDE */}
-                  <div>
-                    {nextDraft && (
-                      <>
-                        {/* OPEN — Countdown and users can join or leave */}
-                        {nextDraft.draft_status === "open" && (
-                          <button
-                            disabled
-                            className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md"
-                          >
-                            Draft live in <Countdown target={new Date(nextDraft.draft_date)} />
-                          </button>
-                        )}
-
-                        {/* CLOSED — Draft happening - enter draft */}
-                        {nextDraft.draft_status === "closed" && (
-                          <button
-                            onClick={() => goToDraft(nextDraft.slug)}
-                            className="bg-[#1f4785] text-white px-4 py-2 rounded-md"
-                          >
-                            Enter Draft Room
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
+                  <p className="text-sm text-gray mt-2 italic">
+                    {nextDraft.description}
+                  </p>
                 </div>
-              </>
+
+                {nextDraft.draft_status === "open" && (
+                  <button
+                    disabled
+                    className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md"
+                  >
+                    Draft live in{" "}
+                    <Countdown target={new Date(nextDraft.draft_date)} />
+                  </button>
+                )}
+
+                {nextDraft.draft_status === "closed" && (
+                  <button
+                    onClick={() => goToDraft(nextDraft.slug)}
+                    className="bg-[#1f4785] text-white px-4 py-2 rounded-md"
+                  >
+                    Enter Draft Room
+                  </button>
+                )}
+              </div>
             )}
-          </main>
         </div>
       </div>
-    </>
-  )
+    </div>
+  </>
+)
+
 }

@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Leaderboard | BUTTON",
+  title: "Leaderboards | BUTTON",
 }
 
 import LeaderboardClient from "./LeaderboardClient"

@@ -20,6 +20,7 @@ type League = {
     start_date: string
     end_date: string
     link: string | null
+    round_robin_end_date: string
   } | null
   members: string[]
   is_commissioner: boolean
@@ -76,7 +77,7 @@ export default function LeagueLeaderboardPage() {
         is_public,
         curling_events:curling_events!fantasy_events_curling_event_id_fkey (*)
       `)
-      .eq("draft_status", "locked")
+      .in("draft_status", ["locked", "completed"])
       .order("draft_date", { ascending: false })
 
     const normalized: League[] = (leagueRows ?? []).map(l => ({
@@ -196,7 +197,7 @@ export default function LeagueLeaderboardPage() {
       <div className="pt-16 max-w-5xl mx-auto px-6 py-10">
         <h1 className="text-3xl font-bold mb-8">Leaderboards</h1>
 
-       <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8">
         {/* LEFT: Tabs */}
         <div className="flex gap-4">
           {[
@@ -296,134 +297,219 @@ export default function LeagueLeaderboardPage() {
             </div>
           </div>
         )}
-      </div>
 
+      </div>
         {activeTab === "current" && (
           <>
             {loading && <p>Loading...</p>}
 
-            {!loading && leagues.length === 0 && (
-              <p className="text-gray-600">No current leagues.</p>
-            )}
+            {!loading && (
+              <>
+                {/* FILTER LEAGUES */}
+                {(() => {
+                  const filtered = leagues.filter((league) => {
+                    if (filterLeagueScope === "ALL") return true
+                    if (filterLeagueScope === "MINE") {
+                      if (!userId) return false
+                      return league.members?.includes(userId)
+                    }
+                    return true
+                  })
 
-            <div className="space-y-8">
-              {leagues
-                .filter((league) => {
-                  if (filterLeagueScope === "ALL") return true
-                  if (filterLeagueScope === "MINE") {
-                    if (!userId) return false
-                    return league.members?.includes(userId)
-                  }
-                  return true
-                })
-                .map((league) => (
-                  <div
-                    key={league.id}
-                    className="bg-white shadow-md p-6 mb-8 rounded-lg"
-                  >
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold">{league.name}</h2>
+                  const completed = filtered.filter(
+                    (l) => l.draft_status === "completed"
+                  )
 
-                    {league.is_public ? (
-                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-                        public
-                      </span>
-                    ) : (
-                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
-                        private
-                      </span>
-                    )}
-                    
-                    {league.is_commissioner && (
-                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                        commissioner
-                      </span>
-                    )}
+                  const active = filtered.filter(
+                    (l) => l.draft_status !== "completed"
+                  )
 
-                  </div>
-                  {league.curling_events && (
-                    <div className="text-gray-700 mb-4 flex items-center justify-between">
-                      <div className="font-medium">
-                        {league.curling_events.year} {league.curling_events.name} in {league.curling_events.location}
-                      </div>
+                  return (
+                    <div className="space-y-4">
 
-                      <div className="text-sm text-gray-600">
-                        {new Date(league.curling_events.start_date).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric"
-                        })}{" "}
-                        –{" "}
-                        {new Date(league.curling_events.end_date).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric"
-                        })}
-                      </div>
-                    </div>
-                  )}
+                      {/* COMPLETED LEAGUES */}
+                      {completed.length > 0 && (
+                        <>
+                          <h2 className="text-2xl font-bold mb-3 mt-6">Completed Leagues</h2>
 
-                  <div className="overflow-hidden rounded-lg">
-                    <table className="w-full border-collapse text-sm">
-                      <thead className="bg-gray-100 text-gray-700">
-                        <tr>
-                          <th className="py-2 px-3 text-left">Rank</th>
-                          <th className="py-2 px-3 text-left"></th>
-                          <th className="py-2 px-3 text-left">Username</th>
-                          <th className="py-2 px-3 text-left">Total Points</th>
-                        </tr>
-                      </thead>
+                          <div className="space-y-6 mb-10">
+                            {completed.map((league) => (
+                              <div
+                                key={league.id}
+                                className="bg-white shadow-md p-6 rounded-lg border border-gray-200 flex items-center justify-between"
+                              >
+                                <div>
+                                  {/* HEADER WITH BADGES */}
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <h3 className="text-xl font-semibold">{league.name}</h3>
 
-                      <tbody>
-                        {leaderboards[league.id]?.map((row, idx) => {
-                          const profile = row.profile
+                                    {league.is_public ? (
+                                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                                        public
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                                        private
+                                      </span>
+                                    )}
 
-                          return (
-                            <tr
-                              key={row.user_id}
-                              className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                            >
-                              <td className="py-2 px-3 font-medium">{idx + 1}</td>
+                                    {league.is_commissioner && (
+                                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                                        commissioner
+                                      </span>
+                                    )}
 
-                              <td className="py-2 px-3">
-                                {profile?.avatar_url ? (
-                                  <Image
-                                    src={profile.avatar_url}
-                                    alt={`${profile.username} avatar`}
-                                    width={32}
-                                    height={32}
-                                    className="rounded-full object-cover border border-gray-300"
-                                  />
-                                ) : (
-                                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
-                                    {profile?.username?.charAt(0)?.toUpperCase() ?? "?"}
+                                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
+                                      completed
+                                    </span>
+                                  </div>
+
+                                  {/* EVENT INFO */}
+                                  {league.curling_events && (
+                                    <p className="text-gray-700 flex items-center justify-between">
+                                      {league.curling_events.year} {league.curling_events.name} in{" "}
+                                      {league.curling_events.location}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <button
+                                  onClick={() => alert("Results page coming soon!")}
+                                  className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition"
+                                >
+                                  View Results
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {/* ACTIVE LEAGUES */}
+                      {active.length > 0 && (
+                        <>
+                          <h2 className="text-2xl font-bold mb-3 mt-6">Active Leagues</h2>
+
+                          <div className="space-y-10">
+                            {active.map((league) => (
+                              <div
+                                key={league.id}
+                                className="bg-white shadow-md p-6 rounded-lg"
+                              >
+                                {/* HEADER */}
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h2 className="text-xl font-semibold">{league.name}</h2>
+
+                                  {league.is_public ? (
+                                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                                      public
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                                      private
+                                    </span>
+                                  )}
+
+                                  {league.is_commissioner && (
+                                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                                      commissioner
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* EVENT INFO */}
+                                {league.curling_events && (
+                                  <div className="text-gray-700 mb-4 flex items-center justify-between">
+                                      {league.curling_events.year}{" "}
+                                      {league.curling_events.name} in{" "}
+                                      {league.curling_events.location}
                                   </div>
                                 )}
-                              </td>
 
-                              <td className="py-2 px-3 font-medium">
-                                {profile?.is_public ? (
-                                  <Link
-                                    href={`/profile/${profile.username}`}
-                                    className="text-blue-600 hover:underline"
-                                  >
-                                    {profile.username}
-                                  </Link>
-                                ) : (
-                                  <span className="text-gray-500">{profile.username}</span>
-                                )}
-                              </td>
+                                {/* LEADERBOARD TABLE */}
+                                <div className="overflow-hidden rounded-lg">
+                                  <table className="w-full border-collapse text-sm">
+                                    <thead className="bg-gray-100 text-gray-700">
+                                      <tr>
+                                        <th className="py-2 px-3 text-left">Rank</th>
+                                        <th className="py-2 px-3 text-left"></th>
+                                        <th className="py-2 px-3 text-left">Username</th>
+                                        <th className="py-2 px-3 text-left">Total Points</th>
+                                      </tr>
+                                    </thead>
 
-                              <td className="py-2 px-3 font-semibold">
-                                {row.total_points}
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ))}
-            </div>
+                                    <tbody>
+                                      {leaderboards[league.id]?.map((row, idx) => {
+                                        const profile = row.profile
+
+                                        return (
+                                          <tr
+                                            key={row.user_id}
+                                            className={
+                                              idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                            }
+                                          >
+                                            <td className="py-2 px-3 font-medium">
+                                              {idx + 1}
+                                            </td>
+
+                                            <td className="py-2 px-3">
+                                              {profile?.avatar_url ? (
+                                                <Image
+                                                  src={profile.avatar_url}
+                                                  alt={`${profile.username} avatar`}
+                                                  width={32}
+                                                  height={32}
+                                                  className="rounded-full object-cover border border-gray-300"
+                                                />
+                                              ) : (
+                                                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                                                  {profile?.username
+                                                    ?.charAt(0)
+                                                    ?.toUpperCase() ?? "?"}
+                                                </div>
+                                              )}
+                                            </td>
+
+                                            <td className="py-2 px-3 font-medium">
+                                              {profile?.is_public ? (
+                                                <Link
+                                                  href={`/profile/${profile.username}`}
+                                                  className="text-blue-600 hover:underline"
+                                                >
+                                                  {profile.username}
+                                                </Link>
+                                              ) : (
+                                                <span className="text-gray-500">
+                                                  {profile.username}
+                                                </span>
+                                              )}
+                                            </td>
+
+                                            <td className="py-2 px-3 font-semibold">
+                                              {row.total_points}
+                                            </td>
+                                          </tr>
+                                        )
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {/* NOTHING FOUND */}
+                      {completed.length === 0 && active.length === 0 && (
+                        <p className="text-gray-600">No current leagues.</p>
+                      )}
+                    </div>
+                  )
+                })()}
+              </>
+            )}
           </>
         )}
 
@@ -442,15 +528,23 @@ export default function LeagueLeaderboardPage() {
                   .filter(pos => filterPosition === "ALL" || pos === filterPosition)
                   .map(position => {
                     const leaderboard = topCurlers[event.id]?.[position] ?? []
+                    const isCompleted = new Date(event.round_robin_end_date) < new Date()
 
                 return (
                   <div
                     key={`${event.id}-${position}`}
                     className="bg-white shadow-md p-6 mb-8 rounded-lg"
                   >
-                    <h2 className="text-xl font-semibold mb-1">
-                      {position}
-                    </h2>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-semibold mb-1">
+                        {position}
+                      </h2>
+                        {isCompleted && (
+                          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
+                            round robin complete
+                          </span>
+                        )}
+                    </div>
 
                     <div className="text-gray-700 mb-4 flex items-center justify-between">
                       <div className="font-medium">
