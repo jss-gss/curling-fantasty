@@ -9,7 +9,9 @@ import LoggedInNavBar from "@/components/LoggedInNavBar"
 type League = {
   id: string
   name: string
-  draft_status: string
+  description: string | null
+  draft_status: string 
+  is_public: boolean
   curling_events?: {
     id: string
     name: string
@@ -18,8 +20,9 @@ type League = {
     start_date: string
     end_date: string
     link: string | null
-  }[] | null
-  members?: string[]
+  } | null
+  members: string[]
+  is_commissioner: boolean
 }
 
 type LeaderboardRow = {
@@ -45,20 +48,19 @@ export default function LeagueLeaderboardPage() {
   const positions = ["Lead", "Second", "Vice Skip", "Skip"]
   const [filterEvent, setFilterEvent] = useState("ALL")
   const [filterPosition, setFilterPosition] = useState("ALL")
-  const [filterLeagueScope, setFilterLeagueScope] = useState<"ALL" | "MINE">("ALL")  
+  const [filterLeagueScope, setFilterLeagueScope] = useState<"ALL" | "MINE">("ALL")
   const [userId, setUserId] = useState<string | null>(null)
 
-  useEffect(() => { 
-    supabase.auth.getUser().
-    then(({ data }) => 
-      { 
-        setUserId(data.user?.id ?? null) 
-      }) 
-    }, [])
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null)
+    })
+  }, [])
 
   useEffect(() => {
+    if (userId === null) return
     loadCurrentLeagues()
-  }, [])
+  }, [userId])
 
   async function loadCurrentLeagues() {
     setLoading(true)
@@ -68,28 +70,23 @@ export default function LeagueLeaderboardPage() {
       .select(`
         id,
         name,
+        description,
         draft_status,
-        curling_events:curling_events!fantasy_events_curling_event_id_fkey (
-          id,
-          name,
-          year,
-          location,
-          start_date,
-          end_date,
-          link
-        )
+        created_by,
+        is_public,
+        curling_events:curling_events!fantasy_events_curling_event_id_fkey (*)
       `)
       .eq("draft_status", "locked")
       .order("draft_date", { ascending: false })
 
-    const normalized = leagueRows?.map(l => ({
+    const normalized: League[] = (leagueRows ?? []).map(l => ({
       ...l,
       curling_events: Array.isArray(l.curling_events)
-        ? l.curling_events
-        : l.curling_events
-        ? [l.curling_events]
-        : []
-    })) ?? []
+        ? l.curling_events[0] ?? null
+        : l.curling_events ?? null,
+      members: [],
+      is_commissioner: userId ? l.created_by === userId : false
+    }))
 
     const leagueIds = normalized.map(l => l.id)
 
@@ -112,11 +109,17 @@ export default function LeagueLeaderboardPage() {
       members: membersByLeague[league.id] ?? []
     }))
 
-    setLeagues(leaguesWithMembers)
+    const visibleLeagues = leaguesWithMembers.filter(league => {
+      if (league.is_public) return true
+      if (!userId) return false
+      return league.members.includes(userId)
+    })
+
+    setLeagues(visibleLeagues)
 
     const results: Record<string, LeaderboardRow[]> = {}
 
-    for (const league of leaguesWithMembers ?? []) {
+    for (const league of visibleLeagues) {
       const { data: totals } = await supabase.rpc("get_league_totals_by_event", {
         event_id: league.id
       })
@@ -131,7 +134,7 @@ export default function LeagueLeaderboardPage() {
         .in("id", userIds)
 
       const profileMap = Object.fromEntries(
-        (profiles ?? []).map((p) => [p.id, p])
+        (profiles ?? []).map(p => [p.id, p])
       )
 
       const rows: LeaderboardRow[] = totals
@@ -186,12 +189,12 @@ export default function LeagueLeaderboardPage() {
     setLoading(false)
   }
 
-
   return (
     <>
       <LoggedInNavBar />
 
       <div className="pt-16 max-w-5xl mx-auto px-6 py-10">
+        <h1 className="text-3xl font-bold mb-8">Leaderboards</h1>
 
        <div className="flex items-center justify-between mb-8">
         {/* LEFT: Tabs */}
@@ -318,29 +321,46 @@ export default function LeagueLeaderboardPage() {
                     key={league.id}
                     className="bg-white shadow-md p-6 mb-8 rounded-lg"
                   >
-                  <h2 className="text-xl font-semibold mb-1">
-                    {league.name}
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-semibold">{league.name}</h2>
 
-                  {league.curling_events && league.curling_events.length > 0 && (
+                    {league.is_public ? (
+                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                        public
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                        private
+                      </span>
+                    )}
+                    
+                    {league.is_commissioner && (
+                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                        commissioner
+                      </span>
+                    )}
+
+                  </div>
+                  {league.curling_events && (
                     <div className="text-gray-700 mb-4 flex items-center justify-between">
                       <div className="font-medium">
-                        {league.curling_events[0].year} {league.curling_events[0].name} in {league.curling_events[0].location}
+                        {league.curling_events.year} {league.curling_events.name} in {league.curling_events.location}
                       </div>
 
                       <div className="text-sm text-gray-600">
-                        {new Date(league.curling_events[0].start_date).toLocaleDateString(undefined, {
+                        {new Date(league.curling_events.start_date).toLocaleDateString(undefined, {
                           month: "short",
                           day: "numeric"
                         })}{" "}
                         –{" "}
-                        {new Date(league.curling_events[0].end_date).toLocaleDateString(undefined, {
+                        {new Date(league.curling_events.end_date).toLocaleDateString(undefined, {
                           month: "short",
                           day: "numeric"
                         })}
                       </div>
                     </div>
                   )}
+
                   <div className="overflow-hidden rounded-lg">
                     <table className="w-full border-collapse text-sm">
                       <thead className="bg-gray-100 text-gray-700">

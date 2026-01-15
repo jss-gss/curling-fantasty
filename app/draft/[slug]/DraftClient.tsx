@@ -24,7 +24,16 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
   const [myPickNumber, setMyPickNumber] = useState<number | null>(null)
   const [teams, setTeams] = useState<any[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
-
+    const currentIndex = useMemo(
+    () => (event ? (event.current_pick ?? 1) - 1 : 0),
+    [event]
+  )
+  const currentUser = useMemo(
+    () => (users.length ? users[currentIndex] ?? null : null),
+    [users, currentIndex]
+  )
+  const myTurn = currentUser?.user_id === user?.id
+  
   async function loadAll() {
     setLoading(true)
 
@@ -118,6 +127,48 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     setLoading(false)
   }
 
+  async function refreshDraftState(eventId: string) {
+    const { data: eventData } = await supabase
+      .from("fantasy_events")
+      .select("current_pick")
+      .eq("id", eventId)
+      .single()
+
+    if (eventData) {
+      setEvent((prev: any) => ({ ...prev, current_pick: eventData.current_pick }))
+    }
+
+    const { data: pk } = await supabase
+      .from("fantasy_picks")
+      .select(`
+        id,
+        player_id,
+        user_id,
+        players (
+          first_name,
+          last_name,
+          position
+        )
+      `)
+      .eq("fantasy_event_id", eventId)
+
+    if (pk) {
+      setPicks(pk)
+    }
+  }
+
+  useEffect(() => {
+    if (!event?.id) return
+
+    if (!myTurn) {
+      const interval = setInterval(() => {
+        refreshDraftState(event.id)
+      }, 1000)
+
+      return () => clearInterval(interval)
+    }
+  }, [event?.id, myTurn])
+
   useEffect(() => {
     loadAll()
   }, [slug])
@@ -140,7 +191,7 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
           const oldPick = payload.old.current_pick
 
           if (newPick !== oldPick) {
-            window.location.reload()
+            refreshDraftState(event.id)
           }
         }
       )
@@ -163,18 +214,6 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     }
     setSelectedPositionFilter(roundToPosition[round] ?? "all")
   }, [users, picks])
-
-  const currentIndex = useMemo(
-    () => (event ? (event.current_pick ?? 1) - 1 : 0),
-    [event]
-  )
-
-  const currentUser = useMemo(
-    () => (users.length ? users[currentIndex] ?? null : null),
-    [users, currentIndex]
-  )
-
-  const myTurn = currentUser?.user_id === user?.id
 
   const draftedPlayerIds = useMemo(
     () => new Set(picks.map((p) => p.player_id)),
@@ -220,13 +259,14 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     setSelectedPlayer(null)
     setIsSubmitting(false)
 
-    if (!res.ok) {
-      alert(`Error: ${data.error ?? "Unknown error"}`)
-      return
-    }
+    if (res.ok) {
+      await refreshDraftState(event.id)
 
-    if (data.userFinished || data.draftFinished) {
-      router.push("/myrinks")
+      if (data.userFinished || data.draftFinished) {
+        router.push("/myrinks")
+        return
+      }
+
       return
     }
   }

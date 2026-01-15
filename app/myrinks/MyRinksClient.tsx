@@ -25,7 +25,6 @@ export default function PicksPage() {
 
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-
   const [closedEvents, setClosedEvents] = useState<any[]>([])
   const [userPicksByEvent, setUserPicksByEvent] = useState<AnyMap<any[]>>({})
 
@@ -108,6 +107,8 @@ export default function PicksPage() {
         description,
         draft_status,
         draft_date,
+        created_by, 
+        is_public,
         curling_events (
           id,
           name,
@@ -240,10 +241,10 @@ export default function PicksPage() {
               <p>Loading...</p>
             ) : (
               <>
-                <h1 className="text-3xl font-bold mb-6">Your leagues</h1>
+                <h1 className="text-3xl font-bold mb-6">Your Current Rinks</h1>
 
                 {closedEvents.length === 0 && (
-                  <div className="text-gray-600">You have no current teams.</div>
+                  <div className="text-gray-600">You have no current rinks.</div>
                 )}
 
                 <div className="space-y-10">
@@ -251,21 +252,47 @@ export default function PicksPage() {
                     const picks = userPicksByEvent[ev.id] ?? []
                     const totalPoints = pointsByEvent[ev.id] ?? 0
                     const rank = ranksByEvent[ev.id] ?? "-"
+                    const isCommissioner = ev.created_by === user?.id
+
                     return (
                       <div key={ev.id} className="space-y-4">
 
                         {/* League Header */}
-                        <div className="flex justify-between items-center">
+                        <div className="relative flex justify-between items-start">
+                          {/* LEFT SIDE */}
                           <div>
-                            <h2 className="text-2xl font-semibold">{ev.name}</h2>
+                            <div className="flex items-center gap-2">
+                              <h2 className="text-2xl font-semibold">{ev.name}</h2>
+
+                              {/* Public/Private pill FIRST */}
+                              {ev.is_public ? (
+                                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                                  public
+                                </span>
+                              ) : (
+                                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                                  private
+                                </span>
+                              )}
+
+                              {/* Commissioner pill SECOND */}
+                              {isCommissioner && (
+                                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                                  commissioner
+                                </span>
+                              )}
+                            </div>
+
                             <div className="text-gray-500 text-sm">
-                              {ev.curling_events?.year ?? ""} {ev.curling_events?.name ?? "Unknown Event"} in {ev.curling_events?.location ?? ""} •{" "}
+                              {ev.curling_events?.year ?? ""} {ev.curling_events?.name ?? "Unknown Event"} in{" "}
+                              {ev.curling_events?.location ?? ""} •{" "}
                               {ev.curling_events?.start_date
                                 ? new Date(ev.curling_events.start_date).toLocaleDateString()
                                 : "No date"}
                             </div>
                           </div>
 
+                          {/* RIGHT SIDE */}
                           <div className="text-right">
                             <div className="text-gray-500 text-sm">Total Points</div>
                             <div className="text-xl font-bold">{totalPoints}</div>
@@ -282,12 +309,12 @@ export default function PicksPage() {
                                 <th className="py-2 px-3 text-left"></th>
                                 <th className="py-2 px-3 text-left">Name</th>
                                 <th className="py-2 px-3 text-left">Team</th>
-                                <th className="py-2 px-3 text-left bg-blue-200">Recent Game</th>
+                                <th className="py-2 px-3 text-left bg-blue-200">Recent Draws</th>
                                 <th className="py-2 px-3 text-left bg-blue-200">Indv %</th>
                                 <th className="py-2 px-3 text-left bg-blue-200">W/L</th>
                                 <th className="py-2 px-3 text-left bg-blue-200">Score Diff</th>
                                 <th className="py-2 px-3 text-left bg-blue-200">Fantasy Pts</th>
-                                <th className="py-2 px-3 text-left">Next Game</th>
+                                <th className="py-2 px-3 text-left">Next Draw</th>
                                 <th className="py-2 px-3 text-left">Total Fantasy Pts</th>
                               </tr>
                             </thead>
@@ -339,7 +366,7 @@ export default function PicksPage() {
                                     <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
                                       {recent?.game ? (
                                         <>
-                                          <div className="font-medium">
+                                          <div className="font-small">
                                             {toET(recent.game.game_datetime)}
                                           </div>
                                           <div className="text-gray-600 text-xs">vs {recentOpponent}</div>
@@ -349,19 +376,19 @@ export default function PicksPage() {
                                       )}
                                     </td>
 
-                                    <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                    <td className={`py-2 px-3 text-center ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
                                       {recent?.indv_pct ?? "N/A"}
                                     </td>
 
-                                    <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                    <td className={`py-2 px-3 text-center ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
                                       {recent ? (recent.won ? "W" : "L") : "N/A"}
                                     </td>
 
-                                    <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                    <td className={`py-2 px-3 text-center ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
                                       {recent?.score_diff ?? "N/A"}
                                     </td>
 
-                                    <td className={`py-2 px-3 ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                    <td className={`py-2 px-3 text-center ${idx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
                                       {recent?.fantasy_pts ?? "N/A"}
                                     </td>
 
@@ -378,7 +405,7 @@ export default function PicksPage() {
                                       )}
                                     </td>
                                     
-                                    <td className="py-2 px-3">
+                                    <td className="py-2 text-center px-3">
                                       {player?.total_player_fantasy_pts ?? "-"}
                                     </td>
                                   </tr>

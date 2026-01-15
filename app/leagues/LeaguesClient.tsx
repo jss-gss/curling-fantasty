@@ -38,23 +38,21 @@ export default function LeaguesPage() {
 
   const findAvailableLeagues = leagues.filter(
     (l) =>
+      l.is_public &&
       !l.enrolled &&
       (l.draft_status === "open") &&
       (l.fantasy_event_users?.length ?? 0) < l.max_users
   )
 
-  const findClosedLeagues = leagues.filter(
-    (l) =>
-      !l.enrolled &&
-      (
-        l.draft_status === "locked" ||
-        l.draft_status === "archived" ||
-        (
-          (l.draft_status === "open") &&
-          (l.fantasy_event_users?.length ?? 0) >= l.max_users
-        )
-      )
-  )
+  const findClosedLeagues = leagues.filter((l) => {
+  const isClosed =
+    l.draft_status === "locked" ||
+    l.draft_status === "archived" ||
+    (l.draft_status === "open" &&
+      (l.fantasy_event_users?.length ?? 0) >= l.max_users)
+
+    return (l.is_public &&  !l.enrolled &&isClosed )
+  })
 
   //modal 
   const [showModal, setShowModal] = useState(false);
@@ -190,6 +188,16 @@ export default function LeaguesPage() {
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-semibold">{league.name}</h2>
 
+            {league.is_public ? (
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                public
+              </span>
+            ) : (
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                private
+              </span>
+            )}
+
             {isCommissioner && (
               <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
                 commissioner
@@ -225,16 +233,6 @@ export default function LeaguesPage() {
             <strong> • Players:</strong> {(league.fantasy_event_users?.length ?? 0)} / {league.max_users}
           </p>
         </div>
-
-        {league.is_public ? (
-          <span className="absolute top-5 right-5 text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-            public
-          </span>
-        ) : (
-          <span className="absolute top-5 right-5 text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700 flex items-center gap-1">
-            private
-          </span>
-        )}
 
         <div className="flex flex-col items-end gap-3">
         {isCommissioner ? (
