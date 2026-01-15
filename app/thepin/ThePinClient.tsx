@@ -61,8 +61,8 @@ export default function ThePinClient() {
     }
   }, [params]);
 
-  function goToDraft(eventId: string) {
-    router.push(`/draft/${eventId}`)
+  function goToDraft(slug: string) {
+    router.push(`/draft/${slug}`)
   }
 
   useEffect(() => {
@@ -88,6 +88,7 @@ export default function ThePinClient() {
         .from("fantasy_events")
         .select(`
           id,
+          slug,
           name,
           draft_date,
           draft_status,
@@ -225,7 +226,7 @@ export default function ThePinClient() {
                         {/* CLOSED — Draft happening - enter draft */}
                         {nextDraft.draft_status === "closed" && (
                           <button
-                            onClick={() => goToDraft(nextDraft.id)}
+                            onClick={() => goToDraft(nextDraft.slug)}
                             className="bg-[#1f4785] text-white px-4 py-2 rounded-md"
                           >
                             Enter Draft Room

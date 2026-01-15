@@ -1,13 +1,13 @@
 "use client"
 
-import { use, useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, use } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 
-type ParamsPromise = Promise<{ eventId: string }>
+type ParamsPromise = Promise<{ slug: string }>
 
 export default function DraftRoom({ params }: { params: ParamsPromise }) {
-  const { eventId } = use(params)
+  const { slug } = use(params)
   const router = useRouter()
 
   const [event, setEvent] = useState<any>(null)
@@ -15,136 +15,124 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
   const [players, setPlayers] = useState<any[]>([])
   const [picks, setPicks] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
-  const [user, setUser] = useState<any>(null) // authenticated user
+  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null)
   const [showModal, setShowModal] = useState(false)
-  const [selectedPositionFilter, setSelectedPositionFilter] = useState<
-    string | "all"
-  >("all")
+  const [selectedPositionFilter, setSelectedPositionFilter] = useState<string | "all">("all")
   const [curlingEvent, setCurlingEvent] = useState<any>(null)
+  const [myPickNumber, setMyPickNumber] = useState<number | null>(null)
+  const [teams, setTeams] = useState<any[]>([])
 
-  // =========================
-  // Load all data
-  // =========================
   async function loadAll() {
     setLoading(true)
 
-    // 1. Auth user
     const userResp = await supabase.auth.getUser()
     const authUser = userResp?.data?.user ?? null
-
-    if (!authUser) {
-      setUser(null)
-      setLoading(false)
-      return
-    }
-
     setUser(authUser)
 
-    // 2. Profile
+    if (!authUser) {
+        setLoading(false)
+        return
+    }
+
     const { data: profileData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", authUser.id)
-      .single()
+        .from("profiles")
+        .select("*")
+        .eq("id", authUser.id)
+        .single()
 
     setProfile(profileData ?? null)
 
-    // 3. Fantasy event
     const { data: e } = await supabase
-      .from("fantasy_events")
-      .select("*")
-      .eq("id", eventId)
-      .single()
+        .from("fantasy_events")
+        .select("*")
+        .eq("slug", slug)
+        .single()
 
-    setEvent(e ?? null)
+    setEvent(e)
 
-    // 4. Curling event
-    if (e?.curling_event_id) {
-      const { data: ce } = await supabase
+    if (!e) {
+        setLoading(false)
+        return
+    }
+
+    if (e.curling_event_id) {
+        const { data: ce } = await supabase
         .from("curling_events")
         .select("*")
         .eq("id", e.curling_event_id)
         .single()
 
-      setCurlingEvent(ce ?? null)
+        setCurlingEvent(ce ?? null)
+
+        const { data: teamsData } = await supabase
+        .from("teams")
+        .select("id, team_name")
+        .eq("curling_event_id", e.curling_event_id)
+
+        setTeams(teamsData ?? [])
+
+        const teamIds = teamsData?.map(t => t.id) ?? []
+
+        const { data: playerRows } = await supabase
+        .from("players")
+        .select("*")
+        .in("team_id", teamIds)
+
+        setPlayers(playerRows ?? [])
     } else {
-      setCurlingEvent(null)
+        setCurlingEvent(null)
+        setTeams([])
+        setPlayers([])
     }
 
-    // 5. Users in draft order
     const { data: u } = await supabase
-      .from("fantasy_event_users")
-      .select("user_id, draft_position, profiles(username)")
-      .eq("fantasy_event_id", eventId)
-      .order("draft_position")
+        .from("fantasy_event_users")
+        .select("user_id, draft_position, profiles(username)")
+        .eq("fantasy_event_id", e.id)
+        .order("draft_position")
 
     setUsers(u ?? [])
 
-    // 6. Players for this curling event
-    if (e?.curling_event_id) {
-      const { data: playerRows } = await supabase
-        .from("players")
-        .select(`
-          id,
-          first_name,
-          last_name,
-          position,
-          player_picture,
-          team_id,
-          teams (
-            id,
-            team_name,
-            gender,
-            slug,
-            curling_event_id
-          )
-        `)
-        .eq("teams.curling_event_id", e.curling_event_id)
+    const myRow = u?.find((row: any) => row.user_id === authUser.id)
+    setMyPickNumber(myRow?.draft_position ?? null)
 
-      setPlayers(playerRows ?? [])
-    } else {
-      setPlayers([])
-    }
-
-    // 7. Existing picks
     const { data: pk } = await supabase
-      .from("fantasy_picks")
-      .select(`
+        .from("fantasy_picks")
+        .select(`
         id,
         player_id,
         user_id,
         players (
-          first_name,
-          last_name,
-          position
+            first_name,
+            last_name,
+            position
         )
-      `)
-      .eq("fantasy_event_id", eventId)
+        `)
+        .eq("fantasy_event_id", e.id)
 
     setPicks(pk ?? [])
 
     setLoading(false)
-  }
+    }
 
-  // Initial + reload on eventId
   useEffect(() => {
     loadAll()
-  }, [eventId])
+  }, [slug])
 
-  // Realtime updates
   useEffect(() => {
+    if (!event?.id) return
+
     const channel = supabase
-      .channel(`draft-${eventId}`)
+      .channel(`draft-${event.id}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "fantasy_events",
-          filter: `id=eq.${eventId}`,
+          filter: `id=eq.${event.id}`,
         },
         (payload) => setEvent(payload.new)
       )
@@ -154,7 +142,7 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
           event: "*",
           schema: "public",
           table: "fantasy_picks",
-          filter: `fantasy_event_id=eq.${eventId}`,
+          filter: `fantasy_event_id=eq.${event.id}`,
         },
         () => loadAll()
       )
@@ -163,31 +151,20 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [eventId])
+  }, [event?.id])
 
-  // Auto-select position filter based on round
   useEffect(() => {
     if (!users.length) return
-
     const totalPicks = picks.length
-    const round = Math.min(
-      Math.max(Math.floor(totalPicks / users.length) + 1, 1),
-      4
-    )
-
+    const round = Math.min(Math.max(Math.floor(totalPicks / users.length) + 1, 1), 4)
     const roundToPosition: Record<number, string> = {
       1: "Lead",
       2: "Second",
       3: "Vice Skip",
       4: "Skip",
     }
-
     setSelectedPositionFilter(roundToPosition[round] ?? "all")
   }, [users, picks])
-
-  // =========================
-  // Derived state
-  // =========================
 
   const currentIndex = useMemo(
     () => (event ? (event.current_pick ?? 1) - 1 : 0),
@@ -217,11 +194,18 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     [players, draftedPlayerIds, selectedPositionFilter]
   )
 
+  const teamMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    teams.forEach(t => {
+        map[t.id] = t.team_name
+    })
+    return map
+    }, [teams])
+
   function slot(position: string) {
     const pick = picks.find(
       (p) => p.user_id === user?.id && p.players?.position === position
     )
-
     if (!pick) return "—"
     return `${pick.players.first_name} ${pick.players.last_name}`
   }
@@ -230,33 +214,31 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     if (!user || !selectedPlayer) return
 
     const res = await fetch("/api/pickPlayer", {
-      method: "POST",
-      body: JSON.stringify({
-        eventId,
+        method: "POST",
+        body: JSON.stringify({
+        eventId: event.id,
         playerId: selectedPlayer.id,
         userId: user.id,
-      }),
+        }),
     })
 
     const data = await res.json()
-    console.log("pickPlayer response:", data)
 
     if (!res.ok) {
-      alert(`Error: ${data.error ?? "Unknown error"}`)
-      return
+        alert(`Error: ${data.error ?? "Unknown error"}`)
+        return
     }
 
-  if (data.userFinished || data.draftFinished) {
-    router.push("/myrinks")
-    return
-  }
+    if (data.userFinished || data.draftFinished) {
+        router.push("/myrinks")
+        return
+    }
 
     setShowModal(false)
     setSelectedPlayer(null)
 
-    await loadAll()
-  }
-
+    router.refresh()
+    }
 
   if (loading || !event) {
     return (
@@ -265,145 +247,130 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
       </div>
     )
   }
-
-  return (
+    return (
     <div className="p-6 flex flex-col gap-6">
-
-      {/* HEADER */}
-      <header className="bg-white shadow-md p-6 border border-gray-200 text-center">
+        <header className="bg-white shadow-md p-6 border border-gray-200 text-center rounded-lg">
         <h1 className="text-4xl font-bold">
-          Draft Room — {event?.name ?? "Loading..."}
+            Draft Room — {event?.name ?? "Loading..."}
         </h1>
-
         <p className="text-gray-600 mt-1">
-          The {curlingEvent.name?? ""} event begins on{" "}
-          {curlingEvent
+            The {curlingEvent?.name ?? ""} event begins on{" "}
+            {curlingEvent
             ? new Date(curlingEvent.start_date).toLocaleDateString()
             : "TBD"}
         </p>
+        </header>
 
-        <p className="mt-2 font-medium">
-          Current Pick: {event?.current_pick ?? "…"} —{" "}
-          {currentUser?.profiles?.username || user?.email || "Loading..."}
-        </p>
-      </header>
-
-      <div className="flex gap-6">
-
-        {/* LEFT SIDEBAR */}
+        <div className="flex gap-6">
         <div className="w-1/4 flex flex-col gap-6">
+            <div className="bg-white shadow-md p-6 border border-gray-200 rounded-lg flex flex-col items-center justify-center h-64 text-center">
+            <h2 className="text-xl font-semibold mb-3">Your Pick Number</h2>
+            <div className="text-5xl font-bold text-[#162a4a] mb-4">
+                {myPickNumber ?? "—"}
+            </div>
+            <p className="text-gray-600">
+                Current Pick: <strong>{event?.current_pick ?? "…"}</strong>
+            </p>
+            <p className="text-gray-600">
+                User:{" "}
+                <strong>
+                {currentUser?.profiles?.username ?? "—"}
+                </strong>
+            </p>
+            </div>
 
-          {/* EVENT LOGO */}
-          <div className="bg-white shadow-md p-6 border border-gray-200 h-64 flex items-center justify-center">
-            <p className="text-gray-500">Event Logo Here</p>
-          </div>
-
-          {/* USER TEAM */}
-          <div className="bg-white shadow-md p-6 border border-gray-200">
+            <div className="bg-white shadow-md p-6 border border-gray-200 rounded-lg">
             <h2 className="text-xl font-semibold mb-4">Your Team</h2>
-
             <p><strong>Lead:</strong> {slot("Lead")}</p>
             <p><strong>Second:</strong> {slot("Second")}</p>
             <p><strong>Vice Skip:</strong> {slot("Vice Skip")}</p>
             <p><strong>Skip:</strong> {slot("Skip")}</p>
-          </div>
+            </div>
         </div>
 
-        {/* MAIN DRAFT AREA */}
         <div className="flex-1">
-
-          {myTurn ? (
+            {myTurn ? (
             <>
-              <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse rounded-lg overflow-hidden">
                 <thead>
-                  <tr className="bg-gray-100 text-gray-700">
+                    <tr className="bg-gray-100 text-gray-700">
                     <th className="py-3 px-4">#</th>
                     <th className="py-3 px-4">Pic</th>
                     <th className="py-3 px-4">Name</th>
                     <th className="py-3 px-4">Team</th>
                     <th className="py-3 px-4">Position</th>
-                  </tr>
+                    </tr>
                 </thead>
-
                 <tbody>
-                  {playersToShow.map((p, index:number) => (
+                    {playersToShow.map((p: any, index: number) => (
                     <tr
-                      key={p.id}
-                      className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                        key={p.id}
+                        className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
                     >
-                      <td className="py-3 px-4">{index + 1}</td>
-
-                      <td className="py-3 px-4">
+                        <td className="py-3 px-4">{index + 1}</td>
+                        <td className="py-3 px-4">
                         <img
-                          src={p.player_picture || "/default-player.png"}
-                          className="w-10 h-10 rounded-full object-cover"
-                          alt={`${p.first_name} ${p.last_name}`}
+                            src={p.player_picture || "/default-player.png"}
+                            className="w-10 h-10 rounded-full object-cover"
+                            alt={`${p.first_name} ${p.last_name}`}
                         />
-                      </td>
-
-                      <td
+                        </td>
+                        <td
                         className="py-3 px-4 font-medium text-blue-700 cursor-pointer hover:underline"
                         onClick={() => {
-                          setSelectedPlayer(p)
-                          setShowModal(true)
+                            setSelectedPlayer(p)
+                            setShowModal(true)
                         }}
-                      >
+                        >
                         {p.first_name} {p.last_name}
-                      </td>
-
-                      <td className="py-3 px-4">
-                        {p.teams?.team_name ?? "Unknown"}
-                      </td>
-
-                      <td className="py-3 px-4">
+                        </td>
+                        <td className="py-3 px-4">
+                        {teamMap[p.team_id] ?? "Unknown"}
+                        </td>
+                        <td className="py-3 px-4">
                         {p.position}
-                      </td>
+                        </td>
                     </tr>
-                  ))}
+                    ))}
                 </tbody>
-              </table>
+                </table>
             </>
-          ) : (
+            ) : (
             <div className="text-center py-10">
-              <h2 className="text-xl font-semibold mb-2">Waiting for the next pick...</h2>
-              <p className="text-gray-600">It’s not your turn yet.</p>
+                <h2 className="text-xl font-semibold mb-2">Waiting for the next pick...</h2>
+                <p className="text-gray-600">It’s not your turn yet.</p>
             </div>
-          )}
+            )}
         </div>
-      </div>
+        </div>
 
-      {/* MODAL */}
-      {showModal && selectedPlayer && (
+        {showModal && selectedPlayer && (
         <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 shadow-xl rounded-lg w-96 border border-gray-200">
+            <div className="bg-white p-6 shadow-xl rounded-lg w-96 border border-gray-200">
             <h3 className="text-xl font-semibold mb-4">Add Player</h3>
-
             <p className="mb-2 text-lg font-medium">
-              {selectedPlayer.first_name} {selectedPlayer.last_name}
+                {selectedPlayer.first_name} {selectedPlayer.last_name}
             </p>
-
             <p className="text-gray-600 mb-6">
-              from <strong>{selectedPlayer.teams?.team_name}</strong>
+                from <strong>{teamMap[selectedPlayer.team_id]}</strong>
             </p>
-
             <div className="flex justify-end gap-4">
-              <button
+                <button
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
-              >
+                >
                 Cancel
-              </button>
-
-              <button
+                </button>
+                <button
                 onClick={confirmPick}
                 className="px-4 py-2 rounded-md bg-[#162a4a] text-white hover:bg-[#1d355f]"
-              >
+                >
                 Confirm
-              </button>
+                </button>
             </div>
-          </div>
+            </div>
         </div>
-      )}
+        )}
     </div>
-  )
+    )
 }

@@ -73,8 +73,7 @@ export default function PicksPage() {
           teams (
             id,
             team_name,
-            gender,
-            slug
+            gender
           )
         )
       `)
