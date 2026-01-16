@@ -86,24 +86,34 @@ export default function ThePinClient() {
 
       setProfile(profileData)
 
-      const { data: drafts } = await supabase
-        .from("fantasy_events")
-        .select(`
-          id,
-          slug,
-          name,
-          description,
-          draft_date,
-          draft_status,
-          max_users,
-          created_by,
-          users:profiles ( id, username, is_public ),
-          curling_events ( * ),
-          fantasy_event_users!inner ( user_id )
-        `)
-        .eq("fantasy_event_users.user_id", userData.user.id)
-        .in("draft_status", ["open", "closed"])
-        .order("draft_date", { ascending: true })
+    const { data: drafts } = await supabase
+      .from("fantasy_events")
+      .select(`
+        id,
+        slug,
+        name,
+        description,
+        draft_date,
+        draft_status,
+        max_users,
+        created_by,
+
+      sender:profiles!fantasy_events_created_by_fkey (
+        id,
+        username,
+        avatar_url,
+        is_public
+      ),
+
+        users:profiles ( id, username, is_public ),
+
+        curling_events ( * ),
+
+        fantasy_event_users!inner ( user_id )
+      `)
+      .eq("fantasy_event_users.user_id", userData.user.id)
+      .in("draft_status", ["open", "closed"])
+      .order("draft_date", { ascending: true })
 
       const processedDrafts = (drafts ?? [])
         .filter(Boolean)
@@ -115,12 +125,18 @@ export default function ThePinClient() {
       setUpcomingDrafts(processedDrafts)
 
       const { data: leagueData } = await supabase
-        .from("fantasy_events")
-        .select(`
-          *,
-          fantasy_event_users ( user_id ),
-          fantasy_event_user_invites ( id, user_id )
-        `)
+      .from("fantasy_events")
+      .select(`
+        *,
+        sender:profiles!fantasy_events_created_by_fkey (
+          id,
+          username,
+          avatar_url,
+          is_public
+        ),
+        fantasy_event_users ( user_id ),
+        fantasy_event_user_invites ( id, user_id )
+      `)
 
       if (leagueData) {
         const processedLeagues = leagueData
@@ -156,11 +172,6 @@ export default function ThePinClient() {
     const updated = [...dismissedInvites, inviteId];
     setDismissedInvites(updated);
     localStorage.setItem("dismissedInvites", JSON.stringify(updated));
-  }
-
-  function formatDate(dateString: string) {
-    const [year, month, day] = dateString.split("-")
-    return `${month}/${day}/${year}`
   }
 
   const privateInvites = leagues.filter((l) => {
@@ -240,40 +251,59 @@ export default function ThePinClient() {
                   {/* INVITES */}
                   {privateInvites.length > 0 && (
                     <div className="mb-6">
-                      <h2 className="text-xl font-semibold mb-3">You’ve Been Invited!</h2>
-
                       <div className="space-y-4">
                         {privateInvites.map((league) => {
                           const invite = league.fantasy_event_user_invites.find(
                             (inv: { id: string; user_id: string }) => inv.user_id === user?.id
                           );
+                            return (    
+                              <div key={league.id} className="p-5 rounded-lg bg-blue-50 border border-blue-200 flex justify-between items-start">
+                                {/* LEFT SIDE — MESSAGE */}
+                                <div className="flex flex-col gap-1">
+                                  <h2 className="text-lg font-bold text-blue-900">You’ve been invited!</h2>
+                                  <p className="text-sm text-gray-700">
+                                    Join <span className="font-semibold">{league.name}</span> – a private league created by{" "}
+                                    
+                                    {league.sender?.is_public ? (
+                                      <span
+                                        onClick={() => router.push(`/profile/${league.sender.username}`)}
+                                        className="font-semibold text-blue-700 cursor-pointer hover:underline"
+                                      >
+                                        {league.sender.username}
+                                      </span>
+                                    ) : (
+                                      <span className="font-semibold">
+                                        {league.sender?.username ?? "someone"}
+                                      </span>
+                                    )}
+                                    .
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-1 italic">
+                                    Ignoring an invite does not decline it.
+                                  </p>
+                                </div>
 
-                          return (
-                            <div
-                              key={league.id}
-                              className="border p-4 rounded-lg bg-yellow-50 flex justify-between items-center"
-                            >
-                              <div>
-                                <p className="font-semibold">{league.name}</p>
-                                <p className="text-sm text-gray-600">Private League Invite</p>
-                              </div>
+                                {/* RIGHT SIDE — ACTIONS */}
+                                <div className="flex flex-col items-end gap-2">
+                                  {/* CLOSE / IGNORE */}
+                                  <button
+                                    onClick={() => dismissInvite(invite.id)}
+                                    className="text-gray-500 hover:text-gray-700 text-xl leading-none"
+                                    aria-label="Ignore invite"
+                                  >
+                                    ×
+                                  </button>
 
-                              <div className="flex gap-3">
-                                <button
-                                  onClick={() => dismissInvite(invite.id)}
-                                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md"
-                                >
-                                  Ignore
-                                </button>
-                                <button
-                                  onClick={() => router.push(`/leagues/${league.id}`)}
-                                  className="bg-[#1f4785] text-white px-4 py-2 rounded-md"
-                                >
-                                  Join
-                                </button>
+                                  {/* VIEW BUTTON */}
+                                  <button
+                                    onClick={() => router.push(`/league/${league.slug}`)}
+                                    className="bg-[#1f4785] text-white px-4 py-2 rounded-md hover:bg-[#163766] transition text-sm"
+                                  >
+                                    View Details
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          );
+                            )
                         })}
                       </div>
                     </div>
@@ -283,8 +313,8 @@ export default function ThePinClient() {
                   <section>
                     {!nextDraft && (
                       <p className="text-gray-600">
-                        No upcoming drafts —{" "}
-                        <a href="/leagues" className="text-[#ac0000] underline">
+                        No upcoming drafts -{" "}
+                        <a href="/leagueplay" className="text-[#ac0000] underline">
                           find a league
                         </a>
                       </p>

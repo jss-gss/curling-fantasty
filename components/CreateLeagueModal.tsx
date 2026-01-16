@@ -8,7 +8,6 @@ interface CreateLeagueModalProps {
   onSubmit: (payload: any) => void;
   onDelete?: () => void;
   events: any[];
-  activeLeagueCount: number;
   isNew: boolean;
   league?: any; // used when editing
 }
@@ -19,7 +18,6 @@ export default function CreateLeagueModal({
   onSubmit,
   onDelete,
   events,
-  activeLeagueCount,
   isNew,
   league
 }: CreateLeagueModalProps) {
@@ -108,6 +106,8 @@ export default function CreateLeagueModal({
       usernames
     });
   };
+  
+  const futureEvents = events.filter(ev => new Date(ev.start_date) > new Date())
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
@@ -172,7 +172,7 @@ export default function CreateLeagueModal({
             className="w-full border p-2 rounded mb-3"
           >
             <option value="">Select Event</option>
-            {events.map((ev) => (
+            {futureEvents.map((ev) => (
               <option key={ev.id} value={ev.id}>
                 {ev.year} {ev.name} in {ev.location}
               </option>
@@ -180,7 +180,7 @@ export default function CreateLeagueModal({
           </select>
         ) : (
           <div className="mb-3">
-            <div className="p-2 text-lg roundedtext-gray-700">
+            <div className="p-2 text-lg rounded text-gray-700">
               {(() => {
                 const ev = events.find((e) => e.id === eventId)
                 return ev ? `${ev.year} ${ev.name} in ${ev.location}` : "Unknown Event"

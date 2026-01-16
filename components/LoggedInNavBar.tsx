@@ -37,7 +37,7 @@ export default function NavBar() {
   const tabs = [
     { name: "The Pin", href: "/thepin" },
     { name: "My Rinks", href: "/myrinks" },
-    { name: "League Play", href: "/leagues" },
+    { name: "League Play", href: "/leagueplay" },
     { name: "Leaderboard", href: "/leaderboard" },
   ]
 

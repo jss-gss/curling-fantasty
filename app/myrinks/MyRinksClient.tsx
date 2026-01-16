@@ -110,6 +110,7 @@ export default function PicksPage() {
         draft_date,
         created_by, 
         is_public,
+        slug,
         curling_events (
           id,
           name,
@@ -262,7 +263,6 @@ export default function PicksPage() {
             <div className="space-y-10">
               {completedLeagues.map((league: any) => {
                 const picks = userPicksByEvent[league.id] ?? []
-
                 return (
                   <div key={league.id} className="space-y-6">
 
@@ -302,7 +302,7 @@ export default function PicksPage() {
                       </div>
 
                       <button
-                        onClick={() => alert("Results page coming soon!")}
+                        onClick={() => router.push(`/league/${league.slug}`)}
                         className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition"
                       >
                         View Results

@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import Image from "next/image"
 import Link from "next/link"
+import confetti from "canvas-confetti"
 import LoggedInNavBar from "@/components/LoggedInNavBar"
 
 type League = {
@@ -39,10 +41,107 @@ type LeaderboardRow = {
   }
 }
 
+export function CompletedLeagueResults({standings, }: { standings: LeaderboardRow[] }) {
+  useEffect(() => {
+  const timer = setTimeout(() => {
+    confetti({
+      particleCount: 500,
+      spread: 100,
+      origin: { y: 0.5 }
+    })
+  }, 1000)
+
+  return () => clearTimeout(timer)
+}, [])
+
+  if (!standings || standings.length === 0) {
+    return <p className="text-gray-500">No results available.</p>
+  }
+
+  const first = standings[0]
+  const second = standings[1]
+  const third = standings[2]
+  const rest = standings.slice(3)
+
+  return (
+    <div className="mt-6">
+
+      {/* PODIUM */}
+      <div className="flex items-end justify-center gap-6 mb-10">
+
+        {/* SECOND */}
+        {second && (
+          <div className="flex flex-col items-center">
+            <div className="bg-gray-300 text-gray-900 px-4 py-1 rounded-t-md font-semibold">
+              2nd
+            </div>
+            <div className="bg-gray-100 p-4 rounded-md shadow-md w-40 text-center">
+              <p className="font-bold">
+                {second.profile?.username ?? second.user_id.slice(0, 6)}
+              </p>
+              <p className="text-sm text-gray-600">{second.total_points} pts</p>
+            </div>
+          </div>
+        )}
+
+        {/* FIRST */}
+        {first && (
+          <div className="flex flex-col items-center">
+            <div className="bg-yellow-300 text-yellow-900 px-4 py-1 rounded-t-md font-semibold">
+              1st
+            </div>
+            <div className="bg-yellow-100 p-6 rounded-md shadow-lg w-48 text-center border-2 border-yellow-400">
+              <p className="font-bold text-lg">
+                {first.profile?.username ?? first.user_id.slice(0, 6)}
+              </p>
+              <p className="text-sm text-gray-700">{first.total_points} pts</p>
+            </div>
+          </div>
+        )}
+
+        {/* THIRD */}
+        {third && (
+          <div className="flex flex-col items-center">
+            <div className="bg-orange-300 text-orange-900 px-4 py-1 rounded-t-md font-semibold">
+              3rd
+            </div>
+            <div className="bg-orange-100 p-4 rounded-md shadow-md w-40 text-center">
+              <p className="font-bold">
+                {third.profile?.username ?? third.user_id.slice(0, 6)}
+              </p>
+              <p className="text-sm text-gray-600">{third.total_points} pts</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* REST OF STANDINGS */}
+      <div className="space-y-3">
+        {rest.map((entry: LeaderboardRow, index: number) => (
+          <div
+            key={entry.user_id}
+            className="flex items-center justify-between bg-gray-50 p-4 rounded-md shadow-sm border"
+          >
+            <span className="font-semibold">
+              {index + 4}.{" "}
+              {entry.profile?.username ?? entry.user_id.slice(0, 6)}
+            </span>
+            <span className="text-gray-700">{entry.total_points} pts</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function LeagueLeaderboardPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const tabFromUrl = searchParams.get("tab")
+
   const [leagues, setLeagues] = useState<League[]>([])
   const [leaderboards, setLeaderboards] = useState<Record<string, LeaderboardRow[]>>({})
-  const [activeTab, setActiveTab] = useState<"current" | "top" | "past">("current")
+  const [activeTab, setActiveTab] = useState<"current" | "top" | "past" | "completed">((tabFromUrl as any) || "current")
   const [loading, setLoading] = useState(true)
   const [events, setEvents] = useState<any[]>([])
   const [topCurlers, setTopCurlers] = useState<Record<string, Record<string, any[]>>>({})
@@ -51,6 +150,8 @@ export default function LeagueLeaderboardPage() {
   const [filterPosition, setFilterPosition] = useState("ALL")
   const [filterLeagueScope, setFilterLeagueScope] = useState<"ALL" | "MINE">("ALL")
   const [userId, setUserId] = useState<string | null>(null)
+
+
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -153,6 +254,23 @@ export default function LeagueLeaderboardPage() {
     setLoading(false)
   }
 
+  const filtered = leagues.filter((league) => {
+    if (filterLeagueScope === "ALL") return true
+    if (filterLeagueScope === "MINE") {
+      if (!userId) return false
+      return league.members?.includes(userId)
+    }
+    return true
+  })
+
+  const completed = filtered.filter(
+    (l) => l.draft_status === "completed"
+  )
+
+  const active = filtered.filter(
+    (l) => l.draft_status !== "completed"
+  )
+
   useEffect(() => {
     if (activeTab === "top") {
       loadTopCurlers()
@@ -190,115 +308,125 @@ export default function LeagueLeaderboardPage() {
     setLoading(false)
   }
 
+  const tabs: { key: "completed" | "current" | "top" | "past" ; label: string }[] = [
+    { key: "current", label: "Current" },
+    { key: "top", label: "Top Curlers" },
+    { key: "past", label: "Past Events" },
+  ]
+
+  if (completed.length > 0) {
+    tabs.push({ key: "completed", label: "Completed Leagues" })
+  }
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab as any)
+    router.push(`?tab=${tab}`)
+  }
+
   return (
     <>
       <LoggedInNavBar />
 
-      <div className="pt-16 max-w-5xl mx-auto px-6 py-10">
+      <div className="pt-16 max-w-6xl mx-auto px-6 py-10">
         <h1 className="text-3xl font-bold mb-8">Leaderboards</h1>
 
         <div className="flex items-center justify-between mb-8">
-        {/* LEFT: Tabs */}
-        <div className="flex gap-4">
-          {[
-            { key: "current", label: "Current Leagues" },
-            { key: "top", label: "Top Curlers" },
-            { key: "past", label: "Past Event Results" }
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key as any)}
-              className={`px-4 py-2 ${
-                activeTab === tab.key
-                  ? "bg-[#1f4785] text-white border-blue-600 rounded-md"
-                  : "bg-gray-100 text-gray-700 border-gray-300 rounded-md"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          <div className="flex gap-4">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)}
+                className={`px-4 py-2 ${
+                  activeTab === tab.key
+                    ? "bg-[#1f4785] text-white border-blue-600 rounded-md"
+                    : "bg-gray-100 text-gray-700 border-gray-300 rounded-md"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* RIGHT: Filters (only visible on TOP tab) */}
+          {activeTab === "top" && (
+            <div className="flex items-center gap-4 text-gray-700">
+
+              {/* Divider */}
+              <div className="h-6 w-px bg-gray-300" />
+
+              <span className="font-medium">Filter By:</span>
+
+              {/* Event Filter */}
+              <div className="relative">
+                <select
+                  value={filterEvent}
+                  onChange={(e) => setFilterEvent(e.target.value)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
+                >
+                  <option value="ALL">Event</option>
+                  {events.map((ev) => (
+                    <option key={ev.id} value={ev.id}>
+                      {ev.year} {ev.name}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Custom arrow */}
+                <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  ⌵
+                </div>
+              </div>
+
+              {/* Position Filter */}
+              <div className="relative">
+                <select
+                  value={filterPosition}
+                  onChange={(e) => setFilterPosition(e.target.value)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
+                >
+                  <option value="ALL">Position</option>
+                  {positions.map((pos) => (
+                    <option key={pos} value={pos}>
+                      {pos}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Custom arrow */}
+                <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  ⌵
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab == "current" && (
+            <div className="flex items-center gap-4 text-gray-700">
+              {/* Divider */}
+              <div className="h-6 w-px bg-gray-300" />
+
+              <span className="font-medium">Filter By:</span>
+
+              {/* League Scope Filter */}
+              <div className="relative">
+                <select
+                  value={filterLeagueScope}
+                  onChange={(e) => setFilterLeagueScope(e.target.value as "ALL" | "MINE")}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
+                >
+                  <option value="ALL">All Leagues</option>
+                  <option value="MINE">My Leagues</option>
+                </select>
+
+                {/* Custom arrow (optional) */}
+                <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 rounded-md">
+                  ⌵
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
-
-        {/* RIGHT: Filters (only visible on TOP tab) */}
-        {activeTab === "top" && (
-          <div className="flex items-center gap-4 text-gray-700">
-
-            {/* Divider */}
-            <div className="h-6 w-px bg-gray-300" />
-
-            <span className="font-medium">Filter By:</span>
-
-            {/* Event Filter */}
-            <div className="relative">
-              <select
-                value={filterEvent}
-                onChange={(e) => setFilterEvent(e.target.value)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
-              >
-                <option value="ALL">Event</option>
-                {events.map((ev) => (
-                  <option key={ev.id} value={ev.id}>
-                    {ev.year} {ev.name}
-                  </option>
-                ))}
-              </select>
-
-              {/* Custom arrow */}
-              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-                ⌵
-              </div>
-            </div>
-
-            {/* Position Filter */}
-            <div className="relative">
-              <select
-                value={filterPosition}
-                onChange={(e) => setFilterPosition(e.target.value)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
-              >
-                <option value="ALL">Position</option>
-                {positions.map((pos) => (
-                  <option key={pos} value={pos}>
-                    {pos}
-                  </option>
-                ))}
-              </select>
-
-              {/* Custom arrow */}
-              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-                ⌵
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab == "current" && (
-          <div className="flex items-center gap-4 text-gray-700">
-            {/* Divider */}
-            <div className="h-6 w-px bg-gray-300" />
-
-            <span className="font-medium">Filter By:</span>
-
-            {/* League Scope Filter */}
-            <div className="relative">
-              <select
-                value={filterLeagueScope}
-                onChange={(e) => setFilterLeagueScope(e.target.value as "ALL" | "MINE")}
-                className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
-              >
-                <option value="ALL">All Leagues</option>
-                <option value="MINE">My Leagues</option>
-              </select>
-
-              {/* Custom arrow (optional) */}
-              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 rounded-md">
-                ⌵
-              </div>
-            </div>
-          </div>
-        )}
-
-      </div>
         {activeTab === "current" && (
           <>
             {loading && <p>Loading...</p>}
@@ -316,74 +444,8 @@ export default function LeagueLeaderboardPage() {
                     return true
                   })
 
-                  const completed = filtered.filter(
-                    (l) => l.draft_status === "completed"
-                  )
-
-                  const active = filtered.filter(
-                    (l) => l.draft_status !== "completed"
-                  )
-
                   return (
                     <div className="space-y-4">
-
-                      {/* COMPLETED LEAGUES */}
-                      {completed.length > 0 && (
-                        <>
-                          <h2 className="text-2xl font-bold mb-3 mt-6">Completed Leagues</h2>
-
-                          <div className="space-y-6 mb-10">
-                            {completed.map((league) => (
-                              <div
-                                key={league.id}
-                                className="bg-white shadow-md p-6 rounded-lg border border-gray-200 flex items-center justify-between"
-                              >
-                                <div>
-                                  {/* HEADER WITH BADGES */}
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <h3 className="text-xl font-semibold">{league.name}</h3>
-
-                                    {league.is_public ? (
-                                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-                                        public
-                                      </span>
-                                    ) : (
-                                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
-                                        private
-                                      </span>
-                                    )}
-
-                                    {league.is_commissioner && (
-                                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                                        commissioner
-                                      </span>
-                                    )}
-
-                                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
-                                      completed
-                                    </span>
-                                  </div>
-
-                                  {/* EVENT INFO */}
-                                  {league.curling_events && (
-                                    <p className="text-gray-700 flex items-center justify-between">
-                                      {league.curling_events.year} {league.curling_events.name} in{" "}
-                                      {league.curling_events.location}
-                                    </p>
-                                  )}
-                                </div>
-
-                                <button
-                                  onClick={() => alert("Results page coming soon!")}
-                                  className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition"
-                                >
-                                  View Results
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </>
-                      )}
 
                       {/* ACTIVE LEAGUES */}
                       {active.length > 0 && (
@@ -619,6 +681,62 @@ export default function LeagueLeaderboardPage() {
             )}
           </>
         )}
+
+        {activeTab === "completed" && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold mb-3 mt-6">Completed Leagues</h2>
+
+            <div className="space-y-6 mb-10">
+              {completed.map((league) => {
+                const standings = leaderboards[league.id] ?? []
+
+                return (
+                  <div
+                    key={league.id}
+                    className="bg-white shadow-md p-6 rounded-lg border border-gray-200"
+                  >
+                    {/* HEADER */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-xl font-semibold">{league.name}</h3>
+
+                      {league.is_public ? (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                          public
+                        </span>
+                      ) : (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                          private
+                        </span>
+                      )}
+
+                      {league.is_commissioner && (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                          commissioner
+                        </span>
+                      )}
+
+                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
+                        completed
+                      </span>
+                    </div>
+
+                    {/* EVENT INFO */}
+                    {league.curling_events && (
+                      <p className="text-gray-700 mb-6">
+                        {league.curling_events.year} {league.curling_events.name} in{" "}
+                        {league.curling_events.location}
+                      </p>
+                    )}
+
+                    {/* PODIUM + STANDINGS */}
+                    <CompletedLeagueResults standings={standings} />
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
       </div>
     </>
   )

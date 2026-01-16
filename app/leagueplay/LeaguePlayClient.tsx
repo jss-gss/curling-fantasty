@@ -1,11 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import LoggedInNavBar from "@/components/LoggedInNavBar"
 import CreateLeagueModal from "@/components/CreateLeagueModal"
 
 export default function LeaguesPage() {
+  const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [leagues, setLeagues] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,10 +67,13 @@ export default function LeaguesPage() {
   //modal 
   const [showModal, setShowModal] = useState(false);
   const [events, setEvents] = useState<any[]>([])
-  const [activeLeagueCount, setActiveLeagueCount] = useState(0)
-  
+    
   // ui
   const [activeTab, setActiveTab] = useState<"mine" | "explore" >("mine")
+  const activeLeagueCount = leagues.filter(l =>
+    l.created_by === user.id &&
+    ["open", "closed", "locked"].includes(l.draft_status)
+  ).length
 
   useEffect(() => {
     async function loadLeagues() {
@@ -115,14 +120,14 @@ export default function LeaguesPage() {
         invited: l.fantasy_event_user_invites?.some(
           (inv: { user_id: string }) => inv.user_id === userData.user.id
         )
-      }));
+      }))
 
       setLeagues(processed);
       setLoading(false);
     }
 
     loadLeagues();
-  }, []);
+  }, [])
 
   useEffect(() => {
     async function loadEvents() {
@@ -268,7 +273,7 @@ export default function LeaguesPage() {
         {/* COMPLETED OVERRIDE */}
         {isComplete ? (
           <button
-            onClick={() => alert("Results page coming soon!")}
+            onClick={() => router.push(`/league/${league.slug}`)}
             className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition"
           >
             View Results
@@ -550,7 +555,6 @@ export default function LeaguesPage() {
         onSubmit={editingLeague ? handleUpdateLeague : handleCreateLeague}
         onDelete={editingLeague ? () => handleDeleteLeague(editingLeague.id) : undefined}
         events={events}
-        activeLeagueCount={activeLeagueCount}
         isNew={!editingLeague}
         league={editingLeague}
       />
@@ -579,29 +583,36 @@ export default function LeaguesPage() {
             ))}
           </div>
 
-          {/* Create League Floating Button */}
-            <div className="relative group">
-              <button
-                disabled={activeLeagueCount >= 2}
-                onClick={() => {
-                  setEditingLeague(null)
-                  setShowModal(true)
-                }}
-                className={`w-12 h-12 flex items-center justify-center rounded-full text-white text-2xl shadow-md transition
-                  ${
-                    activeLeagueCount >= 2
-                      ? "bg-gray-300 cursor-not-allowed"
-                      : "bg-[#1f4785] hover:bg-[#163766]"
-                  }`}
-              >
-                +
-              </button>
+          <div className="relative group">
+            <button
+              disabled={activeLeagueCount >= 2}
+              onClick={() => {
+                setEditingLeague(null)
+                setShowModal(true)
+              }}
+              className={`w-12 h-12 flex items-center justify-center rounded-full text-white text-2xl shadow-md transition
+                ${
+                  activeLeagueCount >= 2
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-[#1f4785] hover:bg-[#163766]"
+                }`}
+            >
+              +
+            </button>
 
-              <span
-                className="absolute left-1/2 -translate-x-1/2 -bottom-12 whitespace-nowrap px-3 py-1 rounded-md text-sm bg-white/60 text-black backdrop-blur-sm opacity-0 group-hover:opacity-100 transition pointer-events-none">
-                Create League
-              </span>
-            </div>
+            <span
+              className={`
+                absolute left-1/2 -translate-x-1/2 -bottom-12 whitespace-nowrap px-3 py-1 rounded-md text-sm 
+                backdrop-blur-sm transition pointer-events-none
+                ${activeLeagueCount >= 2 ? "bg-red-200 text-red-800" : "bg-white/60 text-black"}
+                opacity-0 group-hover:opacity-100
+              `}
+            >
+              {activeLeagueCount >= 2
+                ? "Limit reached - max two active drafts"
+                : "Create League"}
+            </span>
+          </div>
         </div>
 
         {loading && <p>Loading leagues...</p>}
