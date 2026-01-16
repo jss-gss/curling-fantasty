@@ -15,14 +15,12 @@ type League = {
   max_users: number
   draft_date: string
   created_by: string
-
   sender?: {
     id: string
     username: string
     avatar_url?: string
     is_public?: boolean
   }
-
   curling_events?: {
     id: string
     year: number
@@ -31,7 +29,6 @@ type League = {
     start_date: string
     round_robin_end_date: string
   }
-
   fantasy_event_users: LeagueUser[]
   fantasy_event_user_invites: { user_id: string }[]
   fantasy_picks: Pick[]
@@ -69,111 +66,114 @@ type Pick = {
 type ParamsPromise = Promise<{ slug: string }>
 
 export default function DraftRoom({ params }: { params: ParamsPromise }) {
-    const { slug } = use(params)
-    const [league, setLeague] = useState<League | null>(null)
-    const [user, setUser] = useState<any>(null) 
+  const { slug } = use(params)
+  const [league, setLeague] = useState<League | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        window.location.href = "/login"
+        return
+      }
+      const res = await fetch("/api/check-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id })
+      })
+      const data = await res.json()
+      if (!data.allowed) {
+        window.location.href = "/login"
+        return
+      }
+      setUserId(user.id)
+    }
+    checkAuth()
+  }, [])
+
+  useEffect(() => {
+    if (!userId) return
     const fetchLeague = async () => {
-        const { data, error } = await supabase
+      const { data } = await supabase
         .from("fantasy_events")
         .select(`
-            *,
-            sender:profiles!fantasy_events_created_by_fkey (
-            id,
-            username,
-            avatar_url,
-            is_public
-            ),
-            curling_events (*),
-            fantasy_event_users (
-            user_id,
-            draft_position,
-            points,
-            rank,
-            profiles (
-                id,
-                username,
-                avatar_url,
-                is_public
-            )
-            ),
-            fantasy_event_user_invites (
-            user_id
-            ),
-            fantasy_picks (
-            user_id,
-            player_id,
+          *,
+          sender:profiles!fantasy_events_created_by_fkey (
+            id, username, avatar_url, is_public
+          ),
+          curling_events (*),
+          fantasy_event_users (
+            user_id, draft_position, points, rank,
+            profiles ( id, username, avatar_url, is_public )
+          ),
+          fantasy_event_user_invites ( user_id ),
+          fantasy_picks (
+            user_id, player_id,
             players (
-                id,
-                first_name,
-                last_name,
-                team_id,
-                position,
-                player_picture,
-                total_player_fantasy_pts
+              id, first_name, last_name, team_id, position,
+              player_picture, total_player_fantasy_pts
             )
-            )
+          )
         `)
         .eq("slug", slug)
         .single()
+      setLeague(data)
+      setLoading(false)
+    }
+    fetchLeague()
+  }, [slug, userId])
 
-        if (error) {
-        console.error("League fetch error:", error)
-        return
-        }
+  if (loading || !league) return null
 
-        setLeague(data) 
+  const enrolled = league.fantasy_event_users.some(u => u.user_id === userId)
+  const invited = league.fantasy_event_user_invites.some(inv => inv.user_id === userId)
+  const blocked = !league.is_public && !enrolled && !invited
+
+  if (blocked) return null
+
+  const picksByUser = league.fantasy_picks.reduce<Record<string, Pick[]>>(
+    (acc, pick) => {
+      if (!acc[pick.user_id]) acc[pick.user_id] = []
+      acc[pick.user_id].push(pick)
+      return acc
+    },
+    {}
+  )
+    function formatDate(dateString: string) {
+        const [year, month, day] = dateString.split("-")
+        return `${month}/${day}/${year}`
     }
 
-    fetchLeague()
-    }, [slug])
-
-    useEffect(() => {
-        supabase.auth.getUser().then(({ data }) => setUser(data.user))
-    }, [])
-
-    if (!league) return <div>Loading...</div>
-
-    const userId = user?.id
-    const isEnrolled = league.fantasy_event_users.some((u) => u.user_id === userId)
-    const isInvited = league.fantasy_event_user_invites?.some((inv: { user_id: string }) => inv.user_id === userId)
-    const isPrivateAndBlocked = !league.is_public && !isEnrolled && !isInvited
-
-    function OpenLeagueView({ league } : any) {
-        return (
-            <div className="bg-white p-6 rounded-lg shadow-md border">
-            <h2 className="text-xl font-semibold mb-4">Players</h2>
-
-            <ul className="space-y-2">
-                {league.fantasy_event_users.map((u: LeagueUser) => (
-                <li key={u.user_id}>
-                    {u.profiles.is_public ? (
-                    <a
-                        href={`/profile/${u.profiles.id}`}
-                        className="text-blue-600 hover:underline"
-                    >
-                        {u.profiles.username}
-                    </a>
-                    ) : (
-                    <span>{u.profiles.username}</span>
-                    )}
-                </li>
-                ))}
-            </ul>
-            </div>
-        )
+    function OpenLeagueView({ league }: { league: League }) {
+    return (
+        <div className="bg-white p-6 rounded-lg shadow-md border">
+        <h2 className="text-xl font-semibold mb-4">Players</h2>
+        <ul className="space-y-2">
+            {league.fantasy_event_users.map(u => (
+            <li key={u.user_id}>
+                {u.profiles.is_public ? (
+                <a href={`/profile/${u.profiles.id}`} className="text-blue-600 hover:underline">
+                    {u.profiles.username}
+                </a>
+                ) : (
+                <span>{u.profiles.username}</span>
+                )}
+            </li>
+            ))}
+        </ul>
+        </div>
+    )
     }
 
     function ClosedLeagueView() {
-        return (
-            <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
-            <h2 className="text-xl font-semibold text-yellow-800">Draft in Progress</h2>
-            <p className="text-yellow-700 mt-2">
-                The draft is currently underway. Check back soon.
-            </p>
-            </div>
-        )
+    return (
+        <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+        <h2 className="text-xl font-semibold text-yellow-800">Draft in Progress</h2>
+        <p className="text-yellow-700 mt-2">The draft is currently underway. Check back soon.</p>
+        </div>
+    )
     }
 
     function LockedLeagueView({ league }: { league: League }) {
@@ -197,27 +197,21 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
                 <th className="py-2 px-3 text-left">Total Points</th>
             </tr>
             </thead>
-
             <tbody>
             {league.fantasy_event_users
-                .sort((a: LeagueUser, b: LeagueUser) => a.rank - b.rank)
-                .map((u: LeagueUser, idx: number) => {
+                .sort((a, b) => a.rank - b.rank)
+                .map((u, idx) => {
                 const picks = picksByUser[u.user_id] || []
                 const profile = u.profiles
 
                 return [
-                    // MAIN ROW
-                    <tr
-                    key={`${u.user_id}-main`}
-                    className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                    >
+                    <tr key={`${u.user_id}-main`} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                     <td className="py-2 px-3 font-medium">{idx + 1}</td>
-
                     <td className="py-2 px-3">
                         {profile.avatar_url ? (
                         <Image
                             src={profile.avatar_url}
-                            alt={`${profile.username} avatar`}
+                            alt={profile.username}
                             width={32}
                             height={32}
                             className="rounded-full object-cover border border-gray-300"
@@ -228,52 +222,35 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
                         </div>
                         )}
                     </td>
-
                     <td className="py-2 px-3 font-medium">
                         {profile.is_public ? (
-                        <Link
-                            href={`/profile/${profile.username}`}
-                            className="text-blue-600 hover:underline"
-                        >
+                        <Link href={`/profile/${profile.username}`} className="text-blue-600 hover:underline">
                             {profile.username}
                         </Link>
                         ) : (
                         <span className="text-gray-500">{profile.username}</span>
                         )}
                     </td>
-
                     <td className="py-2 px-3 font-semibold">{u.points}</td>
                     </tr>,
 
-                    // PICKS ROW
-                    <tr
-                    key={`${u.user_id}-picks`}
-                    className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                    >
+                    <tr key={`${u.user_id}-picks`} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                     <td colSpan={4} className="py-3 px-3">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {picks.map((p: Pick) => (
-                            <div
-                            key={p.player_id}
-                            className="p-3 bg-gray-100 rounded-md border"
-                            >
+                        {picks.map(p => (
+                            <div key={p.player_id} className="p-3 bg-gray-100 rounded-md border">
                             <p className="font-semibold">
                                 {p.players.first_name} {p.players.last_name}
                             </p>
-                            <p className="text-xs text-gray-600">
-                                {p.players.position}
-                            </p>
+                            <p className="text-xs text-gray-600">{p.players.position}</p>
                             <p className="text-sm mt-1">
-                                Fantasy Points:{" "}
-                                <strong>
-                                {p.players.total_player_fantasy_pts}
-                                </strong>
+                                Fantasy Points: <strong>{p.players.total_player_fantasy_pts}</strong>
                             </p>
                             </div>
                         ))}
                         </div>
                     </td>
-                    </tr>,
+                    </tr>
                 ]
                 })}
             </tbody>
@@ -282,68 +259,44 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     )
     }
 
-    function FinalLeaderboardView({ league } : any) {
-        return (
-            <div className="bg-white p-6 rounded-lg shadow-md border">
-            <h2 className="text-xl font-semibold mb-4">Final Results</h2>
-
-            <ol className="space-y-4">
-                {league.fantasy_event_users
-                .sort((a: LeagueUser, b: LeagueUser) => a.rank - b.rank)
-                .map((u: LeagueUser, index: number) => (
-                    <li
-                    key={u.user_id}
-                    className={`p-4 rounded-lg border ${
-                        index === 0 ? "bg-yellow-100 border-yellow-300" : "bg-gray-50"
-                    }`}
-                    >
-                    <div className="flex justify-between items-center">
-                        <div className="text-lg font-semibold">
-                        {u.profiles.is_public ? (
-                            <a
-                            href={`/profile/${u.profiles.id}`}
-                            className="text-blue-600 hover:underline"
-                            >
-                            {u.profiles.username}
-                            </a>
-                        ) : (
-                            u.profiles.username
-                        )}
-                        </div>
-
-                        <div className="text-right">
-                        <p className="text-sm text-gray-600">
-                            Rank: <strong>{u.rank}</strong>
-                        </p>
-                        <p className="text-sm text-gray-600">
-                            Points: <strong>{u.points}</strong>
-                        </p>
-                        </div>
+    function FinalLeaderboardView({ league }: { league: League }) {
+    return (
+        <div className="bg-white p-6 rounded-lg shadow-md border">
+        <h2 className="text-xl font-semibold mb-4">Final Results</h2>
+        <ol className="space-y-4">
+            {league.fantasy_event_users
+            .sort((a, b) => a.rank - b.rank)
+            .map((u, index) => (
+                <li
+                key={u.user_id}
+                className={`p-4 rounded-lg border ${
+                    index === 0 ? "bg-yellow-100 border-yellow-300" : "bg-gray-50"
+                }`}
+                >
+                <div className="flex justify-between items-center">
+                    <div className="text-lg font-semibold">
+                    {u.profiles.is_public ? (
+                        <a href={`/profile/${u.profiles.id}`} className="text-blue-600 hover:underline">
+                        {u.profiles.username}
+                        </a>
+                    ) : (
+                        u.profiles.username
+                    )}
                     </div>
-                    </li>
-                ))}
-            </ol>
-            </div>
-        )
-    }
-
-    function formatDate(dateString: string) {
-        const [year, month, day] = dateString.split("-")
-        return `${month}/${day}/${year}`
-    }
-    
-    if (isPrivateAndBlocked) {
-        return (
-            <>
-            <LoggedInNavBar />
-            <div className="p-6 max-w-xl mx-auto text-center">
-                <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-lg">
-                <h2 className="text-xl font-semibold mb-2">Private League</h2>
-                <p>This league is private and you do not have access.</p>
+                    <div className="text-right">
+                    <p className="text-sm text-gray-600">
+                        Rank: <strong>{u.rank}</strong>
+                    </p>
+                    <p className="text-sm text-gray-600">
+                        Points: <strong>{u.points}</strong>
+                    </p>
+                    </div>
                 </div>
-            </div>
-            </>
-        )
+                </li>
+            ))}
+        </ol>
+        </div>
+    )
     }
 
     return (

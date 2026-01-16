@@ -1,71 +1,78 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabaseClient"
+import Image from "next/image"
 import LoggedInNavBar from "@/components/LoggedInNavBar"
 
 export default function ProfilePublicClient({ username }: { username: string }) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const router = useRouter()
 
-  const router = useRouter();
-
-  const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [totalLeagues, setTotalLeagues] = useState(0);
-  const [bestRank, setBestRank] = useState<number | null>(null);
+  const [profile, setProfile] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [totalLeagues, setTotalLeagues] = useState(0)
+  const [bestRank, setBestRank] = useState<number | null>(null)
   const wouldRatherOptions = [
     "have perfect draw weight",
     "make every called takeout",
     "never get tired from sweeping"
-  ];
+  ]
 
   useEffect(() => {
     async function loadProfile() {
-      // Check if logged-in user is viewing their own profile
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser()
 
-      if (user) {
-        const { data: TheirProfile } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", user.id)
-          .single();
-
-        if (TheirProfile?.username?.toLowerCase() === username.toLowerCase()) {
-          router.push("/profile");
-          return;
-        }
+      if (!user) {
+        router.push("/login")
+        return
       }
 
-      // Load public profile
+      const res = await fetch("/api/check-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id })
+      })
+
+      const auth = await res.json()
+
+      if (!auth.allowed) {
+        router.push("/login")
+        return
+      }
+
+      const { data: TheirProfile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", user.id)
+        .single()
+
+      if (TheirProfile?.username?.toLowerCase() === username.toLowerCase()) {
+        router.push("/profile")
+        return
+      }
+
       const { data } = await supabase
         .from("profiles")
         .select("*")
         .eq("username", username)
-        .single();
+        .single()
 
       if (!data) {
-        setProfile(null);
-        setLoading(false);
-        return;
+        setProfile(null)
+        setLoading(false)
+        return
       }
 
-      setProfile(data);
+      setProfile(data)
 
       const { data: leagues } = await supabase
         .from("fantasy_event_users")
         .select("id, fantasy_events!inner(draft_status)")
         .eq("user_id", data.id)
-        .in("fantasy_events.draft_status", ["locked", "archived"]);
+        .in("fantasy_events.draft_status", ["locked", "archived"])
 
-      setTotalLeagues(leagues?.length ?? 0);
+      setTotalLeagues(leagues?.length ?? 0)
 
       const { data: best } = await supabase
         .from("fantasy_event_users")
@@ -73,49 +80,47 @@ export default function ProfilePublicClient({ username }: { username: string }) 
         .eq("user_id", data.id)
         .eq("fantasy_events.draft_status", "archived")
         .order("rank", { ascending: true })
-        .limit(1);
+        .limit(1)
 
-      setBestRank(best?.[0]?.rank ?? null);
-
-      setLoading(false);
+      setBestRank(best?.[0]?.rank ?? null)
+      setLoading(false)
     }
 
-    loadProfile();
-  }, [username, router, supabase]);
+    loadProfile()
+  }, [username, router])
 
   if (loading)
     return (
       <div className="w-full flex justify-center mt-20 text-gray-600">
         Loading profile...
       </div>
-    );
+    )
 
-  if (!profile) return <p className="text-center mt-10">Profile not found.</p>;
+  if (!profile) return <p className="text-center mt-10">Profile not found.</p>
 
   if (!profile.is_public)
     return (
       <p className="text-center text-gray-600 mt-10">
         This profile is private.
       </p>
-    );
+    )
 
   return (
     <>
-      <div className="w-full min-h-screen bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: "url('/webpage/profile-page.png')" }}>
-
+      <div
+        className="w-full min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
+        style={{ backgroundImage: "url('/webpage/profile-page.png')" }}
+      >
         <LoggedInNavBar />
-      
+
         <div className="max-w-3xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-          {/* HEADER */}
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-[#234C6A]">
               {profile.username}'s Profile
             </h1>
           </div>
 
-          {/* STATIC PROFILE VIEW */}
           <div className="flex items-center gap-6">
-            {/* Avatar */}
             {profile.avatar_url ? (
               <div className="w-24 h-24 rounded-full overflow-hidden border border-[#456882]">
                 <Image
@@ -151,7 +156,6 @@ export default function ProfilePublicClient({ username }: { username: string }) 
             </div>
           </div>
 
-          {/* FANTASY STATS */}
           <div className="mt-8 border-t pt-6">
             <h2 className="text-xl font-semibold text-[#234C6A] mb-3">
               Fantasy Stats
@@ -166,7 +170,6 @@ export default function ProfilePublicClient({ username }: { username: string }) 
             )}
           </div>
 
-          {/* CURLING PROFILE */}
           {(profile.years_played ||
             profile.favorite_club ||
             profile.go_to_shot?.length > 0 ||
@@ -213,16 +216,16 @@ export default function ProfilePublicClient({ username }: { username: string }) 
 
               {profile?.would_rather?.[0] && (
                 <p className="text-gray-700">
-                  Would Rather: {profile.would_rather[0]} over{" "}
+                  Would Rather: {profile.would_rather[0]} than{" "}
                   {
                     wouldRatherOptions.filter(
-                      (opt) => opt !== profile.would_rather[0]
+                      opt => opt !== profile.would_rather[0]
                     )[0]
                   }{" "}
                   and{" "}
                   {
                     wouldRatherOptions.filter(
-                      (opt) => opt !== profile.would_rather[0]
+                      opt => opt !== profile.would_rather[0]
                     )[1]
                   }
                 </p>
@@ -230,15 +233,14 @@ export default function ProfilePublicClient({ username }: { username: string }) 
 
               {profile.most_curling_thing && (
                 <p className="text-gray-700">
-                  The Most “Curling Person” Thing {profile.username} Has Ever Done: {" "}
+                  The Most “Curling Person” Thing {profile.username} Has Ever Done:{" "}
                   {profile.most_curling_thing}
                 </p>
               )}
 
               {profile.walkup_music && (
                 <p className="text-gray-700">
-                  Curling Walk-Up Music: {" "}
-                  {profile.walkup_music}
+                  Curling Walk-Up Music: {profile.walkup_music}
                 </p>
               )}
 
@@ -252,5 +254,5 @@ export default function ProfilePublicClient({ username }: { username: string }) 
         </div>
       </div>
     </>
-  );
+  )
 }

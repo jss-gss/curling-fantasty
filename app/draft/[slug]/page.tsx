@@ -4,8 +4,7 @@ export const metadata = {
   title: "Draft Room | BUTTON",
 }
 
-export default function Page({ params }: { params: Promise<{ slug: string }> }) {
-  return (
-    <DraftClient params={params} />
-  )
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  return <DraftClient slug={slug} />
 }

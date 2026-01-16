@@ -8,71 +8,133 @@ import CreateLeagueModal from "@/components/CreateLeagueModal"
 
 export default function LeaguesPage() {
   const router = useRouter()
+
+  const [userId, setUserId] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
   const [leagues, setLeagues] = useState<any[]>([])
+  const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [editingLeague, setEditingLeague] = useState<any>(null);
+  const [showModal, setShowModal] = useState(false)
+  const [editingLeague, setEditingLeague] = useState<any>(null)
+  const [activeTab, setActiveTab] = useState<"mine" | "explore">("mine")
 
-  // types of leagues 
-  const commissionedLeagues = leagues.filter(
-    (l) => l.created_by === user?.id
-  )
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push("/login")
+        return
+      }
+      const res = await fetch("/api/check-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id })
+      })
+      const data = await res.json()
+      if (!data.allowed) {
+        router.push("/login")
+        return
+      }
+      setUserId(user.id)
+      setUser(user)
+    }
+    checkAuth()
+  }, [router])
+
+  useEffect(() => {
+    if (!userId) return
+    const loadLeagues = async () => {
+      const { data: leagueData } = await supabase
+        .from("fantasy_events")
+        .select(`
+          *,
+          curling_events (*),
+          fantasy_event_users ( user_id ),
+          fantasy_event_user_invites ( user_id ),
+          users:profiles!fantasy_events_created_by_fkey ( id, username, is_public )
+        `)
+        .order("draft_date", { ascending: true })
+
+      if (!leagueData) {
+        setLeagues([])
+        setLoading(false)
+        return
+      }
+
+      const processed = leagueData.map(l => ({
+        ...l,
+        enrolled: l.fantasy_event_users?.some((u: { user_id: string }) => u.user_id === userId),
+        invited: l.fantasy_event_user_invites?.some((inv: { user_id: string }) => inv.user_id === userId)
+      }))
+
+      setLeagues(processed)
+      setLoading(false)
+    }
+    loadLeagues()
+  }, [userId])
+
+  useEffect(() => {
+    if (!userId) return
+    const loadEvents = async () => {
+      const { data } = await supabase
+        .from("curling_events")
+        .select("*")
+        .order("start_date", { ascending: true })
+      setEvents(data || [])
+    }
+    loadEvents()
+  }, [userId])
+
+  const commissionedLeagues = leagues.filter(l => l.created_by === userId)
 
   const privateInvites = leagues.filter(
-  (l) =>
-    !l.is_public &&
-    !l.enrolled &&
-    l.created_by !== user?.id &&
-    l.fantasy_event_user_invites?.some(
-      (inv: { user_id: string }) => inv.user_id === user?.id
-    )
-)
+    l =>
+      !l.is_public &&
+      !l.enrolled &&
+      l.created_by !== userId &&
+      l.draft_status === "open" &&
+      l.fantasy_event_user_invites?.some((inv: { user_id: string }) => inv.user_id === userId)
+  )
 
   const myActiveLeagues = leagues.filter(
-    (l) =>
-      (l.enrolled || l.created_by === user?.id) &&
+    l =>
+      (l.enrolled || l.created_by === userId) &&
       l.draft_status === "locked"
   )
 
   const myUpcomingDrafts = leagues.filter(
-    (l) =>
-      (l.enrolled || l.created_by === user?.id) &&
-      (l.draft_status === "open")
+    l =>
+      (l.enrolled || l.created_by === userId) &&
+      l.draft_status === "open"
   )
 
   const findAvailableLeagues = leagues.filter(
-    (l) =>
+    l =>
       l.is_public &&
       !l.enrolled &&
-      (l.draft_status === "open") &&
+      l.draft_status === "open" &&
       (l.fantasy_event_users?.length ?? 0) < l.max_users
   )
 
-  const findClosedLeagues = leagues.filter((l) => {
-  const isClosed =
-    l.draft_status === "locked" ||
-    l.draft_status === "archived" ||
-    (l.draft_status === "open" &&
-      (l.fantasy_event_users?.length ?? 0) >= l.max_users)
-
-    return (l.is_public &&  !l.enrolled &&isClosed )
+  const findClosedLeagues = leagues.filter(l => {
+    const isClosed =
+      l.draft_status === "locked" ||
+      l.draft_status === "archived" ||
+      (l.draft_status === "open" &&
+        (l.fantasy_event_users?.length ?? 0) >= l.max_users)
+    return l.is_public && !l.enrolled && isClosed
   })
 
   const completedLeagues = leagues.filter(
-    (l) =>
-      (l.enrolled || l.created_by === user?.id) &&
+    l =>
+      (l.enrolled || l.created_by === userId) &&
       l.draft_status === "completed"
   )
 
-  //modal 
-  const [showModal, setShowModal] = useState(false);
-  const [events, setEvents] = useState<any[]>([])
-    
-  // ui
-  const [activeTab, setActiveTab] = useState<"mine" | "explore" >("mine")
-  const activeLeagueCount = leagues.filter(l =>
-    l.created_by === user.id &&
-    ["open", "closed", "locked"].includes(l.draft_status)
+  const activeLeagueCount = leagues.filter(
+    l =>
+      l.created_by === userId &&
+      ["open", "closed", "locked"].includes(l.draft_status)
   ).length
 
   useEffect(() => {
@@ -201,21 +263,164 @@ export default function LeaguesPage() {
 
     const isInvited =
       invitedView ||
-      (!league.is_public &&
+      (
+        league.draft_status === "open" &&
+        !league.is_public &&
         !league.enrolled &&
-        league.fantasy_event_users?.some((u: any) => u.user_id === user?.id));
+        league.fantasy_event_users?.some((u: any) => u.user_id === user?.id)
+      )
 
-    const isOpen = league.draft_status === "open"
-    const isComplete = league.draft_status === "completed"
-    const isFull = (league.fantasy_event_users?.length ?? 0) >= league.max_users
-    const isJoinable = isOpen && !isFull
-    const hasEventStarted = league.curling_events && new Date() >= new Date(league.curling_events.start_date)
+
+    const isOpen = league.draft_status === "open";
+    const isComplete = league.draft_status === "completed";
+    const isFull = (league.fantasy_event_users?.length ?? 0) >= league.max_users;
+    const isJoinable = isOpen && !isFull;
+    const hasEventStarted =
+      league.curling_events &&
+      new Date() >= new Date(league.curling_events.start_date);
+
+    function renderLeagueAction() {
+      if (isComplete) {
+        return (
+          <button
+            onClick={() => router.push(`/league/${league.slug}`)}
+            className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition"
+          >
+            View Results
+          </button>
+        );
+      }
+
+      if (is_commissioner) {
+        if (isOpen) {
+          return (
+            <button
+              onClick={() => {
+                setEditingLeague(league);
+                setShowModal(true);
+              }}
+              className="bg-[#1f4785] text-white px-6 py-2 rounded-md hover:bg-[#163766] transition"
+            >
+              Edit
+            </button>
+          )
+        }
+
+        if (league.draft_status === "locked" && !hasEventStarted) {
+          return (
+            <button
+              disabled
+              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+            >
+              Picks Locked
+            </button>
+          );
+        }
+      }
+
+      if (isInvited) {
+        if (isOpen) {
+          return (
+            <button
+              onClick={() => joinLeague(league.id)}
+              className="bg-[#234C6A] text-white px-6 py-2 rounded-md hover:bg-[#1B3C53] transition"
+            >
+              Join
+            </button>
+          )
+        }
+
+        return (
+          <button
+            disabled
+            className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+          >
+            Closed
+          </button>
+        )
+      }
+
+      if (league.enrolled) {
+        if (league.draft_status === "closed") {
+          return (
+            <button
+              disabled
+              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+            >
+              Draft In Progress
+            </button>
+          )
+        }
+
+        if (league.draft_status === "locked") {
+          return (
+            <button
+              disabled
+              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+            >
+              {hasEventStarted ? "Event Live" : "Picks Locked"}
+            </button>
+          )
+        }
+
+        if (league.draft_status === "archived") {
+          return (
+            <button
+              disabled
+              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+            >
+              Archived
+            </button>
+          )
+        }
+
+        return (
+          <button
+            onClick={() => leaveLeague(league.id)}
+            className="bg-[#AA2B1D] text-white px-6 py-2 hover:bg-[#8A1F15] transition rounded-md"
+          >
+            Leave
+          </button>
+        )
+      }
+
+      if (isFull || league.draft_status === "closed") {
+        return (
+          <button
+            disabled
+            className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+          >
+            Closed
+          </button>
+        )
+      }
+
+      return (
+        <button
+          disabled={!isJoinable}
+          onClick={() => isJoinable && joinLeague(league.id)}
+          className={`px-4 py-2 text-white rounded-md ${
+            isJoinable
+              ? "bg-[#234C6A] hover:bg-[#1B3C53] cursor-pointer"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
+        >
+          {isFull ? "Full" : "Join"}
+        </button>
+      )
+    }
 
     return (
       <div className="flex relative items-center justify-between bg-white shadow-md p-6 border border-gray-200 rounded-lg">
+        {/* left side */}
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">{league.name}</h2>
+            <h2
+              className="text-2xl font-semibold hover:underline cursor-pointer"
+              onClick={() => router.push(`/league/${league.slug}`)}
+            >
+              {league.name}
+            </h2>
 
             {league.is_public ? (
               <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
@@ -245,7 +450,8 @@ export default function LeaguesPage() {
           )}
 
           <p className="text-md text-gray mt-3">
-            {league.curling_events.year} {league.curling_events.name} in {league.curling_events.location}
+            {league.curling_events.year} {league.curling_events.name} in{" "}
+            {league.curling_events.location}
           </p>
 
           <p className="text-sm text-gray-600 mt-3">
@@ -260,137 +466,25 @@ export default function LeaguesPage() {
             ) : (
               <span>{league.users?.username}</span>
             )}
-            <strong> • Draft:</strong> {new Date(league.draft_date).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "short", timeStyle: "short" })} ET {" "}
-            <strong>• Event Starts:</strong>{" "} {formatDate(league.curling_events.start_date)} {" "}
+            <strong> • Draft:</strong>{" "}
+            {new Date(league.draft_date).toLocaleString("en-US", {
+              timeZone: "America/New_York",
+              dateStyle: "short",
+              timeStyle: "short",
+            })}{" "}
+            ET <strong>• Event Starts:</strong>{" "}
+            {formatDate(league.curling_events.start_date)}{" "}
             <strong>• Round Robin Ends:</strong>{" "}
-            {formatDate(league.curling_events.round_robin_end_date)} {" "}
-            <strong> • Players:</strong> {(league.fantasy_event_users?.length ?? 0)} / {league.max_users}
+            {formatDate(league.curling_events.round_robin_end_date)}{" "}
+            <strong> • Players:</strong>{" "}
+            {(league.fantasy_event_users?.length ?? 0)} / {league.max_users}
           </p>
         </div>
 
-        <div className="flex flex-col items-end gap-3">
-
-        {/* COMPLETED OVERRIDE */}
-        {isComplete ? (
-          <button
-            onClick={() => router.push(`/league/${league.slug}`)}
-            className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition"
-          >
-            View Results
-          </button>
-        ) : (
-
-          is_commissioner ? (
-            isOpen ? (
-              <button
-                onClick={() => {
-                  setEditingLeague(league)
-                  setShowModal(true)
-                }}
-                className="bg-[#1f4785] text-white px-6 py-2 rounded-md hover:bg-[#163766] transition"
-              >
-                Edit
-              </button>
-            ) : !hasEventStarted ? (
-              <button
-                disabled
-                className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-              >
-                Picks Locked
-              </button>
-            ) : (
-              <button
-                disabled
-                className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-              >
-                Event Live
-              </button>
-            )
-
-          /* INVITED USER LOGIC */
-          ) : isInvited ? (
-            isOpen ? (
-              <button
-                onClick={() => joinLeague(league.id)}
-                className="bg-[#234C6A] text-white px-6 py-2 rounded-md hover:bg-[#1B3C53] transition"
-              >
-                Join
-              </button>
-            ) : (
-              <button
-                disabled
-                className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-              >
-                Closed
-              </button>
-            )
-
-          /* ENROLLED USER LOGIC */
-          ) : league.enrolled ? (
-            league.draft_status === "closed" ? (
-              <button
-                disabled
-                className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-              >
-                Draft In Progress
-              </button>
-            ) : league.draft_status === "locked" ? (
-              !hasEventStarted ? (
-                <button
-                  disabled
-                  className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-                >
-                  Picks Locked
-                </button>
-              ) : (
-                <button
-                  disabled
-                  className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-                >
-                  Event Live
-                </button>
-              )
-            ) : league.draft_status === "archived" ? (
-              <button
-                disabled
-                className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-              >
-                Archived
-              </button>
-            ) : (
-              <button
-                onClick={() => leaveLeague(league.id)}
-                className="bg-[#AA2B1D] text-white px-6 py-2 hover:bg-[#8A1F15] transition rounded-md"
-              >
-                Leave
-              </button>
-            )
-
-          /* NOT ENROLLED, NOT INVITED, NOT COMMISSIONER */
-          ) : isFull || league.draft_status === "closed" ? (
-            <button
-              disabled
-              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-            >
-              Closed
-            </button>
-          ) : (
-            <button
-              disabled={!isJoinable}
-              onClick={() => isJoinable && joinLeague(league.id)}
-              className={`px-4 py-2 text-white rounded-md ${
-                isJoinable
-                  ? "bg-[#234C6A] hover:bg-[#1B3C53] cursor-pointer"
-                  : "bg-gray-400 cursor-not-allowed"
-              }`}
-            >
-              {isFull ? "Full" : "Join"}
-            </button>
-          )
-        )}
+        {/* right side */}
+        <div className="flex flex-col items-end gap-3">{renderLeagueAction()}</div>
       </div>
-      </div>
-    );
+    )
   }
 
   function generateBaseSlug(leagueName: string) {
@@ -549,8 +643,8 @@ export default function LeaguesPage() {
       <CreateLeagueModal
         isOpen={showModal}
         onClose={() => {
-          setShowModal(false);
-          setEditingLeague(null);
+          setShowModal(false)
+          setEditingLeague(null)
         }}
         onSubmit={editingLeague ? handleUpdateLeague : handleCreateLeague}
         onDelete={editingLeague ? () => handleDeleteLeague(editingLeague.id) : undefined}
@@ -558,24 +652,21 @@ export default function LeaguesPage() {
         isNew={!editingLeague}
         league={editingLeague}
       />
+
       <div className="max-w-6xl mx-auto px-6 py-10">
         <h1 className="text-3xl font-bold mb-8">League Play</h1>
 
-        {/* Tabs + Create Button Row */}
         <div className="flex items-center justify-between mb-10">
-          {/* Tabs */}
           <div className="flex gap-4">
             {[
               { key: "mine", label: "My Leagues" },
               { key: "explore", label: "Explore Available Leagues" }
-            ].map((tab) => (
+            ].map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key as any)}
                 className={`px-4 py-2 rounded-md ${
-                  activeTab === tab.key
-                    ? "bg-[#1f4785] text-white"
-                    : "bg-gray-100 text-gray-700"
+                  activeTab === tab.key ? "bg-[#1f4785] text-white" : "bg-gray-100 text-gray-700"
                 }`}
               >
                 {tab.label}
@@ -590,23 +681,19 @@ export default function LeaguesPage() {
                 setEditingLeague(null)
                 setShowModal(true)
               }}
-              className={`w-12 h-12 flex items-center justify-center rounded-full text-white text-2xl shadow-md transition
-                ${
-                  activeLeagueCount >= 2
-                    ? "bg-gray-300 cursor-not-allowed"
-                    : "bg-[#1f4785] hover:bg-[#163766]"
-                }`}
+              className={`w-12 h-12 flex items-center justify-center rounded-full text-white text-2xl shadow-md transition ${
+                activeLeagueCount >= 2
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-[#1f4785] hover:bg-[#163766]"
+              }`}
             >
               +
             </button>
 
             <span
-              className={`
-                absolute left-1/2 -translate-x-1/2 -bottom-12 whitespace-nowrap px-3 py-1 rounded-md text-sm 
-                backdrop-blur-sm transition pointer-events-none
-                ${activeLeagueCount >= 2 ? "bg-red-200 text-red-800" : "bg-white/60 text-black"}
-                opacity-0 group-hover:opacity-100
-              `}
+              className={`absolute left-1/2 -translate-x-1/2 -bottom-12 whitespace-nowrap px-3 py-1 rounded-md text-sm backdrop-blur-sm transition pointer-events-none ${
+                activeLeagueCount >= 2 ? "bg-red-200 text-red-800" : "bg-white/60 text-black"
+              } opacity-0 group-hover:opacity-100`}
             >
               {activeLeagueCount >= 2
                 ? "Limit reached - max two active drafts"
@@ -615,25 +702,27 @@ export default function LeaguesPage() {
           </div>
         </div>
 
-        {loading && <p>Loading leagues...</p>}
+        {loading && (
+          <p className="w-full flex justify-center mt-20 text-gray-600">Loading...</p>
+        )}
 
-        {/* MY LEAGUES */}
         {activeTab === "mine" && (
           <>
             {completedLeagues.length > 0 && (
               <>
                 <h3 className="text-xl font-semibold mb-3 mt-6">Completed Leagues</h3>
                 <div className="flex flex-col gap-6 mb-10">
-                  {completedLeagues.map((league) => (
+                  {completedLeagues.map(league => (
                     <LeagueCard key={league.id} league={league} />
                   ))}
                 </div>
               </>
-            )} 
+            )}
+
             <h3 className="text-xl font-semibold mb-3 mt-6">Active Leagues</h3>
             <div className="flex flex-col gap-6 mb-10">
               {myActiveLeagues.length > 0 ? (
-                myActiveLeagues.map((league) => (
+                myActiveLeagues.map(league => (
                   <LeagueCard key={league.id} league={league} />
                 ))
               ) : (
@@ -644,7 +733,7 @@ export default function LeaguesPage() {
             <h3 className="text-xl font-semibold mb-3 mt-6">Upcoming Drafts</h3>
             <div className="flex flex-col gap-6 mb-10">
               {myUpcomingDrafts.length > 0 ? (
-                myUpcomingDrafts.map((league) => (
+                myUpcomingDrafts.map(league => (
                   <LeagueCard key={league.id} league={league} />
                 ))
               ) : (
@@ -652,11 +741,10 @@ export default function LeaguesPage() {
               )}
             </div>
 
-            {/* COMMISSIONED LEAGUES */}
             <h3 className="text-xl font-semibold mb-3 mt-6">Commissioned Leagues</h3>
             <div className="flex flex-col gap-6 mb-10">
               {commissionedLeagues.length > 0 ? (
-                commissionedLeagues.map((league) => (
+                commissionedLeagues.map(league => (
                   <LeagueCard key={league.id} league={league} commissionerView />
                 ))
               ) : (
@@ -666,14 +754,12 @@ export default function LeaguesPage() {
           </>
         )}
 
-        {/* EXPLORE LEAGUES */}
         {activeTab === "explore" && (
           <>
-            {/* Open Leagues */}
             <h3 className="text-xl font-semibold mb-3 mt-6">Open Leagues</h3>
             <div className="flex flex-col gap-6 mb-10">
               {findAvailableLeagues.length > 0 ? (
-                findAvailableLeagues.map((league) => (
+                findAvailableLeagues.map(league => (
                   <LeagueCard key={league.id} league={league} />
                 ))
               ) : (
@@ -681,11 +767,10 @@ export default function LeaguesPage() {
               )}
             </div>
 
-            {/* Private Invites */}
             <h3 className="text-xl font-semibold mb-3 mt-6">Private Invites</h3>
             <div className="flex flex-col gap-6 mb-10">
               {privateInvites.length > 0 ? (
-                privateInvites.map((league) => (
+                privateInvites.map(league => (
                   <LeagueCard key={league.id} league={league} invitedView />
                 ))
               ) : (
@@ -693,11 +778,10 @@ export default function LeaguesPage() {
               )}
             </div>
 
-            {/* Closed / Full Leagues */}
             <h3 className="text-xl font-semibold mb-3 mt-6">Full Leagues</h3>
             <div className="flex flex-col gap-6 mb-10">
               {findClosedLeagues.length > 0 ? (
-                findClosedLeagues.map((league) => (
+                findClosedLeagues.map(league => (
                   <LeagueCard key={league.id} league={league} />
                 ))
               ) : (

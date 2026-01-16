@@ -1,55 +1,133 @@
 "use client"
 
-import { useEffect, useState, useMemo, use } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 
-type ParamsPromise = Promise<{ slug: string }>
+type DraftClientProps = {
+  slug: string
+}
 
-export default function DraftRoom({ params }: { params: ParamsPromise }) {
-  const { slug } = use(params)
+type Profile = {
+  id: string
+  username?: string
+}
+
+type FantasyEvent = {
+  id: string
+  slug: string
+  name: string
+  created_by: string
+  draft_status: string
+  current_pick: number
+  curling_event_id: string | null
+}
+
+type Player = {
+  id: string
+  first_name: string
+  last_name: string
+  position: string
+  team_id: string
+  profile_image_url?: string
+}
+
+type FantasyEventUser = {
+  user_id: string
+  draft_position: number
+  profiles: { username: string } | null
+}
+
+type Pick = {
+  id: string
+  player_id: string
+  user_id: string
+  players: {
+    first_name: string
+    last_name: string
+    position: string
+  }
+}
+
+type Team = {
+  id: string
+  team_name: string
+}
+
+export default function DraftClient({ slug }: DraftClientProps) {
   const router = useRouter()
 
-  const [event, setEvent] = useState<any>(null)
-  const [users, setUsers] = useState<any[]>([])
-  const [players, setPlayers] = useState<any[]>([])
-  const [picks, setPicks] = useState<any[]>([])
-  const [profile, setProfile] = useState<any>(null)
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [selectedPlayer, setSelectedPlayer] = useState<any>(null)
-  const [showModal, setShowModal] = useState(false)
-  const [selectedPositionFilter, setSelectedPositionFilter] = useState<string | "all">("all")
+  const [userId, setUserId] = useState<string | null>(null)
+  const [event, setEvent] = useState<FantasyEvent | null>(null)
+  const [users, setUsers] = useState<FantasyEventUser[]>([])
+  const [players, setPlayers] = useState<Player[]>([])
+  const [picks, setPicks] = useState<Pick[]>([])
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
+  const [showModal, setShowModal] = useState<boolean>(false)
+  const [selectedPositionFilter, setSelectedPositionFilter] = useState<string>("all")
   const [curlingEvent, setCurlingEvent] = useState<any>(null)
   const [myPickNumber, setMyPickNumber] = useState<number | null>(null)
-  const [teams, setTeams] = useState<any[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-    const currentIndex = useMemo(
+  const [teams, setTeams] = useState<Team[]>([])
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+useEffect(() => {
+  supabase.auth.getUser().then(res => {
+  })
+}, [])
+
+  const currentIndex = useMemo(
     () => (event ? (event.current_pick ?? 1) - 1 : 0),
     [event]
   )
+
   const currentUser = useMemo(
     () => (users.length ? users[currentIndex] ?? null : null),
     [users, currentIndex]
   )
-  const myTurn = currentUser?.user_id === user?.id
-  
-  async function loadAll() {
-    setLoading(true)
 
-    const userResp = await supabase.auth.getUser()
-    const authUser = userResp?.data?.user ?? null
-    setUser(authUser)
+  const myTurn = currentUser?.user_id === userId
 
-    if (!authUser) {
-      setLoading(false)
-      return
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (!session?.user) {
+          router.push("/login")
+          return
+        }
+
+        const res = await fetch("/api/check-access", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ slug, userId: session.user.id }),
+        })
+
+        const data = await res.json()
+
+        if (!data.allowed) {
+          router.push("/login")
+          return
+        }
+
+        setUserId(session.user.id)
+        loadAll(session.user.id)
+      }
+    )
+
+    return () => {
+      listener.subscription.unsubscribe()
     }
+  }, [slug])
+
+  async function loadAll(uid: string) {
+    setLoading(true)
 
     const { data: profileData } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", authUser.id)
+      .eq("id", uid)
       .single()
 
     setProfile(profileData ?? null)
@@ -101,14 +179,14 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
       .from("fantasy_event_users")
       .select("user_id, draft_position, profiles(username)")
       .eq("fantasy_event_id", e.id)
-      .order("draft_position")
+      .order("draft_position") as { data: FantasyEventUser[] | null }
 
     setUsers(u ?? [])
 
-    const myRow = u?.find((row: any) => row.user_id === authUser.id)
+    const myRow = u?.find(row => row.user_id === uid)
     setMyPickNumber(myRow?.draft_position ?? null)
 
-    const { data: pk } = await supabase
+    const { data: pkRaw } = await supabase
       .from("fantasy_picks")
       .select(`
         id,
@@ -122,8 +200,13 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
       `)
       .eq("fantasy_event_id", e.id)
 
-    setPicks(pk ?? [])
+    const pk: Pick[] =
+      pkRaw?.map((p: any) => ({
+        ...p,
+        players: Array.isArray(p.players) ? p.players[0] : p.players,
+      })) ?? []
 
+    setPicks(pk)
     setLoading(false)
   }
 
@@ -135,10 +218,10 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
       .single()
 
     if (eventData) {
-      setEvent((prev: any) => ({ ...prev, current_pick: eventData.current_pick }))
+      setEvent(prev => (prev ? { ...prev, current_pick: eventData.current_pick } : prev))
     }
 
-    const { data: pk } = await supabase
+    const { data: pkRaw } = await supabase
       .from("fantasy_picks")
       .select(`
         id,
@@ -152,30 +235,27 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
       `)
       .eq("fantasy_event_id", eventId)
 
-    if (pk) {
+    if (pkRaw) {
+      const pk: Pick[] = pkRaw.map((p: any) => ({
+        ...p,
+        players: Array.isArray(p.players) ? p.players[0] : p.players,
+      }))
       setPicks(pk)
     }
   }
 
   useEffect(() => {
     if (!event?.id) return
-
     if (!myTurn) {
       const interval = setInterval(() => {
         refreshDraftState(event.id)
       }, 1000)
-
       return () => clearInterval(interval)
     }
   }, [event?.id, myTurn])
 
   useEffect(() => {
-    loadAll()
-  }, [slug])
-
-  useEffect(() => {
     if (!event?.id) return
-
     const channel = supabase
       .channel(`draft-${event.id}`)
       .on(
@@ -186,17 +266,15 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
           table: "fantasy_events",
           filter: `id=eq.${event.id}`,
         },
-        (payload) => {
+        payload => {
           const newPick = payload.new.current_pick
           const oldPick = payload.old.current_pick
-
           if (newPick !== oldPick) {
             refreshDraftState(event.id)
           }
         }
       )
       .subscribe()
-
     return () => {
       supabase.removeChannel(channel)
     }
@@ -216,15 +294,15 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
   }, [users, picks])
 
   const draftedPlayerIds = useMemo(
-    () => new Set(picks.map((p) => p.player_id)),
+    () => new Set(picks.map(p => p.player_id)),
     [picks]
   )
 
   const playersToShow = useMemo(
     () =>
       players
-        .filter((p) => !draftedPlayerIds.has(p.id))
-        .filter((p) => {
+        .filter(p => !draftedPlayerIds.has(p.id))
+        .filter(p => {
           if (selectedPositionFilter === "all") return true
           return p.position === selectedPositionFilter
         }),
@@ -234,59 +312,43 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
   const teamMap = useMemo(() => {
     const map: Record<string, string> = {}
     teams.forEach(t => {
-      map[t.id] = t.team_name
+      map[String(t.id)] = String(t.team_name)
     })
     return map
   }, [teams])
 
   async function handleConfirm() {
-    if (!user || !selectedPlayer) return
+    if (!userId || !selectedPlayer) return
     setIsSubmitting(true)
     setShowModal(false)
     setPlayers(prev => prev.filter(p => p.id !== selectedPlayer.id))
-
     const res = await fetch("/api/pickPlayer", {
       method: "POST",
       body: JSON.stringify({
-        eventId: event.id,
+        eventId: event?.id,
         playerId: selectedPlayer.id,
-        userId: user.id,
+        userId,
       }),
     })
-
     const data = await res.json()
-
     setSelectedPlayer(null)
     setIsSubmitting(false)
-
-    if (res.ok) {
+    if (res.ok && event) {
       await refreshDraftState(event.id)
-
       if (data.userFinished || data.draftFinished) {
         router.push("/myrinks")
-        return
       }
-
-      return
     }
   }
 
   function slot(position: string) {
     const pick = picks.find(
-      (p) => p.user_id === user?.id && p.players?.position === position
-    )
+  p => p.user_id === userId && p.players?.position === position
+)
+
     if (!pick) return "—"
     return `${pick.players.first_name} ${pick.players.last_name}`
   }
-
-  if (loading || !event) {
-    return (
-      <div className="p-6">
-        <p>Loading draft...</p>
-      </div>
-    )
-  }
-
   return (
     <div className="p-6 flex flex-col gap-6">
         <header className="bg-white shadow-md p-6 border border-gray-200 text-center rounded-lg">
@@ -331,7 +393,7 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
         <div className="flex-1">
             {myTurn ? (
             <>
-                <table className="w-full text-left border-collapse rounded-lg overflow-hidden">
+              <table className="w-full shadow-md text-left border-collapse rounded-lg overflow-hidden border border-black">
                 <thead>
                     <tr className="bg-gray-100 text-gray-700">
                     <th className="py-3 px-4">#</th>
@@ -383,36 +445,57 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
             )}
         </div>
         </div>
-      {showModal && selectedPlayer && (
-        <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 shadow-xl rounded-lg w-96 border border-gray-200">
-            <h3 className="text-xl font-semibold mb-4">Add Player</h3>
-            <p className="mb-2 text-lg font-medium">
-              {selectedPlayer.first_name} {selectedPlayer.last_name}
-            </p>
-            <p className="text-gray-600 mb-6">
-              from <strong>{teamMap[selectedPlayer.team_id]}</strong>
-            </p>
-            <div className="flex justify-end gap-4">
+        {showModal && selectedPlayer && (
+          <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="relative bg-white p-6 shadow-xl rounded-lg w-96 border border-gray-200">
+
+              {/* X button */}
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
               >
-                Cancel
+                ✕
               </button>
+
+              <h3 className="text-xl font-semibold mb-4">Add Player</h3>
+
+              {/* Image + Name */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+                  {selectedPlayer.profile_image_url ? (
+                    <img
+                      src={selectedPlayer.profile_image_url}
+                      alt={`${selectedPlayer.first_name} ${selectedPlayer.last_name}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div />
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-lg font-medium">
+                    {selectedPlayer.first_name} {selectedPlayer.last_name}
+                  </p>
+                  <p className="text-gray-600">
+                    from <strong>{teamMap[selectedPlayer.team_id]}</strong>
+                  </p>
+                </div>
+              </div>
+
+              {/* Confirm button */}
               <button
                 disabled={isSubmitting}
                 onClick={handleConfirm}
                 className={`w-full py-2 rounded-md text-white 
-                  ${isSubmitting ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}
+                  ${isSubmitting ? "bg-gray-400" : "bg-[#1f4785] hover:bg-[#163766]"}
                 `}
               >
                 {isSubmitting ? "Submitting..." : "Confirm Pick"}
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   )
 }

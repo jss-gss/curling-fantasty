@@ -137,8 +137,6 @@ export default function PicksPage() {
         e.draft_status === "closed" || e.draft_status === "locked"
     )
 
-    const allRelevantEvents = [...currentRinks, ...completed]
-
     const picksByEvent: AnyMap<any[]> = {}
     ;(picks ?? []).forEach((p) => {
       if (!picksByEvent[p.fantasy_event_id]) {
@@ -254,7 +252,6 @@ export default function PicksPage() {
       <LoggedInNavBar />
 
       <div className="w-full px-6 py-10 flex flex-col items-center gap-10">
-
         {/* CARD 1 — Completed Leagues */}
         {completedLeagues.length > 0 && (
           <main className="w-full max-w-screen-xl bg-white shadow-md p-8 rounded-lg">
@@ -270,8 +267,11 @@ export default function PicksPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h2 className="text-2xl font-semibold">{league.name}</h2>
-
+                          <h2
+                            className="text-2xl font-semibold hover:underline cursor-pointer"
+                            onClick={() => router.push(`/league/${league.slug}`)}>
+                            {league.name}
+                          </h2>
                           {league.is_public ? (
                             <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                               public
@@ -405,8 +405,9 @@ export default function PicksPage() {
         {/* CARD 2 — Current Rinks */}
         <main className="w-full max-w-screen-xl bg-white shadow-md p-8 rounded-lg">
           <h1 className="text-3xl font-bold mb-6">Current Rinks</h1>
+          {loading && <p className="w-full flex justify-center mt-20 text-gray-600"> Loading...</p>}
 
-          {closedEvents.length === 0 && (
+          {!loading && closedEvents.length === 0 && (
             <div className="text-gray-600">No current rinks.</div>
           )}
 
@@ -424,8 +425,12 @@ export default function PicksPage() {
                       {/* LEFT SIDE */}
                       <div>
                         <div className="flex items-center gap-2">
-                          <h2 className="text-2xl font-semibold">{ev.name}</h2>
-
+                          <h2
+                            className="text-2xl font-semibold hover:underline cursor-pointer"
+                            onClick={() => router.push(`/league/${ev.slug}`)}
+                          >
+                            {ev.name}
+                          </h2>
                           {/* Public/Private pill FIRST */}
                           {ev.is_public ? (
                             <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">

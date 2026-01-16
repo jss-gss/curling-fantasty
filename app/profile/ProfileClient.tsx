@@ -13,69 +13,90 @@ export default function ProfileClient() {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [totalLeagues, setTotalLeagues] = useState<number>(0);
-  const [bestRank, setBestRank] = useState<number | null>(null);
-  const [isPublic, setIsPublic] = useState(profile?.is_public);
+  const [totalLeagues, setTotalLeagues] = useState(0)
+  const [bestRank, setBestRank] = useState<number | null>(null)
+  const [isPublic, setIsPublic] = useState<boolean | undefined>(undefined)
 
-  // Editing state
   const [isEditing, setIsEditing] = useState(false)
   const [newUsername, setNewUsername] = useState("")
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
 
-  // Curling profile fields
-  const [yearsPlayed, setYearsPlayed] = useState(profile?.years_played ?? "");
-  const [favoriteClub, setFavoriteClub] = useState(profile?.favorite_club ?? "");
-  const [goToShot, setGoToShot] = useState<string | null>(profile?.go_to_shot?.[0] ?? null);
-  const [tradition, setTradition] = useState(profile?.tradition ?? "");
-  const [favoriteProTeam, setFavoriteProTeam] = useState(profile?.favorite_pro_team ?? "");
-  const [wouldRather, setWouldRather] = useState<string | null>(profile?.would_rather ?? null);
-  const [mostCurlingThing, setMostCurlingThing] = useState(profile?.most_curling_thing ?? "");
-  const [walkupMusic, setWalkupMusic] = useState(profile?.walkup_music ?? "");
-  const [hotTake, setHotTake] = useState(profile?.hot_take ?? "");
-  const shotOptions = ["Guard", "Draw", "Takeout", "Plan B"];
+  const [yearsPlayed, setYearsPlayed] = useState("")
+  const [favoriteClub, setFavoriteClub] = useState("")
+  const [goToShot, setGoToShot] = useState<string | null>(null)
+  const [tradition, setTradition] = useState("")
+  const [favoriteProTeam, setFavoriteProTeam] = useState("")
+  const [wouldRather, setWouldRather] = useState<string | null>(null)
+  const [mostCurlingThing, setMostCurlingThing] = useState("")
+  const [walkupMusic, setWalkupMusic] = useState("")
+  const [hotTake, setHotTake] = useState("")
+  const shotOptions = ["Guard", "Draw", "Takeout", "Plan B"]
   const wouldRatherOptions = [
     "have perfect draw weight",
     "make every called takeout",
     "never get tired from sweeping"
-  ];
+  ]
 
   useEffect(() => {
     async function load() {
-      const { data: userData } = await supabase.auth.getUser();
-
-      if (!userData.user) {
-        router.push("/");
-        return;
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push("/login")
+        return
       }
 
-      setUser(userData.user);
+      const res = await fetch("/api/check-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id })
+      })
+
+      const auth = await res.json()
+      if (!auth.allowed) {
+        router.push("/login")
+        return
+      }
+
+      setUser(user)
 
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", userData.user.id)
-        .single();
+        .eq("id", user.id)
+        .single()
 
-      setProfile(profileData);
-      setLoading(false);
+      setProfile(profileData)
+      setIsPublic(profileData?.is_public)
+
+      setYearsPlayed(profileData?.years_played ?? "")
+      setFavoriteClub(profileData?.favorite_club ?? "")
+      setGoToShot(profileData?.go_to_shot?.[0] ?? null)
+      setTradition(profileData?.tradition ?? "")
+      setFavoriteProTeam(profileData?.favorite_pro_team ?? "")
+      setWouldRather(profileData?.would_rather?.[0] ?? null)
+      setMostCurlingThing(profileData?.most_curling_thing ?? "")
+      setWalkupMusic(profileData?.walkup_music ?? "")
+      setHotTake(profileData?.hot_take ?? "")
+
+      setLoading(false)
     }
 
-    load();
-  }, [router]);
+    load()
+  }, [router])
 
   useEffect(() => {
     async function loadFantasyStats() {
-      if (!user) return;
+      if (!user) return
 
       const { data: leagues } = await supabase
         .from("fantasy_event_users")
         .select("id, fantasy_events!inner(draft_status)")
         .eq("user_id", user.id)
-        .in("fantasy_events.draft_status", ["locked", "archived"]);
+        .in("fantasy_events.draft_status", ["locked", "archived"])
 
-      setTotalLeagues(leagues?.length ?? 0);
+      setTotalLeagues(leagues?.length ?? 0)
 
       const { data: best } = await supabase
         .from("fantasy_event_users")
@@ -83,83 +104,75 @@ export default function ProfileClient() {
         .eq("user_id", user.id)
         .eq("fantasy_events.draft_status", "archived")
         .order("rank", { ascending: true })
-        .limit(1);
+        .limit(1)
 
-      setBestRank(best?.[0]?.rank ?? null);
+      setBestRank(best?.[0]?.rank ?? null)
     }
 
-    loadFantasyStats();
-  }, [user]);
-
-  useEffect(() => {
-    if (profile?.is_public !== undefined) {
-      setIsPublic(profile.is_public);
-    }
-  }, [profile]);
+    loadFantasyStats()
+  }, [user])
 
   async function saveProfileChanges() {
-    if (!user) return;
-    setSaving(true);
-    setErrorMsg("");
+    if (!user) return
+    setSaving(true)
+    setErrorMsg("")
 
-    let avatarUrl = profile?.avatar_url || null;
+    let avatarUrl = profile?.avatar_url || null
 
     function extractFileName(url: string) {
-      const parts = url.split("/avatars/");
-      return parts[1] ?? null;
+      const parts = url.split("/avatars/")
+      return parts[1] ?? null
     }
 
     if (avatarFile) {
       if (profile?.avatar_url) {
-        const oldFileName = extractFileName(profile.avatar_url);
+        const oldFileName = extractFileName(profile.avatar_url)
         if (oldFileName) {
-          await supabase.storage.from("avatars").remove([oldFileName]);
+          await supabase.storage.from("avatars").remove([oldFileName])
         }
       }
 
       if (avatarFile.size > 2 * 1024 * 1024) {
-        setErrorMsg("Image must be under 2MB.");
-        setSaving(false);
-        return;
+        setErrorMsg("Image must be under 2MB.")
+        setSaving(false)
+        return
       }
 
-      const ext = avatarFile.name.split(".").pop();
-      const fileName = `${user.id}-${Date.now()}.${ext}`;
+      const ext = avatarFile.name.split(".").pop()
+      const fileName = `${user.id}-${Date.now()}.${ext}`
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, avatarFile);
+        .upload(fileName, avatarFile)
 
       if (uploadError) {
-        console.log("UPLOAD ERROR:", uploadError);
-        setErrorMsg("Failed to upload image.");
-        setSaving(false);
-        return;
+        setErrorMsg("Failed to upload image.")
+        setSaving(false)
+        return
       }
 
       const { data: urlData } = supabase.storage
         .from("avatars")
-        .getPublicUrl(fileName);
+        .getPublicUrl(fileName)
 
-      avatarUrl = urlData.publicUrl;
+      avatarUrl = urlData.publicUrl
     }
 
-    const cleanedYearsPlayed = emptyToNull(yearsPlayed);
-    const cleanedFavoriteClub = emptyToNull(favoriteClub);
-    const cleanedTradition = emptyToNull(tradition);
-    const cleanedFavoriteProTeam = emptyToNull(favoriteProTeam);
-    const cleanedMostCurlingThing = emptyToNull(mostCurlingThing);
-    const cleanedWalkupMusic = emptyToNull(walkupMusic);
-    const cleanedHotTake = emptyToNull(hotTake);
-    const cleanedGoToShot = goToShot ? [goToShot] : null;
-    const cleanedWouldRather = wouldRather ? [wouldRather] : null;
+    const cleanedYearsPlayed = emptyToNull(yearsPlayed)
+    const cleanedFavoriteClub = emptyToNull(favoriteClub)
+    const cleanedTradition = emptyToNull(tradition)
+    const cleanedFavoriteProTeam = emptyToNull(favoriteProTeam)
+    const cleanedMostCurlingThing = emptyToNull(mostCurlingThing)
+    const cleanedWalkupMusic = emptyToNull(walkupMusic)
+    const cleanedHotTake = emptyToNull(hotTake)
+    const cleanedGoToShot = goToShot ? [goToShot] : null
+    const cleanedWouldRather = wouldRather ? [wouldRather] : null
 
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
         username: newUsername,
         avatar_url: avatarUrl,
-
         years_played: cleanedYearsPlayed,
         favorite_club: cleanedFavoriteClub,
         go_to_shot: cleanedGoToShot,
@@ -168,25 +181,24 @@ export default function ProfileClient() {
         would_rather: cleanedWouldRather,
         most_curling_thing: cleanedMostCurlingThing,
         walkup_music: cleanedWalkupMusic,
-        hot_take: cleanedHotTake,
+        hot_take: cleanedHotTake
       })
-      .eq("id", user.id);
+      .eq("id", user.id)
 
     if (updateError) {
       if (updateError.message.includes("duplicate key value")) {
-        setErrorMsg("Username is already taken.");
+        setErrorMsg("Username is already taken.")
       } else {
-        setErrorMsg("Something went wrong. Please try again.");
+        setErrorMsg("Something went wrong. Please try again.")
       }
-      setSaving(false);
-      return;
+      setSaving(false)
+      return
     }
 
     setProfile((prev: any) => ({
       ...prev,
       username: newUsername,
       avatar_url: avatarUrl,
-
       years_played: cleanedYearsPlayed,
       favorite_club: cleanedFavoriteClub,
       go_to_shot: cleanedGoToShot,
@@ -195,11 +207,11 @@ export default function ProfileClient() {
       would_rather: cleanedWouldRather,
       most_curling_thing: cleanedMostCurlingThing,
       walkup_music: cleanedWalkupMusic,
-      hot_take: cleanedHotTake,
-    }));
+      hot_take: cleanedHotTake
+    }))
 
-    setIsEditing(false);
-    setSaving(false);
+    setIsEditing(false)
+    setSaving(false)
   }
 
   if (loading) {
@@ -210,22 +222,20 @@ export default function ProfileClient() {
     )
   }
 
-  // Curling Profile
   function toggleShot(option: string) {
-    if (goToShot === option) {
-      setGoToShot(null); 
-    } else {
-      setGoToShot(option);
-    }
+    setGoToShot(goToShot === option ? null : option)
   }
+
   function selectWouldRather(option: string) {
-    setWouldRather(option);
+    setWouldRather(option)
   }
+
   function clearWouldRather() {
-    setWouldRather(null);
+    setWouldRather(null)
   }
+
   function emptyToNull(value: string) {
-    return value.trim() === "" ? null : value;
+    return value.trim() === "" ? null : value
   }
 
   return (
@@ -396,7 +406,7 @@ export default function ProfileClient() {
 
                   {profile?.would_rather?.[0] && (
                     <p className="text-gray-700">
-                      I would rather {profile.would_rather[0]} over{" "}
+                      I would rather {profile.would_rather[0]} than{" "}
                       {
                         wouldRatherOptions.filter(
                           (opt) => opt !== profile.would_rather[0]
