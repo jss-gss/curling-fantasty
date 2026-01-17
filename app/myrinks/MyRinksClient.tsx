@@ -284,7 +284,7 @@ export default function PicksPage() {
 
                           {league.is_commissioner && (
                             <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                              commissioner
+                              draw master
                             </span>
                           )}
 
@@ -445,7 +445,7 @@ export default function PicksPage() {
                           {/* Commissioner pill SECOND */}
                           {isCommissioner && (
                             <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                              commissioner
+                              draw master
                             </span>
                           )}
                         </div>

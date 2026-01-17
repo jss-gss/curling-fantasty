@@ -313,9 +313,6 @@ export default function ThePinClient() {
                                   )}
                                   .
                                 </p>
-                                <p className="text-xs text-gray-500 mt-1 italic">
-                                  Ignoring an invite does not decline it.
-                                </p>
                               </div>
 
                               <div className="flex flex-col items-end gap-2">
@@ -390,7 +387,7 @@ export default function ThePinClient() {
 
                     {nextDraft.is_commissioner && (
                       <span className="text-xs mt-2 font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                        commissioner
+                        draw master
                       </span>
                     )}
                   </div>

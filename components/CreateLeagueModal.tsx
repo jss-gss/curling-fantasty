@@ -122,7 +122,7 @@ export default function CreateLeagueModal({
         </button>
 
         <h2 className="text-2xl font-bold mb-4">
-          {isNew ? "Be Your Own Commissioner" : "Edit League Details"}
+          {isNew ? "Be Your Own Draw Master" : "Edit League Details"}
         </h2>
 
         {/* Errors */}

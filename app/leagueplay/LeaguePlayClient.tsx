@@ -91,6 +91,7 @@ export default function LeaguesPage() {
     l =>
       !l.is_public &&
       !l.enrolled &&
+      !(l.fantasy_event_users.length >= l.max_users) &&
       l.created_by !== userId &&
       l.draft_status === "open" &&
       l.fantasy_event_user_invites?.some((inv: { user_id: string }) => inv.user_id === userId)
@@ -113,17 +114,8 @@ export default function LeaguesPage() {
       l.is_public &&
       !l.enrolled &&
       l.draft_status === "open" &&
-      (l.fantasy_event_users?.length ?? 0) < l.max_users
+      l.fantasy_event_users.length < l.max_users
   )
-
-  const findClosedLeagues = leagues.filter(l => {
-    const isClosed =
-      l.draft_status === "locked" ||
-      l.draft_status === "archived" ||
-      (l.draft_status === "open" &&
-        (l.fantasy_event_users?.length ?? 0) >= l.max_users)
-    return l.is_public && !l.enrolled && isClosed
-  })
 
   const completedLeagues = leagues.filter(
     l =>
@@ -136,6 +128,10 @@ export default function LeaguesPage() {
       l.created_by === userId &&
       ["open", "closed", "locked"].includes(l.draft_status)
   ).length
+
+  const fullLeagues = leagues.filter(
+    l => l.fantasy_event_users.length >= l.max_users
+  )
 
   useEffect(() => {
     async function loadLeagues() {
@@ -434,7 +430,7 @@ export default function LeaguesPage() {
 
             {is_commissioner && (
               <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                commissioner
+                draw master
               </span>
             )}
 
@@ -594,7 +590,7 @@ export default function LeaguesPage() {
   async function handleUpdateLeague(payload: any) {
     if (!editingLeague) return;
 
-    const { eventId, name, description, draftDate, isPublic } = payload;
+    const { eventId, name, description, draftDate, isPublic, usernames } = payload;
 
     const utcDraftDate = new Date(draftDate).toISOString();
 
@@ -604,7 +600,7 @@ export default function LeaguesPage() {
       slug = await generateUniqueSlug(baseSlug, supabase);
     }
 
-    const { data, error } = await supabase
+    const { data: updatedLeague, error } = await supabase
       .from("fantasy_events")
       .update({
         curling_event_id: eventId,
@@ -615,14 +611,46 @@ export default function LeaguesPage() {
         slug
       })
       .eq("id", editingLeague.id)
-      .select()
+      .select(`
+        *,
+        fantasy_event_user_invites ( user_id )
+      `)
       .single();
 
-    if (!error) {
-      setLeagues(prev =>
-        prev.map(l => (l.id === editingLeague.id ? { ...l, ...data } : l))
-      );
+    if (error) return;
+
+    if (!isPublic && usernames?.trim()) {
+      const usernameList = usernames
+        .split(",")
+        .map((u: string) => u.trim())
+        .filter(Boolean);
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("username", usernameList);
+
+      if (profiles?.length) {
+        const alreadyInvited = new Set(
+          updatedLeague.fantasy_event_user_invites.map((i: any) => i.user_id)
+        );
+
+        const newInvites = profiles
+          .filter((p: any) => !alreadyInvited.has(p.id))
+          .map((p: any) => ({
+            fantasy_event_id: updatedLeague.id,
+            user_id: p.id
+          }));
+
+        if (newInvites.length > 0) {
+          await supabase.from("fantasy_event_user_invites").insert(newInvites);
+        }
+      }
     }
+
+    setLeagues(prev =>
+      prev.map(l => (l.id === editingLeague.id ? { ...l, ...updatedLeague } : l))
+    );
 
     setShowModal(false);
     setEditingLeague(null);
@@ -741,7 +769,7 @@ export default function LeaguesPage() {
               )}
             </div>
 
-            <h3 className="text-xl font-semibold mb-3 mt-6">Commissioned Leagues</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">Draw Master Leagues</h3>
             <div className="flex flex-col gap-6 mb-10">
               {commissionedLeagues.length > 0 ? (
                 commissionedLeagues.map(league => (
@@ -780,12 +808,12 @@ export default function LeaguesPage() {
 
             <h3 className="text-xl font-semibold mb-3 mt-6">Full Leagues</h3>
             <div className="flex flex-col gap-6 mb-10">
-              {findClosedLeagues.length > 0 ? (
-                findClosedLeagues.map(league => (
+              {fullLeagues.length > 0 ? (
+                fullLeagues.map(league => (
                   <LeagueCard key={league.id} league={league} />
                 ))
               ) : (
-                <p className="text-gray-600">No closed leagues.</p>
+                <p className="text-gray-600">No full leagues.</p>
               )}
             </div>
           </>

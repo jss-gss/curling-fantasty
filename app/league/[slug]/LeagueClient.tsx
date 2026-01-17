@@ -55,6 +55,10 @@ type Player = {
   position: string
   player_picture: string | null
   total_player_fantasy_pts: number
+  teams?: {
+    id: string
+    team_name: string
+  } | null
 }
 
 type Pick = {
@@ -65,11 +69,12 @@ type Pick = {
 
 type ParamsPromise = Promise<{ slug: string }>
 
-export default function DraftRoom({ params }: { params: ParamsPromise }) {
+export default function LeagueClient({ params }: { params: ParamsPromise }) {
   const { slug } = use(params)
   const [league, setLeague] = useState<League | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isCommissioner, setIsCommissioner] = useState(false)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -93,37 +98,55 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     checkAuth()
   }, [])
 
-  useEffect(() => {
-    if (!userId) return
-    const fetchLeague = async () => {
-      const { data } = await supabase
-        .from("fantasy_events")
-        .select(`
-          *,
-          sender:profiles!fantasy_events_created_by_fkey (
-            id, username, avatar_url, is_public
-          ),
-          curling_events (*),
-          fantasy_event_users (
-            user_id, draft_position, points, rank,
-            profiles ( id, username, avatar_url, is_public )
-          ),
-          fantasy_event_user_invites ( user_id ),
-          fantasy_picks (
-            user_id, player_id,
-            players (
-              id, first_name, last_name, team_id, position,
-              player_picture, total_player_fantasy_pts
+useEffect(() => {
+  if (!userId) return
+
+  const fetchLeague = async () => {
+    const { data } = await supabase
+      .from("fantasy_events")
+      .select(`
+        *,
+        sender:profiles!fantasy_events_created_by_fkey (
+          id, username, avatar_url, is_public
+        ),
+        curling_events (*),
+        fantasy_event_users (
+          user_id, draft_position, points, rank,
+          profiles ( id, username, avatar_url, is_public )
+        ),
+        fantasy_event_user_invites ( user_id ),
+        fantasy_picks (
+          user_id,
+          player_id,
+          players (
+            id,
+            first_name,
+            last_name,
+            team_id,
+            position,
+            player_picture,
+            total_player_fantasy_pts,
+            teams (
+              id,
+              team_name
             )
           )
-        `)
-        .eq("slug", slug)
-        .single()
-      setLeague(data)
-      setLoading(false)
+        )
+      `)
+      .eq("slug", slug)
+      .single()
+
+    setLeague(data)
+
+    if (data?.created_by === userId) 
+    { 
+        setIsCommissioner(true) 
     }
-    fetchLeague()
-  }, [slug, userId])
+    setLoading(false)
+  }
+
+  fetchLeague()
+}, [slug, userId])
 
   if (loading || !league) return null
 
@@ -147,36 +170,81 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
     }
 
     function OpenLeagueView({ league }: { league: League }) {
-    return (
-        <div className="bg-white p-6 rounded-lg shadow-md border">
-        <h2 className="text-xl font-semibold mb-4">Players</h2>
-        <ul className="space-y-2">
-            {league.fantasy_event_users.map(u => (
-            <li key={u.user_id}>
-                {u.profiles.is_public ? (
-                <a href={`/profile/${u.profiles.id}`} className="text-blue-600 hover:underline">
-                    {u.profiles.username}
-                </a>
-                ) : (
-                <span>{u.profiles.username}</span>
-                )}
-            </li>
-            ))}
-        </ul>
-        </div>
-    )
+        const sorted = [...league.fantasy_event_users].sort((a, b) =>
+            a.profiles.username.localeCompare(b.profiles.username)
+        )
+
+        return (
+            <div className="bg-white p-6 rounded-lg">
+            <div className="overflow-x-auto rounded-lg">
+                <table className="w-full text-left text-sm border-collapse">
+                <thead className="bg-gray-100 text-gray-700">
+                    <tr>
+                    <th className="py-2 px-3">#</th>
+                    <th className="py-2 px-3"></th>
+                    <th className="py-2 px-3">Username</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {sorted.map((u, idx) => (
+                    <tr
+                        key={u.user_id}
+                        className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                    >
+                        <td className="py-2 px-3 font-medium">{idx + 1}</td>
+
+                        <td className="py-2 px-3">
+                        {u.profiles.avatar_url ? (
+                            <img
+                            src={u.profiles.avatar_url}
+                            alt={u.profiles.username}
+                            className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                            />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                            {u.profiles.username.charAt(0).toUpperCase()}
+                            </div>
+                        )}
+                        </td>
+
+                        <td className="py-2 px-3">
+                        {u.profiles.is_public ? (
+                            <a
+                            href={`/profile/${u.profiles.id}`}
+                            className="text-blue-600 hover:underline"
+                            >
+                            {u.profiles.username}
+                            </a>
+                        ) : (
+                            <span className="text-gray-600">{u.profiles.username}</span>
+                        )}
+                        </td>
+                    </tr>
+                    ))}
+                </tbody>
+                </table>
+            </div>
+            </div>
+        )
     }
 
     function ClosedLeagueView() {
-    return (
-        <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
-        <h2 className="text-xl font-semibold text-yellow-800">Draft in Progress</h2>
-        <p className="text-yellow-700 mt-2">The draft is currently underway. Check back soon.</p>
-        </div>
-    )
+        return (
+            <div className="bg-yellow-50 p-6 rounded-lg">
+            <h2 className="text-xl font-semibold text-yellow-800">Draft in Progress</h2>
+            <p className="text-yellow-700 mt-2">The draft is currently underway. Check back soon.</p>
+            </div>
+        )
     }
 
     function LockedLeagueView({ league }: { league: League }) {
+    const [openRows, setOpenRows] = useState<Record<string, boolean>>({})
+
+    const toggleRow = (userId: string) => {
+        setOpenRows(prev => ({ ...prev, [userId]: !prev[userId] }))
+    }
+
     const picksByUser = league.fantasy_picks.reduce<Record<string, Pick[]>>(
         (acc, pick) => {
         if (!acc[pick.user_id]) acc[pick.user_id] = []
@@ -188,73 +256,140 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
 
     return (
         <div className="overflow-hidden rounded-lg">
-        <table className="w-full border-collapse text-sm">
-            <thead className="bg-gray-100 text-gray-700">
-            <tr>
-                <th className="py-2 px-3 text-left">Rank</th>
-                <th className="py-2 px-3 text-left"></th>
-                <th className="py-2 px-3 text-left">Username</th>
-                <th className="py-2 px-3 text-left">Total Points</th>
-            </tr>
-            </thead>
-            <tbody>
-            {league.fantasy_event_users
-                .sort((a, b) => a.rank - b.rank)
-                .map((u, idx) => {
-                const picks = picksByUser[u.user_id] || []
-                const profile = u.profiles
+            <table className="w-full border-collapse text-sm">
+                <thead className="bg-gray-100 text-gray-700">
+                <tr>
+                    <th className="py-2 px-3 text-left">Rank</th>
+                    <th className="py-2 px-3 text-left"></th>
+                    <th className="py-2 px-3 text-left">Username</th>
+                    <th className="py-2 px-3 text-left">Total Points</th>
+                    <th className="py-2 px-3 text-right">Drafted Players</th>
+                </tr>
+                </thead>
+                    <tbody>
+                    {league.fantasy_event_users
+                        .sort((a, b) => a.rank - b.rank)
+                        .map((u, idx) => {
+                        const picks = picksByUser[u.user_id] || []
+                        const profile = u.profiles
+                        const isOpen = openRows[u.user_id]
 
-                return [
-                    <tr key={`${u.user_id}-main`} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                    <td className="py-2 px-3 font-medium">{idx + 1}</td>
-                    <td className="py-2 px-3">
-                        {profile.avatar_url ? (
-                        <Image
-                            src={profile.avatar_url}
-                            alt={profile.username}
-                            width={32}
-                            height={32}
-                            className="rounded-full object-cover border border-gray-300"
-                        />
-                        ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
-                            {profile.username.charAt(0).toUpperCase()}
-                        </div>
-                        )}
-                    </td>
-                    <td className="py-2 px-3 font-medium">
-                        {profile.is_public ? (
-                        <Link href={`/profile/${profile.username}`} className="text-blue-600 hover:underline">
-                            {profile.username}
-                        </Link>
-                        ) : (
-                        <span className="text-gray-500">{profile.username}</span>
-                        )}
-                    </td>
-                    <td className="py-2 px-3 font-semibold">{u.points}</td>
-                    </tr>,
+                        return [
+                        // MAIN USER ROW
+                        <tr
+                            key={`${u.user_id}-main`}
+                            className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                        >
+                            <td className="py-2 px-3 font-medium">{idx + 1}</td>
 
-                    <tr key={`${u.user_id}-picks`} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                    <td colSpan={4} className="py-3 px-3">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {picks.map(p => (
-                            <div key={p.player_id} className="p-3 bg-gray-100 rounded-md border">
-                            <p className="font-semibold">
-                                {p.players.first_name} {p.players.last_name}
-                            </p>
-                            <p className="text-xs text-gray-600">{p.players.position}</p>
-                            <p className="text-sm mt-1">
-                                Fantasy Points: <strong>{p.players.total_player_fantasy_pts}</strong>
-                            </p>
+                            <td className="py-2 px-3">
+                            {profile.avatar_url ? (
+                                <Image
+                                src={profile.avatar_url}
+                                alt={profile.username}
+                                width={32}
+                                height={32}
+                                className="rounded-full object-cover border border-gray-300"
+                                />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                                {profile.username.charAt(0).toUpperCase()}
+                                </div>
+                            )}
+                            </td>
+
+                            <td className="py-2 px-3 font-medium">
+                            {profile.is_public ? (
+                                <Link
+                                href={`/profile/${profile.username}`}
+                                className="text-blue-600 hover:underline"
+                                >
+                                {profile.username}
+                                </Link>
+                            ) : (
+                                <span className="text-gray-500">{profile.username}</span>
+                            )}
+                            </td>
+
+                            <td className="py-2 px-3 font-semibold">{u.points}</td>
+
+                            <td className="py-2 px-3 text-right">
+                            <button
+                                onClick={() => toggleRow(u.user_id)}
+                                className="text-lg font-bold text-gray-700 hover:text-black"
+                            >
+                                {isOpen ? "−" : "+"}
+                            </button>
+                            </td>
+                        </tr>,
+
+                        isOpen && (
+                            <tr key={`${u.user_id}-picks`}>
+                            <td colSpan={5} className="py-3 px-3">
+                            <div className="overflow-hidden rounded-lg">
+                                <table className="w-full border-collapse text-sm">
+                                <thead className="bg-blue-200 text-gray-700">
+                                    <tr>
+                                    <th className="py-2 px-3 text-left">Position</th>
+                                    <th className="py-2 px-3 text-left"></th>
+                                    <th className="py-2 px-3 text-left">Name</th>
+                                    <th className="py-2 px-3 text-left">Team</th>
+                                    <th className="py-2 px-3 text-center">Fantasy Pts</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {picks.map((p, pIdx) => {
+                                    const player = p.players
+                                    const team = player.teams
+
+                                    return (
+                                        <tr
+                                        key={p.player_id}
+                                        className={pIdx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                                        >
+                                        <td className={`py-2 px-3 ${pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                            {player.position}
+                                        </td>
+
+                                        <td className={`py-2 px-3 ${pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                            {player.player_picture ? (
+                                            <Image
+                                                src={player.player_picture}
+                                                alt={player.first_name}
+                                                width={32}
+                                                height={32}
+                                                className="rounded-full object-cover border border-gray-300"
+                                            />
+                                            ) : (
+                                            <div className="w-8 h-8 bg-gray-300 rounded-full" />
+                                            )}
+                                        </td>
+
+                                        <td className={`py-2 px-3 ${pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                            {player.first_name} {player.last_name}
+                                        </td>
+
+                                        <td className={`py-2 px-3 ${pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                            {team?.team_name ?? player.team_id}
+                                        </td>
+
+                                        <td className={`py-2 px-3 text-center ${pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}`}>
+                                            {player.total_player_fantasy_pts}
+                                        </td>
+                                        </tr>
+                                    )
+                                    })}
+                                </tbody>
+                                </table>
                             </div>
-                        ))}
-                        </div>
-                    </td>
-                    </tr>
-                ]
-                })}
-            </tbody>
-        </table>
+                            </td>
+                            </tr>
+                        )
+                        ].filter(Boolean)
+                        })}
+                    </tbody>
+            </table>
         </div>
     )
     }
@@ -325,6 +460,13 @@ export default function DraftRoom({ params }: { params: ParamsPromise }) {
                 completed
                 </span>
             )}
+
+            {isCommissioner && (
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                draw master
+              </span>
+            )}
+
             </div>
 
             {/* DESCRIPTION */}
