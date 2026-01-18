@@ -2,7 +2,6 @@
 
 import { useEffect, useState, use } from "react"
 import { supabase } from "@/lib/supabaseClient"
-import LoggedInNavBar from "@/components/LoggedInNavBar"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -436,7 +435,6 @@ useEffect(() => {
 
     return (
     <>
-        <LoggedInNavBar />
         <div className="w-full px-6 py-10 flex flex-col items-center">
 
         <div className="w-full max-w-screen-xl bg-white shadow-md p-8 border border-gray-200 rounded-lg">

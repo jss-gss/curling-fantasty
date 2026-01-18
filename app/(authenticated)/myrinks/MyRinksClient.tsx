@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import type { User } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
-import LoggedInNavBar from "@/components/LoggedInNavBar"
 
 type AnyMap<T = any> = Record<string, T>
 
@@ -249,8 +248,6 @@ export default function PicksPage() {
 
   return (
     <>
-      <LoggedInNavBar />
-
       <div className="w-full px-6 py-10 flex flex-col items-center gap-10">
         {/* CARD 1 — Completed Leagues */}
         {completedLeagues.length > 0 && (

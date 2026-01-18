@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import type { User } from "@supabase/supabase-js"
 import { useRouter, useSearchParams } from "next/navigation"
-import LoggedInNavBar from "@/components/LoggedInNavBar"
 import NextMajorEvent from "@/components/NextMajorEvent"
 import WelcomeModal from "@/components/WelcomeModal"
 
@@ -196,8 +195,6 @@ export default function ThePinClient() {
             username={profile?.username}
           />
         )}
-
-        <LoggedInNavBar />
 
         <div className="flex w-full max-w-[1450px] mx-auto gap-6 py-10 px-6">
           <aside className="w-1/5 flex flex-col gap-6">

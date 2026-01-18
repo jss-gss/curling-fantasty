@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
-import LoggedInNavBar from "@/components/LoggedInNavBar"
 import CreateLeagueModal from "@/components/CreateLeagueModal"
 
 export default function LeaguesPage() {
@@ -666,8 +665,6 @@ export default function LeaguesPage() {
 
   return (
     <>
-      <LoggedInNavBar />
-
       <CreateLeagueModal
         isOpen={showModal}
         onClose={() => {

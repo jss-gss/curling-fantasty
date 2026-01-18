@@ -1,47 +1,85 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import Image from "next/image"
-import { useRouter, usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabaseClient"
-import type { User } from "@supabase/supabase-js"
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import type { User } from "@supabase/supabase-js";
+import { achievementIcons } from "@/lib/achievementIcons";
+import { useAchievementModal } from "@/app/ModalProvider";
+import AchievementModal from "@/components/AchievementModal";
 
 export default function NavBar() {
-  const router = useRouter()
-  const pathname = usePathname()
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<any>(null)
-  const [open, setOpen] = useState(false)
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [open, setOpen] = useState(false);
+
+  const { setModal } = useAchievementModal();
 
   useEffect(() => {
     async function loadUser() {
-      const { data } = await supabase.auth.getUser()
-      setUser(data.user)
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
 
       if (data.user) {
         const { data: profileData } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", data.user.id)
-          .single()
+          .single();
 
-        setProfile(profileData)
+        setProfile(profileData);
       }
     }
 
-    loadUser()
-  }, [])
+    loadUser();
+  }, []);
 
   const tabs = [
     { name: "The Pin", href: "/thepin" },
     { name: "My Rinks", href: "/myrinks" },
     { name: "League Play", href: "/leagueplay" },
     { name: "Leaderboard", href: "/leaderboard" },
-  ]
+  ];
 
-  const displayName = profile?.username ? profile.username : ""
+  const displayName = profile?.username ?? "";
+
+  const handleLogoClick = async () => {
+    if (!user) return;
+
+    const res = await fetch("/api/award-achievement", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: user.id,
+        achievement: "FOUND_THE_BUTTON",
+      }),
+    });
+
+    const { earned } = await res.json();
+
+    if (earned) {
+      setModal(
+        <AchievementModal
+          open={true}
+          onClose={() => setModal(null)}
+          title="Found the Button!"
+          icon={
+            <Image
+              src={achievementIcons.FOUND_THE_BUTTON}
+              alt="Found the Button"
+              width={160}
+              height={160}
+            />
+          }
+        />
+      )
+    }
+  }
 
   return (
     <div
@@ -49,9 +87,13 @@ export default function NavBar() {
       style={{ backgroundColor: "#234C6A" }}
     >
       <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 w-full relative">
-        
-        {/* LEFT SIDE — LOGO */}
-        <div className="flex items-center gap-2">
+
+        {/* LEFT — LOGO */}
+        <button
+          onClick={handleLogoClick}
+          className="flex items-center justify-center rounded-full overflow-hidden"
+          style={{ width: 200, height: 200 }}
+        >
           <Image
             src="/logos/button-main-logo.png"
             alt="BUTTON Logo"
@@ -59,13 +101,12 @@ export default function NavBar() {
             height={200}
             className="object-contain"
           />
-        </div>
+        </button>
 
-        {/* RIGHT SIDE — NAV TABS */}
+        {/* RIGHT — NAVIGATION */}
         <div className="flex gap-12 text-lg font-medium items-center">
-
           {tabs.map((tab) => {
-            const active = pathname === tab.href
+            const active = pathname === tab.href;
 
             return (
               <Link
@@ -79,7 +120,7 @@ export default function NavBar() {
               >
                 {tab.name}
               </Link>
-            )
+            );
           })}
 
           {/* USER DROPDOWN */}
@@ -104,8 +145,8 @@ export default function NavBar() {
                   <button
                     className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
                     onClick={async () => {
-                      await supabase.auth.signOut()
-                      window.location.href = "/"
+                      await supabase.auth.signOut();
+                      window.location.href = "/";
                     }}
                   >
                     Log Out
@@ -117,5 +158,5 @@ export default function NavBar() {
         </div>
       </div>
     </div>
-  )
+  );
 }

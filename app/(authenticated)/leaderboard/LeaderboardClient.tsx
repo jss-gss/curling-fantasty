@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
-import LoggedInNavBar from "@/components/LoggedInNavBar"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -204,8 +203,6 @@ export default function LeagueLeaderboardPage() {
 
   return (
     <>
-      <LoggedInNavBar />
-
       <div className="pt-16 max-w-5xl mx-auto px-6 py-10">
         <h1 className="text-3xl font-bold mb-8">Leaderboards</h1>
 
