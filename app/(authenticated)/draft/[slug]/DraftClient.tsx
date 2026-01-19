@@ -3,6 +3,9 @@
 import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
+import type { AchievementId } from "@/lib/achievementIcons"
+import { getAchievementIcon } from "@/lib/getAchievementIcon"
+import AchievementModal from "@/components/AchievementModal"
 
 type DraftClientProps = {
   slug: string
@@ -71,10 +74,27 @@ export default function DraftClient({ slug }: DraftClientProps) {
   const [myPickNumber, setMyPickNumber] = useState<number | null>(null)
   const [teams, setTeams] = useState<Team[]>([])
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
-useEffect(() => {
-  supabase.auth.getUser().then(res => {
-  })
-}, [])
+  const [achievements, setAchievements] = useState<any[]>([])
+  const [achievementModal, setAchievementModal] = useState<AchievementId | null>(null)
+  const [pendingRedirect, setPendingRedirect] = useState(false)
+  const achievementFromDB = achievements.find(a => a.code === achievementModal)
+
+  useEffect(() => {
+    const loadAchievements = async () => {
+      const { data } = await supabase
+        .from("achievements")
+        .select("id, code, name, description")
+
+      if (data) setAchievements(data)
+    }
+
+    loadAchievements()
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getUser().then(res => {
+    })
+  }, [])
 
   const currentIndex = useMemo(
     () => (event ? (event.current_pick ?? 1) - 1 : 0),
@@ -319,9 +339,11 @@ useEffect(() => {
 
   async function handleConfirm() {
     if (!userId || !selectedPlayer) return
+
     setIsSubmitting(true)
     setShowModal(false)
     setPlayers(prev => prev.filter(p => p.id !== selectedPlayer.id))
+
     const res = await fetch("/api/pickPlayer", {
       method: "POST",
       body: JSON.stringify({
@@ -330,27 +352,61 @@ useEffect(() => {
         userId,
       }),
     })
+
     const data = await res.json()
     setSelectedPlayer(null)
     setIsSubmitting(false)
-    if (res.ok && event) {
-      await refreshDraftState(event.id)
-      if (data.userFinished || data.draftFinished) {
-        router.push("/myrinks")
+
+    if (!res.ok || !event) return
+
+    await refreshDraftState(event.id)
+
+    if (
+      selectedPlayer.first_name === "Rachel" &&
+      selectedPlayer.last_name === "Homan"
+    ) {
+      const homanRow = achievements.find((a: any) => a.code === "HOMAN_WARRIOR")
+
+      if (homanRow) {
+        const { data: existing } = await supabase
+          .from("user_achievements")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("achievement_id", homanRow.id)
+          .maybeSingle()
+
+        if (!existing) {
+          await supabase.from("user_achievements").insert({
+            user_id: userId,
+            achievement_id: homanRow.id
+          })
+        }
       }
+
+      setAchievementModal("HOMAN_WARRIOR")
+
+      setPendingRedirect(true)
+
+      return
+    }
+
+    if (data.userFinished || data.draftFinished) {
+      router.push("/myrinks")
     }
   }
 
   function slot(position: string) {
     const pick = picks.find(
-  p => p.user_id === userId && p.players?.position === position
-)
+      p => p.user_id === userId && p.players?.position === position
+  )
 
     if (!pick) return "—"
-    return `${pick.players.first_name} ${pick.players.last_name}`
-  }
+      return `${pick.players.first_name} ${pick.players.last_name}`
+    }
+
   return (
-    <div className="p-6 flex flex-col gap-6">
+    <>
+      <div className="p-6 flex flex-col gap-6">
         <header className="bg-white shadow-md p-6 border border-gray-200 text-center rounded-lg">
         <h1 className="text-4xl font-bold">
             Draft Room — {event?.name ?? "Loading..."}
@@ -393,7 +449,8 @@ useEffect(() => {
         <div className="flex-1">
             {myTurn ? (
             <>
-              <table className="w-full shadow-md text-left border-collapse rounded-lg overflow-hidden border border-black">
+              <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                <table className="w-full ext-left border-collapse rounded-lg overflow-hidden">
                 <thead>
                     <tr className="bg-gray-100 text-gray-700">
                     <th className="py-3 px-4">#</th>
@@ -436,6 +493,7 @@ useEffect(() => {
                     ))}
                 </tbody>
                 </table>
+              </div>
             </>
             ) : (
             <div className="text-center py-10">
@@ -496,6 +554,22 @@ useEffect(() => {
             </div>
           </div>
         )}
-    </div>
+      </div>
+
+      {achievementModal && (
+        <AchievementModal
+          open={true}
+          onClose={() => {
+            setAchievementModal(null)
+            if (pendingRedirect) {
+              router.push("/myrinks")
+            }
+          }}
+          title={achievementFromDB?.name}
+          description={achievementFromDB?.description}
+          icon={getAchievementIcon(achievementModal)}
+        />
+      )}
+    </>
   )
 }

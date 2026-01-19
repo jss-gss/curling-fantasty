@@ -97,6 +97,7 @@ export default function ThePinClient() {
           draft_status,
           max_users,
           created_by,
+          is_public,
           sender:profiles!fantasy_events_created_by_fkey (
             id,
             username,
@@ -124,6 +125,7 @@ export default function ThePinClient() {
         .from("fantasy_events")
         .select(`
           *,
+          is_public,
           sender:profiles!fantasy_events_created_by_fkey (
             id,
             username,

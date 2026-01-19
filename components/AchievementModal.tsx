@@ -47,7 +47,7 @@ export default function AchievementModal({
         </button>
         {!viewOnly && (
           <h1 className="text-2xl font-bold text-[#234C6A] mb-4 flex items-center justify-center gap-3">
-          "Achievement Unlocked!"
+          New Pin Collected!
         </h1>
         )}
         

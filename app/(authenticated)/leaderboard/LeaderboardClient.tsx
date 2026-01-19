@@ -220,7 +220,7 @@ export default function LeagueLeaderboardPage() {
               className={`px-4 py-2 ${
                 activeTab === tab.key
                   ? "bg-[#1f4785] text-white border-blue-600 rounded-md"
-                  : "bg-gray-100 text-gray-700 border-gray-300 rounded-md"
+                  : "bg-gray-100 border-gray-300 rounded-md"
               }`}
             >
               {tab.label}
@@ -242,7 +242,7 @@ export default function LeagueLeaderboardPage() {
               <select
                 value={filterEvent}
                 onChange={(e) => setFilterEvent(e.target.value)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
+                className="px-4 py-2 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
               >
                 <option value="ALL">Event</option>
                 {events.map((ev) => (
@@ -263,7 +263,7 @@ export default function LeagueLeaderboardPage() {
               <select
                 value={filterPosition}
                 onChange={(e) => setFilterPosition(e.target.value)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
+                className="px-4 py-2 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
               >
                 <option value="ALL">Position</option>
                 {positions.map((pos) => (
@@ -293,7 +293,7 @@ export default function LeagueLeaderboardPage() {
               <select
                 value={filterLeagueScope}
                 onChange={(e) => setFilterLeagueScope(e.target.value as "ALL" | "MINE")}
-                className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
+                className="px-4 py-2 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
               >
                 <option value="ALL">All Leagues</option>
                 <option value="MINE">My Leagues</option>

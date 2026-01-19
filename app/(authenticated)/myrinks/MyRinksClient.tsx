@@ -1,9 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import type { User } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
+import type { AchievementId } from "@/lib/achievementIcons"
+import { getAchievementIcon } from "@/lib/getAchievementIcon"
+import AchievementModal from "@/components/AchievementModal"
 
 type AnyMap<T = any> = Record<string, T>
 
@@ -16,7 +19,7 @@ function toET(dateString: string) {
     hour: "numeric",
     minute: "2-digit",
     hour12: true
-  }) + " ET";
+  }) + " ET"
 }
 
 export default function PicksPage() {
@@ -24,156 +27,145 @@ export default function PicksPage() {
 
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+
   const [closedEvents, setClosedEvents] = useState<any[]>([])
   const [completedLeagues, setCompletedLeagues] = useState<any[]>([])
-  const [userPicksByEvent, setUserPicksByEvent] = useState<AnyMap<any[]>>({})
-
+  const [eligibleForStats, setEligibleForStats] = useState<any[]>([])
   const [pointsByEvent, setPointsByEvent] = useState<AnyMap<number>>({})
   const [ranksByEvent, setRanksByEvent] = useState<AnyMap<number | string>>({})
+
+  const [userPicksByEvent, setUserPicksByEvent] = useState<AnyMap<any[]>>({})
   const [recentByPlayer, setRecentByPlayer] = useState<AnyMap<any>>({})
   const [nextByPlayer, setNextByPlayer] = useState<AnyMap<any>>({})
 
+  const [achievements, setAchievements] = useState<any[]>([])
+  const [achievementModal, setAchievementModal] = useState<AchievementId | null>(null)
+  const [modalQueue, setModalQueue] = useState<AchievementId[]>([])
+  const achievementFromDB = achievements.find(a => a.code === achievementModal)
+
+  const hasRunCleanSweep = useRef(false)
+
+  const enqueueModal = (code: AchievementId) => {
+    setModalQueue(prev => [...prev, code])
+  }
+
   useEffect(() => {
-    loadPage()
+    if (!achievementModal && modalQueue.length > 0) {
+      const timer = setTimeout(() => {
+        setAchievementModal(modalQueue[0])
+        setModalQueue(prev => prev.slice(1))
+      }, 800)
+      return () => clearTimeout(timer)
+    }
+  }, [achievementModal, modalQueue])
+
+  useEffect(() => {
+    const loadAchievements = async () => {
+      const { data } = await supabase
+        .from("achievements")
+        .select("id, code, name, description")
+      if (data) setAchievements(data)
+    }
+    loadAchievements()
   }, [])
 
-  async function loadPage() {
-    setLoading(true)
+  useEffect(() => {
+    const loadPage = async () => {
+      setLoading(true)
 
-    const userResp = await supabase.auth.getUser()
-    const currentUser = userResp?.data?.user ?? null
-
-    if (!currentUser) {
-      router.push("/login")
-      return
-    }
-
-    setUser(currentUser)
-
-    const { data: memberships } = await supabase
-      .from("fantasy_event_users")
-      .select("fantasy_event_id, points, rank")
-      .eq("user_id", currentUser.id)
-
-    const membershipEventIds = memberships?.map((m) => m.fantasy_event_id) ?? []
-
-    const pointsMap: AnyMap<number> = {}
-    const ranksMap: AnyMap<number | string> = {}
-
-    for (const m of memberships ?? []) {
-      pointsMap[m.fantasy_event_id] = m.points ?? 0
-      ranksMap[m.fantasy_event_id] = m.rank ?? "-"
-    }
-
-    setPointsByEvent(pointsMap)
-    setRanksByEvent(ranksMap)
-
-    const { data: picks } = await supabase
-      .from("fantasy_picks")
-      .select(`
-        fantasy_event_id,
-        player_id,
-        players (
-          id,
-          first_name,
-          last_name,
-          position,
-          player_picture,
-          total_player_fantasy_pts,
-          teams (
-            id,
-            team_name,
-            gender
-          )
-        )
-      `)
-      .eq("user_id", currentUser.id)
-
-    const pickEventIds = picks?.map((p) => p.fantasy_event_id) ?? []
-    const eventIds = Array.from(new Set([...membershipEventIds, ...pickEventIds]))
-
-    if (eventIds.length === 0) {
-      setClosedEvents([])
-      setUserPicksByEvent({})
-      setLoading(false)
-      return
-    }
-
-    const { data: events } = await supabase
-      .from("fantasy_events")
-      .select(`
-        id,
-        name,
-        description,
-        draft_status,
-        draft_date,
-        created_by, 
-        is_public,
-        slug,
-        curling_events (
-          id,
-          name,
-          year,
-          location,
-          start_date
-        )
-      `)
-      .in("id", eventIds)
-
-    const closed = (events ?? []).filter(
-      (e) =>
-        e.draft_status === "closed" ||
-        e.draft_status === "locked" ||
-        e.draft_status === "completed"
-    )
-
-    const completed = (events ?? []).filter(
-      e => e.draft_status === "completed"
-    )
-
-    const currentRinks = (events ?? []).filter(
-      e =>
-        e.draft_status === "closed" || e.draft_status === "locked"
-    )
-
-    const picksByEvent: AnyMap<any[]> = {}
-    ;(picks ?? []).forEach((p) => {
-      if (!picksByEvent[p.fantasy_event_id]) {
-        picksByEvent[p.fantasy_event_id] = []
+      const userResp = await supabase.auth.getUser()
+      const currentUser = userResp?.data?.user ?? null
+      if (!currentUser) {
+        router.push("/login")
+        return
       }
-      picksByEvent[p.fantasy_event_id].push(p)
-    })
+      setUser(currentUser)
 
-    setUserPicksByEvent(picksByEvent)
-    setCompletedLeagues(completed)
-    setClosedEvents(currentRinks)
+      const { data: memberships } = await supabase
+        .from("fantasy_event_users")
+        .select("fantasy_event_id, points, rank")
+        .eq("user_id", currentUser.id)
 
-    const curlingEventIds = closed
-      .map((e: any) => e.curling_events?.id)
-      .filter(Boolean)
+      const pointsMap: Record<string, number> = {}
+      const ranksMap: Record<string, number | string> = {}
 
-    let allGames: any[] = []
+      for (const m of memberships ?? []) {
+        pointsMap[m.fantasy_event_id] = m.points
+        ranksMap[m.fantasy_event_id] = m.rank
+      }
 
-    if (curlingEventIds.length > 0) {
-      const { data: games } = await supabase
-        .from("games")
+      setPointsByEvent(pointsMap)
+      setRanksByEvent(ranksMap)
+
+      const membershipEventIds = memberships?.map(m => m.fantasy_event_id) ?? []
+
+      const { data: picks } = await supabase
+        .from("fantasy_picks")
+        .select(`
+          fantasy_event_id,
+          player_id,
+          players (
+            id,
+            first_name,
+            last_name,
+            position,
+            player_picture,
+            total_player_fantasy_pts,
+            teams ( id, team_name, gender )
+          )
+        `)
+        .eq("user_id", currentUser.id)
+
+      const pickEventIds = picks?.map(p => p.fantasy_event_id) ?? []
+      const eventIds = Array.from(new Set([...membershipEventIds, ...pickEventIds]))
+
+      if (eventIds.length === 0) {
+        setClosedEvents([])
+        setCompletedLeagues([])
+        setEligibleForStats([])
+        setUserPicksByEvent({})
+        setLoading(false)
+        return
+      }
+
+      const { data: events } = await supabase
+        .from("fantasy_events")
         .select(`
           id,
-          game_datetime,
-          team1_id,
-          team2_id,
-          team1:teams!games_team1_id_fkey ( team_name ),
-          team2:teams!games_team2_id_fkey ( team_name )
+          slug,
+          name,
+          is_public,
+          draft_status,
+          curling_events ( id, name, year, location )
         `)
-        .in("curling_event_id", curlingEventIds)
-        .order("game_datetime", { ascending: true })
+        .in("id", eventIds)
 
-      allGames = games ?? []
-    }
+      const current = events?.filter(
+        e => e.draft_status === "closed" || e.draft_status === "locked"
+      ) ?? []
 
-    const playerIds = (picks ?? []).map((p: any) => p.player_id)
+      const completed = events?.filter(
+        e => e.draft_status === "completed"
+      ) ?? []
 
-    const { data: recentDraws } = await supabase
+      const eligible = events?.filter(
+        e => e.draft_status === "locked" || e.draft_status === "completed"
+      ) ?? []
+
+      setClosedEvents(current)
+      setCompletedLeagues(completed)
+      setEligibleForStats(eligible)
+
+      const picksByEvent: AnyMap<any[]> = {}
+      for (const p of picks ?? []) {
+        if (!picksByEvent[p.fantasy_event_id]) picksByEvent[p.fantasy_event_id] = []
+        picksByEvent[p.fantasy_event_id].push(p)
+      }
+      setUserPicksByEvent(picksByEvent)
+
+      const playerIds = (picks ?? []).map(p => p.player_id)
+
+      const { data: recentDraws } = await supabase
       .from("draws")
       .select(`
         player_id,
@@ -193,58 +185,92 @@ export default function PicksPage() {
       `)
       .in("player_id", playerIds)
       .order("game_datetime", { foreignTable: "games", ascending: false })
-
-    const recentMap: AnyMap<any> = {}
-
-    for (const row of recentDraws ?? []) {
-      const key = String(row.player_id)
-      if (!recentMap[key]) {
-        recentMap[key] = row
+      
+      const recentMap: AnyMap<any> = {}
+      for (const row of recentDraws ?? []) {
+        const key = String(row.player_id)
+        if (!recentMap[key]) recentMap[key] = row
       }
+      setRecentByPlayer(recentMap)
+
+      const { data: nextDraws } = await supabase
+        .from("games")
+        .select(`
+          id,
+          game_datetime,
+          team1_id,
+          team2_id,
+          team1:teams!games_team1_id_fkey ( team_name ),
+          team2:teams!games_team2_id_fkey ( team_name )
+        `)
+        .gt("game_datetime", new Date().toISOString())
+        .order("game_datetime", { ascending: true })
+
+      const nextMap: AnyMap<any> = {}
+      for (const p of picks ?? []) {
+        const rawPlayer = p.players as any
+        const player = Array.isArray(rawPlayer) ? rawPlayer[0] : rawPlayer
+        if (!player) continue
+        const rawTeam = player.teams as any
+        const team = Array.isArray(rawTeam) ? rawTeam[0] : rawTeam
+        const teamId = team?.id
+        if (!teamId) continue
+        const nextGame = (nextDraws ?? []).find(
+          g => g.team1_id === teamId || g.team2_id === teamId
+        )
+        if (nextGame) nextMap[p.player_id] = nextGame
+      }
+      setNextByPlayer(nextMap)
+
+      setLoading(false)
     }
 
-    setRecentByPlayer(recentMap)
+    loadPage()
+  }, [])
 
-    const { data: nextDraws } = await supabase
-      .from("games")
-      .select(`
-        id,
-        game_datetime,
-        team1_id,
-        team2_id,
-        team1:teams!games_team1_id_fkey ( team_name ),
-        team2:teams!games_team2_id_fkey ( team_name )
-      `)
-      .gt("game_datetime", new Date().toISOString())
-      .order("game_datetime", { ascending: true })
+  useEffect(() => {
+    if (!user) return
+    if (!achievements.length) return
+    if (!Object.keys(recentByPlayer).length) return
+    if (!completedLeagues.length && !closedEvents.length) return
 
-    const safeNextDraws = nextDraws ?? []
-    const nextMap: AnyMap<any> = {}
+    if (!hasRunCleanSweep.current) {
+      hasRunCleanSweep.current = true
 
-    for (const p of picks ?? []) {
-      const rawPlayer = p.players as any
-
-      const player = Array.isArray(rawPlayer) ? rawPlayer[0] : rawPlayer
-      if (!player) continue
-
-      const rawTeam = player.teams as any
-      const team = Array.isArray(rawTeam) ? rawTeam[0] : rawTeam
-      const teamId = team?.id
-      if (!teamId) continue
-
-      const nextGame = safeNextDraws.find(
-        (g: any) => g.team1_id === teamId || g.team2_id === teamId
+      const hasPerfect = Object.values(recentByPlayer).some(
+        (d: any) => d?.indv_pct === 100
       )
 
-      if (nextGame) {
-        nextMap[p.player_id] = nextGame
+      if (hasPerfect) {
+        const row = achievements.find((a: any) => a.code === "CLEAN_SWEEP")
+        if (row) {
+          const checkExisting = async () => {
+            const { data: existing } = await supabase
+              .from("user_achievements")
+              .select("id")
+              .eq("user_id", user.id)
+              .eq("achievement_id", row.id)
+              .maybeSingle()
+
+            if (!existing) {
+              await supabase.from("user_achievements").insert({
+                user_id: user.id,
+                achievement_id: row.id
+              })
+              enqueueModal("CLEAN_SWEEP")
+            }
+          }
+          checkExisting()
+        }
       }
     }
-
-    setNextByPlayer(nextMap)
-
-    setLoading(false)
-  }
+  }, [
+      user,
+      achievements,
+      recentByPlayer,
+      completedLeagues,
+      closedEvents
+  ])
 
   return (
     <>
@@ -330,7 +356,7 @@ export default function PicksPage() {
                             if (!player) return null
 
                             const team = player.teams
-                            const recent = recentByPlayer[p.player_id] // final stats
+                            const recent = recentByPlayer[p.player_id]
 
                             return (
                               <tr key={player.id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
@@ -580,6 +606,16 @@ export default function PicksPage() {
                 </div>
             </main>
         </div>
+
+      {achievementModal && (
+        <AchievementModal
+          open={true}
+          onClose={() => setAchievementModal(null)}
+          title={achievementFromDB?.name ?? ""}
+          description={achievementFromDB?.description ?? ""}
+          icon={getAchievementIcon(achievementFromDB?.code)}
+        />
+      )}
     </>
   )
 }

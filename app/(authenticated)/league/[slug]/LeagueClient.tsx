@@ -1,9 +1,12 @@
 "use client"
 
-import { useEffect, useState, use } from "react"
+import { useEffect, useState, useRef, use } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import Image from "next/image"
 import Link from "next/link"
+import AchievementModal from "@/components/AchievementModal";
+import { getAchievementIcon } from "@/lib/getAchievementIcon"
+import type { AchievementId } from "@/lib/achievementIcons"
 
 type League = {
   id: string
@@ -69,103 +72,362 @@ type Pick = {
 type ParamsPromise = Promise<{ slug: string }>
 
 export default function LeagueClient({ params }: { params: ParamsPromise }) {
-  const { slug } = use(params)
-  const [league, setLeague] = useState<League | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [isCommissioner, setIsCommissioner] = useState(false)
+    const { slug } = use(params)
+    const [league, setLeague] = useState<League | null>(null)
+    const [userId, setUserId] = useState<string | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [isCommissioner, setIsCommissioner] = useState(false)
+    const [achievements, setAchievements] = useState<any[]>([])
+    const [achievementModal, setAchievementModal] = useState<AchievementId | null>(null)
+    const achievementFromDB = achievements.find(a => a.code === achievementModal)
+    const [modalQueue, setModalQueue] = useState<AchievementId[]>([])
+    const hasRun = useRef(false)
+    const positions = ["skip", "third", "second", "lead"] as const
+    type Position = (typeof positions)[number]
+    const positionMap: Record<Position, string> = { skip: "Skip", third: "Vice Skip", second: "Second", lead: "Lead" }    
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        window.location.href = "/login"
-        return
-      }
-      const res = await fetch("/api/check-auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id })
-      })
-      const data = await res.json()
-      if (!data.allowed) {
-        window.location.href = "/login"
-        return
-      }
-      setUserId(user.id)
+    const enqueueModal = (code: AchievementId) => {
+        setModalQueue(prev => [...prev, code])
     }
-    checkAuth()
-  }, [])
 
-useEffect(() => {
-  if (!userId) return
+    useEffect(() => {
+        if (!achievementModal && modalQueue.length > 0) {
+        const timer = setTimeout(() => {
+            setAchievementModal(modalQueue[0])
+            setModalQueue(prev => prev.slice(1))
+        }, 800)
 
-  const fetchLeague = async () => {
-    const { data } = await supabase
-      .from("fantasy_events")
-      .select(`
-        *,
-        sender:profiles!fantasy_events_created_by_fkey (
-          id, username, avatar_url, is_public
-        ),
-        curling_events (*),
-        fantasy_event_users (
-          user_id, draft_position, points, rank,
-          profiles ( id, username, avatar_url, is_public )
-        ),
-        fantasy_event_user_invites ( user_id ),
-        fantasy_picks (
-          user_id,
-          player_id,
-          players (
-            id,
-            first_name,
-            last_name,
-            team_id,
-            position,
-            player_picture,
-            total_player_fantasy_pts,
-            teams (
-              id,
-              team_name
-            )
-          )
-        )
-      `)
-      .eq("slug", slug)
-      .single()
+        return () => clearTimeout(timer)
+        }
+    }, [achievementModal, modalQueue])
 
-    setLeague(data)
+    useEffect(() => {
+        const checkAuth = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+            window.location.href = "/login"
+            return
+        }
+        const res = await fetch("/api/check-auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: user.id })
+        })
+        const data = await res.json()
+        if (!data.allowed) {
+            window.location.href = "/login"
+            return
+        }
+        setUserId(user.id)
+        }
+        checkAuth()
+    }, [])
 
-    if (data?.created_by === userId) 
-    { 
-        setIsCommissioner(true) 
-    }
-    setLoading(false)
+    useEffect(() => {
+        if (!userId) return
+
+        const fetchLeague = async () => {
+            const { data } = await supabase
+            .from("fantasy_events")
+            .select(`
+                *,
+                sender:profiles!fantasy_events_created_by_fkey (
+                id, username, avatar_url, is_public
+                ),
+                curling_events (*),
+                fantasy_event_users (
+                user_id, draft_position, points, rank,
+                profiles ( id, username, avatar_url, is_public )
+                ),
+                fantasy_event_user_invites ( user_id ),
+                fantasy_picks (
+                user_id,
+                player_id,
+                players (
+                    id,
+                    first_name,
+                    last_name,
+                    team_id,
+                    position,
+                    player_picture,
+                    total_player_fantasy_pts,
+                    teams (
+                    id,
+                    team_name
+                    )
+                )
+                )
+            `)
+            .eq("slug", slug)
+            .single()
+
+            setLeague(data)
+
+            if (data?.created_by === userId) 
+            { 
+                setIsCommissioner(true) 
+            }
+            setLoading(false)
+        }
+
+        fetchLeague()
+    }, [slug, userId])
+
+    useEffect(() => {
+        const fetchAchievements = async () => {
+            const { data } = await supabase
+            .from("achievements")
+            .select("id, code, name, description")
+
+            if (data) setAchievements(data)
+        }
+
+        fetchAchievements()
+    }, [])
+
+    const loadTopCurlersForEvent = async (eventId: string) => {
+  const results: Record<Position, any[]> = {
+    skip: [],
+    third: [],
+    second: [],
+    lead: []
   }
 
-  fetchLeague()
-}, [slug, userId])
+  for (const pos of positions) {
+    const dbPos = positionMap[pos]
+    console.log("[RPC CALL] pos:", pos, "dbPos:", dbPos, "eventId:", eventId)
 
-  if (loading || !league) return null
+    const { data: rows, error } = await supabase.rpc(
+      "get_top_curlers_by_event_and_position",
+      { event_id: eventId, pos: dbPos }
+    )
 
-  const enrolled = league.fantasy_event_users.some(u => u.user_id === userId)
-  const invited = league.fantasy_event_user_invites.some(inv => inv.user_id === userId)
-  const blocked = !league.is_public && !enrolled && !invited
+    if (error) {
+      console.error("[RPC ERROR]", pos, error)
+    } else {
+      console.log("[RPC RESULT]", pos, rows)
+    }
 
-  if (blocked) return null
+    results[pos] = rows ?? []
+  }
 
-  const picksByUser = league.fantasy_picks.reduce<Record<string, Pick[]>>(
-    (acc, pick) => {
-      if (!acc[pick.user_id]) acc[pick.user_id] = []
-      acc[pick.user_id].push(pick)
-      return acc
-    },
-    {}
-  )
+  console.log("[TOP CURLERS RESULTS]", results)
+  return results
+}
+
+
+    const checkAchievements = async () => {
+        if (!league || !userId) return
+
+        const users = league.fantasy_event_users
+        const me = users.find(u => u.user_id === userId)
+        if (!me) return
+
+        const { data: rawRows } = await supabase
+            .from("fantasy_event_users")
+            .select("fantasy_event_id, fantasy_events(draft_status)")
+            .eq("user_id", userId)
+
+        const completedRows = (rawRows as any[]) ?? []
+        const completedEvents = completedRows.filter(
+            row => row.fantasy_events?.draft_status === "completed"
+        )
+        const completedCount = completedEvents.length
+
+        const proRow = achievements.find(a => a.code === "PROFESSIONAL_CURLER")
+        if (proRow) {
+            const { data: existingPro } = await supabase
+            .from("user_achievements")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("achievement_id", proRow.id)
+            .maybeSingle()
+
+            if (completedCount === 1 && !existingPro) {
+            await supabase.from("user_achievements").insert({
+                user_id: userId,
+                achievement_id: proRow.id
+            })
+            enqueueModal("PROFESSIONAL_CURLER")
+            }
+        }
+
+        const rank = me.rank
+        const total = users.length
+
+        let achievementCode: AchievementId | null = null
+        if (rank === 1) achievementCode = "FOUR_FOOT_FINISHER"
+        else if (rank === 2) achievementCode = "EIGHT_FOOT_FINISHER"
+        else if (rank === 3) achievementCode = "TWELVE_FOOT_FINISHER"
+        else if (rank === total) achievementCode = "WOODEN_BROOM"
+
+        if (achievementCode) {
+            const achievementRow = achievements.find(a => a.code === achievementCode)
+            if (achievementRow) {
+            const { data: existing } = await supabase
+                .from("user_achievements")
+                .select("id")
+                .eq("user_id", userId)
+                .eq("achievement_id", achievementRow.id)
+                .maybeSingle()
+
+            if (!existing) {
+                await supabase.from("user_achievements").insert({
+                user_id: userId,
+                achievement_id: achievementRow.id
+                })
+                enqueueModal(achievementCode)
+            }
+            }
+        }
+
+        const eventId = league.curling_events?.id
+        if (!eventId) return
+
+        const topCurlers = await loadTopCurlersForEvent(eventId)
+        const myPicks = league.fantasy_picks.filter(p => p.user_id === userId)
+        const myPlayerIds = myPicks.map(p => p.player_id)
+console.log("[CHECK ACHIEVEMENTS] eventId:", eventId)
+
+
+console.log("[MY PICKS]", myPicks)
+console.log("[MY PLAYER IDS]", myPlayerIds)
+console.log("[TOP CURLERS FINAL]", topCurlers)
+
+        const hasAllTop1 = positions.every(pos => {
+  const rows = topCurlers[pos]
+  console.log("[TOP1 CHECK]", pos, "rows:", rows)
+
+  if (!rows.length) {
+    console.log("[TOP1 FAIL] no rows for", pos)
+    return false
+  }
+
+  const id = rows[0].player_id ?? rows[0].curler_id
+  const ok = myPlayerIds.includes(id)
+  console.log("[TOP1 COMPARE]", { pos, topId: id, ok })
+  return ok
+})
+
+const hasAllTop2 = positions.every(pos => {
+  const rows = topCurlers[pos]
+  console.log("[TOP2 CHECK]", pos, "rows:", rows)
+
+  if (rows.length < 2) {
+    console.log("[TOP2 FAIL] less than 2 rows for", pos)
+    return false
+  }
+
+  const id = rows[1].player_id ?? rows[1].curler_id
+  const ok = myPlayerIds.includes(id)
+  console.log("[TOP2 COMPARE]", { pos, top2Id: id, ok })
+  return ok
+})
+
+const hasAllBottom = positions.every(pos => {
+  const rows = topCurlers[pos]
+  console.log("[BOTTOM CHECK]", pos, "rows:", rows)
+
+  if (!rows.length) {
+    console.log("[BOTTOM FAIL] no rows for", pos)
+    return false
+  }
+
+  const bottom = rows[rows.length - 1]
+  const id = bottom.player_id ?? bottom.curler_id
+  const ok = myPlayerIds.includes(id)
+  console.log("[BOTTOM COMPARE]", { pos, bottomId: id, ok })
+  return ok
+})
+
+console.log("[RESULT] hasAllTop1:", hasAllTop1, "hasAllTop2:", hasAllTop2, "hasAllBottom:", hasAllBottom)
+
+
+        const award = async (code: AchievementId) => {
+            const row = achievements.find(a => a.code === code)
+            if (!row) return
+            const { data: existing } = await supabase
+            .from("user_achievements")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("achievement_id", row.id)
+            .maybeSingle()
+            if (!existing) {
+            await supabase.from("user_achievements").insert({
+                user_id: userId,
+                achievement_id: row.id
+            })
+            enqueueModal(code)
+            }
+        }
+
+        if (hasAllTop1) await award("FIRST_EVENT_WINNER")
+        if (hasAllTop2) await award("SECOND_EVENT_WINNER")
+        if (hasAllBottom) await award("HOGGED_OUT")
+            
+    }
+    
+    useEffect(() => {
+        if (!league || !userId) return
+        if (!league.curling_events) return
+        if (!league.fantasy_event_users) return
+        if (!achievements || achievements.length === 0) return
+        if (league.draft_status !== "completed") return
+
+        if (hasRun.current) return
+        hasRun.current = true
+
+        checkAchievements()
+    }, [league, userId, achievements])
+
+    if (loading || !league) return null
+
+    const enrolled = league.fantasy_event_users.some(u => u.user_id === userId)
+    const invited = league.fantasy_event_user_invites.some(inv => inv.user_id === userId)
+    const blocked = !league.is_public && !enrolled && !invited
+
+    if (blocked) return null
+
     function formatDate(dateString: string) {
         const [year, month, day] = dateString.split("-")
         return `${month}/${day}/${year}`
+    }
+
+    function InvitedRow({ userId }: { userId: string }) {
+        const [profile, setProfile] = useState<any>(null)
+
+        useEffect(() => {
+            supabase
+            .from("profiles")
+            .select("id, username, avatar_url, is_public")
+            .eq("id", userId)
+            .maybeSingle()
+            .then(res => setProfile(res.data))
+        }, [userId])
+
+        if (!profile) return null
+
+        return (
+            <tr className="bg-gray-50">
+            <td className="py-2 px-3">
+                {profile.avatar_url ? (
+                <img
+                    src={profile.avatar_url}
+                    alt={profile.username}
+                    className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                />
+                ) : (
+                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                    {profile.username.charAt(0).toUpperCase()}
+                </div>
+                )}
+            </td>
+
+            <td className="py-2 px-3">{profile.username}</td>
+
+            <td className="py-2 px-3 text-gray-500 italic">Invited</td>
+            </tr>
+        )
     }
 
     function OpenLeagueView({ league }: { league: League }) {
@@ -173,57 +435,92 @@ useEffect(() => {
             a.profiles.username.localeCompare(b.profiles.username)
         )
 
-        return (
-            <div className="bg-white p-6 rounded-lg">
-            <div className="overflow-x-auto rounded-lg">
-                <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-gray-100 text-gray-700">
-                    <tr>
-                    <th className="py-2 px-3">#</th>
-                    <th className="py-2 px-3"></th>
-                    <th className="py-2 px-3">Username</th>
-                    </tr>
-                </thead>
+        const acceptedIds = new Set(sorted.map(u => u.user_id))
 
-                <tbody>
+        const invited = league.fantasy_event_user_invites.filter(
+            inv => !acceptedIds.has(inv.user_id)
+        )
+
+        return (
+            <div className="bg-white p-6 rounded-lg space-y-8">
+
+            {/* Accepted Users */}
+            <div>
+                <h2 className="text-lg font-semibold mb-3">Players</h2>
+                <div className="overflow-x-auto rounded-lg">
+                <table className="w-full text-left text-sm border-collapse">
+                    <thead className="bg-gray-100 text-gray-700">
+                    <tr>
+                        <th className="py-2 px-3">#</th>
+                        <th className="py-2 px-3"></th>
+                        <th className="py-2 px-3">Username</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
                     {sorted.map((u, idx) => (
-                    <tr
+                        <tr
                         key={u.user_id}
                         className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                    >
+                        >
                         <td className="py-2 px-3 font-medium">{idx + 1}</td>
 
                         <td className="py-2 px-3">
-                        {u.profiles.avatar_url ? (
+                            {u.profiles.avatar_url ? (
                             <img
-                            src={u.profiles.avatar_url}
-                            alt={u.profiles.username}
-                            className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                                src={u.profiles.avatar_url}
+                                alt={u.profiles.username}
+                                className="w-8 h-8 rounded-full object-cover border border-gray-300"
                             />
-                        ) : (
+                            ) : (
                             <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
-                            {u.profiles.username.charAt(0).toUpperCase()}
+                                {u.profiles.username.charAt(0).toUpperCase()}
                             </div>
-                        )}
+                            )}
                         </td>
 
                         <td className="py-2 px-3">
-                        {u.profiles.is_public ? (
+                            {u.profiles.is_public ? (
                             <a
-                            href={`/profile/${u.profiles.id}`}
-                            className="text-blue-600 hover:underline"
+                                href={`/profile/${u.profiles.id}`}
+                                className="text-blue-600 hover:underline"
                             >
-                            {u.profiles.username}
+                                {u.profiles.username}
                             </a>
-                        ) : (
+                            ) : (
                             <span className="text-gray-600">{u.profiles.username}</span>
-                        )}
+                            )}
                         </td>
-                    </tr>
+                        </tr>
                     ))}
-                </tbody>
+                    </tbody>
                 </table>
+                </div>
             </div>
+
+            {/* Invited Users (Private Leagues Only) */}
+            {league.is_public === false && invited.length > 0 && (
+                <div>
+                <h2 className="text-lg font-semibold mb-3">Invited</h2>
+                <div className="overflow-x-auto rounded-lg">
+                    <table className="w-full text-left text-sm border-collapse">
+                    <thead className="bg-gray-100 text-gray-700">
+                        <tr>
+                        <th className="py-2 px-3"></th>
+                        <th className="py-2 px-3">Username</th>
+                        <th className="py-2 px-3">Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {invited.map(inv => (
+                        <InvitedRow key={inv.user_id} userId={inv.user_id} />
+                        ))}
+                    </tbody>
+                    </table>
+                </div>
+                </div>
+            )}
             </div>
         )
     }
@@ -518,6 +815,16 @@ useEffect(() => {
 
         </div>
         </div> 
+        
+       {achievementModal && achievementFromDB && (
+            <AchievementModal
+                open={true}
+                onClose={() => setAchievementModal(null)}
+                title={achievementFromDB.name}
+                description={achievementFromDB.description}
+                icon={getAchievementIcon(achievementModal as AchievementId)}
+            />
+        )}
     </>
     )
 }
