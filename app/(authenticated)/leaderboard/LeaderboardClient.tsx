@@ -350,8 +350,12 @@ export default function LeagueLeaderboardPage() {
                                 <div>
                                   {/* HEADER WITH BADGES */}
                                   <div className="flex items-center gap-2 mb-2">
-                                    <h3 className="text-xl font-semibold">{league.name}</h3>
-
+                                    <h3
+                                      className="text-2xl font-semibold hover:underline cursor-pointer"
+                                      onClick={() => router.push(`/league/${league.slug}`)}
+                                    >
+                                      {league.name}
+                                    </h3>
                                     {league.is_public ? (
                                       <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                                         public
@@ -407,8 +411,12 @@ export default function LeagueLeaderboardPage() {
                               >
                                 {/* HEADER */}
                                 <div className="flex items-center gap-2 mb-2">
-                                  <h2 className="text-xl font-semibold">{league.name}</h2>
-
+                                  <h2
+                                    className="text-2xl font-semibold hover:underline cursor-pointer"
+                                    onClick={() => router.push(`/league/${league.slug}`)}
+                                  >
+                                    {league.name}
+                                  </h2>
                                   {league.is_public ? (
                                     <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                                       public

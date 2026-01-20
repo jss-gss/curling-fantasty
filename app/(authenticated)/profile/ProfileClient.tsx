@@ -141,7 +141,7 @@ export default function ProfileClient() {
         .from("fantasy_event_users")
         .select("id, fantasy_events!inner(draft_status)")
         .eq("user_id", user.id)
-        .in("fantasy_events.draft_status", ["locked", "archived"])
+        .in("fantasy_events.draft_status", ["locked", "completed", "archived"])
 
       setTotalLeagues(leagues?.length ?? 0)
 
@@ -149,7 +149,7 @@ export default function ProfileClient() {
         .from("fantasy_event_users")
         .select("rank, fantasy_events!inner(draft_status)")
         .eq("user_id", user.id)
-        .eq("fantasy_events.draft_status", "archived")
+        .eq("fantasy_events.draft_status", ["completed", "archived"])
         .order("rank", { ascending: true })
         .limit(1)
 

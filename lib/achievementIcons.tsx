@@ -10,7 +10,8 @@ export const achievementIcons = {
   HOGGED_OUT: "/icons/hogged-out.png",
   CLEAN_SWEEP: "/icons/clean-sweep.png",
   FIRST_EVENT_WINNER: "/icons/first-event-winner.png",
-  WOODEN_BROOM: "/icons/wooden-broom.png"
+  WOODEN_BROOM: "/icons/wooden-broom.png",
+  DRAW_MASTER: "/icons/draw-master.png"
 } as const;
 
 export type AchievementId = keyof typeof achievementIcons;
