@@ -111,7 +111,7 @@ export default function PicksPage() {
             position,
             player_picture,
             total_player_fantasy_pts,
-            teams ( id, team_name, gender )
+            teams ( id, team_name )
           )
         `)
         .eq("user_id", currentUser.id)

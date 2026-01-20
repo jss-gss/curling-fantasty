@@ -6,6 +6,9 @@ import type { User } from "@supabase/supabase-js"
 import { useRouter, useSearchParams } from "next/navigation"
 import NextMajorEvent from "@/components/NextMajorEvent"
 import WelcomeModal from "@/components/WelcomeModal"
+import AchievementModal from "@/components/AchievementModal"
+import { getAchievementIcon } from "@/lib/getAchievementIcon"
+import type { AchievementId } from "@/lib/achievementIcons"
 
 function Countdown({ target }: { target: Date }) {
   const [timeLeft, setTimeLeft] = useState("")
@@ -43,6 +46,35 @@ export default function ThePinClient() {
   const [upcomingDrafts, setUpcomingDrafts] = useState<any[]>([])
   const nextDraft = upcomingDrafts[0] ?? null
   const [showModal, setShowModal] = useState(false)
+  const [achievements, setAchievements] = useState<any[]>([])
+  const [achievementModal, setAchievementModal] = useState<AchievementId | null>(null)
+  const achievementFromDB = achievements.find(a => a.code === achievementModal)
+  const [modalQueue, setModalQueue] = useState<AchievementId[]>([])
+  const [triviaQuestion, setTriviaQuestion] = useState<any>(null)
+  const [triviaLoading, setTriviaLoading] = useState(true)
+  const [triviaFeedback, setTriviaFeedback] = useState<"correct" | "wrong" | null>(null)
+
+  useEffect(() => {
+    const loadTrivia = async () => {
+      if (!user?.id) return;
+      const q = await getNextTriviaQuestion(user.id);
+      setTriviaQuestion(q);
+      setTriviaLoading(false);
+    };
+    loadTrivia()
+  }, [user])
+
+  useEffect(() => {
+    const loadAchievements = async () => {
+      const { data } = await supabase
+        .from("achievements")
+        .select("*")
+
+      setAchievements(data ?? [])
+    }
+
+    loadAchievements()
+  }, [])
 
   useEffect(() => {
     const welcome = params.get("welcome")
@@ -184,6 +216,128 @@ export default function ThePinClient() {
     if (l.draft_status !== "open") return false
     return true
   })
+
+  const getNextTriviaQuestion = async (userId: string) => {
+    const { data: answered } = await supabase
+      .from("trivia_user_answers")
+      .select("question_id")
+      .eq("user_id", userId);
+
+    const answeredIds = answered?.map(a => a.question_id) ?? [];
+
+    const { data: next } = await supabase
+      .from("trivia_questions")
+      .select("*")
+      .not("id", "in", `(${answeredIds.join(",")})`)
+      .limit(1);
+
+    return next?.[0] ?? null;
+  }
+
+  const submitTriviaAnswer = async (userId: string, questionId: string, userAnswer: boolean) => {
+    const { data: question } = await supabase
+      .from("trivia_questions")
+      .select("answer")
+      .eq("id", questionId)
+      .single();
+
+    const correct = question!.answer === userAnswer;
+
+    await supabase.from("trivia_user_answers").insert({
+      user_id: userId,
+      question_id: questionId,
+      correct
+    })
+
+    return correct;
+  }
+
+  const getTotalTriviaQuestions = async () => {
+    const { count } = await supabase
+      .from("trivia_questions")
+      .select("*", { count: "exact", head: true });
+
+    return count ?? 0;
+  }
+
+  const getCorrectCount = async (userId: string) => {
+    const { data } = await supabase
+      .from("trivia_user_answers")
+      .select("correct")
+      .eq("user_id", userId);
+
+    return data?.filter(r => r.correct).length ?? 0;
+  }
+
+  const handleTriviaAnswer = async (userAnswer: boolean) => {
+    if (!triviaQuestion || !user?.id) return;
+
+    const correct = await submitTriviaAnswer(
+      user.id,
+      triviaQuestion.id,
+      userAnswer
+    );
+
+    setTriviaFeedback(correct ? "correct" : "wrong");
+
+    setTimeout(async () => {
+      const next = await getNextTriviaQuestion(user.id);
+
+      if (!next) {
+        await checkStoneColdAward(user.id);
+        setTriviaQuestion(null);
+        setTriviaFeedback(null);
+        return;
+      }
+
+      setTriviaQuestion(next);
+      setTriviaFeedback(null);
+    }, 1200)
+  }
+
+  const checkStoneColdAward = async (userId: string) => {
+    const total = await getTotalTriviaQuestions();
+    const correct = await getCorrectCount(userId);
+
+    const percent = (correct / total) * 100;
+
+    if (percent >= 90) {
+      await award("STONE_COLD_KNOW_IT_ALL")
+    }
+  }
+
+  const award = async (code: AchievementId) => {
+      const row = achievements.find(a => a.code === code)
+      if (!row) return
+      const { data: existing } = await supabase
+      .from("user_achievements")
+      .select("id")
+      .eq("user_id", user!.id)
+      .eq("achievement_id", row.id)
+      .maybeSingle()
+      if (!existing) {
+      await supabase.from("user_achievements").insert({
+          user_id: user!.id,
+          achievement_id: row.id
+      })
+      enqueueModal(code)
+      }
+  }
+
+    const enqueueModal = (code: AchievementId) => {
+          setModalQueue(prev => [...prev, code])
+      }
+  
+      useEffect(() => {
+          if (!achievementModal && modalQueue.length > 0) {
+          const timer = setTimeout(() => {
+              setAchievementModal(modalQueue[0])
+              setModalQueue(prev => prev.slice(1))
+          }, 800)
+  
+          return () => clearTimeout(timer)
+          }
+      }, [achievementModal, modalQueue])
 
   return (
     <>
@@ -356,6 +510,52 @@ export default function ThePinClient() {
               )}
             </main>
 
+            {!triviaLoading && triviaQuestion && (
+              <div className="bg-white shadow-md p-4 rounded-lg mt-4 relative flex items-center">
+
+                {/* Normal content (hidden when feedback is active) */}
+                <div className={`${triviaFeedback ? "opacity-0" : "opacity-100"} w-full`}>
+                  <div className="flex items-center gap-3 flex-wrap">
+
+                    <button
+                      onClick={() => handleTriviaAnswer(true)}
+                      className="text-green-600 text-xl font-semibold hover:text-green-800"
+                    >
+                      TRUE
+                    </button>
+
+                    <span className="text-xl text-gray-700">or</span>
+
+                    <button
+                      onClick={() => handleTriviaAnswer(false)}
+                      className="text-red-600 text-xl font-semibold hover:text-red-800"
+                    >
+                      FALSE
+                    </button>
+
+                    <span className="text-xl font-semibold text-gray-700">:</span>
+
+                    <p className="text-lg text-gray-800 flex-1">
+                      {triviaQuestion.question}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Centered feedback overlay */}
+                {triviaFeedback && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <p
+                      className={`text-2xl ${
+                        triviaFeedback === "correct" ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {triviaFeedback === "correct" ? "Bang! Bang!" : "Flash!"}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {nextDraft && (
               <div className="bg-white shadow-md p-6 rounded-lg mt-4 flex items-center justify-between">
                 <div>
@@ -419,6 +619,15 @@ export default function ThePinClient() {
           </div>
         </div>
       </div>
+      {achievementModal && achievementFromDB && (
+        <AchievementModal
+            open={true}
+            onClose={() => setAchievementModal(null)}
+            title={achievementFromDB.name}
+            description={achievementFromDB.description}
+            icon={getAchievementIcon(achievementModal as AchievementId)}
+        />
+      )}
     </>
   )
 }
