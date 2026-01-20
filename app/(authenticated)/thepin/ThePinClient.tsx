@@ -9,6 +9,7 @@ import WelcomeModal from "@/components/WelcomeModal"
 import AchievementModal from "@/components/AchievementModal"
 import { getAchievementIcon } from "@/lib/getAchievementIcon"
 import type { AchievementId } from "@/lib/achievementIcons"
+import GameTicker from "@/components/GameTicker"
 
 function Countdown({ target }: { target: Date }) {
   const [timeLeft, setTimeLeft] = useState("")
@@ -341,6 +342,7 @@ export default function ThePinClient() {
 
   return (
     <>
+    <GameTicker />
       <div
         className="w-full min-h-screen bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/webpage/pin-page.png')" }}

@@ -130,9 +130,9 @@ export default function LeagueLeaderboardPage() {
       members: membersByLeague[league.id] ?? []
     }))
 
-  const visibleLeagues = leaguesWithMembers.filter(league =>
-    league.is_public || league.members.includes(userId)
-  )
+    const visibleLeagues = leaguesWithMembers.filter(league =>
+      league.is_public || league.members.includes(userId)
+    )
 
     setLeagues(visibleLeagues)
 
@@ -212,7 +212,7 @@ export default function LeagueLeaderboardPage() {
           {[
             { key: "current", label: "Current Leagues" },
             { key: "top", label: "Top Curlers" },
-            { key: "past", label: "Past Event Results" }
+            { key: "past", label: "Past Events" }
           ].map((tab) => (
             <button
               key={tab.key}
@@ -220,7 +220,7 @@ export default function LeagueLeaderboardPage() {
               className={`px-4 py-2 ${
                 activeTab === tab.key
                   ? "bg-[#1f4785] text-white border-blue-600 rounded-md"
-                  : "bg-gray-100 border-gray-300 rounded-md"
+                  : "border-gray-300 rounded-md"
               }`}
             >
               {tab.label}

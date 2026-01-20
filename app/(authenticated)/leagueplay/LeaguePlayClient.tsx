@@ -691,7 +691,7 @@ export default function LeaguesPage() {
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key as any)}
                 className={`px-4 py-2 rounded-md ${
-                  activeTab === tab.key ? "bg-[#1f4785] text-white" : "bg-gray-100 text-gray-700"
+                  activeTab === tab.key ? "bg-[#1f4785] text-white" : "text-gray-700"
                 }`}
               >
                 {tab.label}

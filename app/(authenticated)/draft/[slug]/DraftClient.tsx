@@ -343,6 +343,12 @@ export default function DraftClient({ slug }: DraftClientProps) {
     setIsSubmitting(true)
     setShowModal(false)
     setPlayers(prev => prev.filter(p => p.id !== selectedPlayer.id))
+console.log("Submitting pick:", {
+  eventId: event?.id,
+  playerId: selectedPlayer?.id,
+  userId
+})
+
 
     const res = await fetch("/api/pickPlayer", {
       method: "POST",
@@ -354,6 +360,8 @@ export default function DraftClient({ slug }: DraftClientProps) {
     })
 
     const data = await res.json()
+    console.log("Response:", res.status, data)
+
     setSelectedPlayer(null)
     setIsSubmitting(false)
 
@@ -400,9 +408,9 @@ export default function DraftClient({ slug }: DraftClientProps) {
       p => p.user_id === userId && p.players?.position === position
   )
 
-    if (!pick) return "—"
-      return `${pick.players.first_name} ${pick.players.last_name}`
-    }
+  if (!pick) return "—"
+    return `${pick.players.first_name} ${pick.players.last_name}`
+  }
 
   return (
     <>
