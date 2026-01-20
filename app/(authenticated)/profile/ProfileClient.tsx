@@ -287,6 +287,7 @@ export default function ProfileClient() {
 
   return (
     <>
+      <div className="pb-14">
         <div className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-lg">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-[#234C6A]">
@@ -719,6 +720,7 @@ export default function ProfileClient() {
             />
           )}
         </div>
+      </div>
     </>
   );
 }
