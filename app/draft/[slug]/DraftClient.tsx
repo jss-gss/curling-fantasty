@@ -489,7 +489,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
         </h1>
         <p className="text-gray-600 mt-1">
             The {curlingEvent?.name ?? ""} event begins on{" "}
-            {formatDate(curlingEvent.start_date)}{" "}
+            {formatDate(curlingEvent?.start_date ?? "TBD")}{" "}
         </p>
         </header>
 
