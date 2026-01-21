@@ -7,7 +7,7 @@ export default function HowItWorksPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen">
 
       {/* HEADER */}
       <section className="w-full py-16">
@@ -51,6 +51,20 @@ export default function HowItWorksPage() {
 
         </div>
       </section>
+
+      <h3 className="text-3xl font-bold text-center text-[#1f4785] mb-6">
+        How the Platform Was Designed
+      </h3>
+
+      <p className="text-gray-700 text-lg leading-relaxed text-center">
+        The platform is built around a simple, event‑first lifecycle. Each fantasy 
+        league is tied to a single competition, ensuring that drafts, rosters, and 
+        scoring all stay focused on one defined event. Because curling events run in 
+        a round‑robin format, the application flow follows that same structure - users 
+        join an event, draft from only the athletes competing in that specific field, 
+        and track performance as the event progresses. This avoids mixing data across 
+        tournaments or genders and keeps every league self‑contained and easy to follow. 
+      </p>
 
       {/* DRAFTING YOUR RINK — BLUE CARD STYLE */}
       <section className="w-full flex justify-center mb-20 px-4">
