@@ -24,6 +24,7 @@ type FantasyEvent = {
   draft_status: string
   current_pick: number
   curling_event_id: string | null
+  turn_started_at: string | null
 }
 
 type Player = {
@@ -78,6 +79,14 @@ export default function DraftClient({ slug }: DraftClientProps) {
   const [achievementModal, setAchievementModal] = useState<AchievementId | null>(null)
   const [pendingRedirect, setPendingRedirect] = useState(false)
   const achievementFromDB = achievements.find(a => a.code === achievementModal)
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!event) return
+    if (event.draft_status === "locked") {
+      router.push("/myrinks")
+    }
+  }, [event?.draft_status])
 
   useEffect(() => {
     const loadAchievements = async () => {
@@ -90,6 +99,24 @@ export default function DraftClient({ slug }: DraftClientProps) {
 
     loadAchievements()
   }, [])
+
+  useEffect(() => {
+    const ts = event?.turn_started_at
+    if (!ts || event?.draft_status !== "closed") {
+      setSecondsLeft(null)
+      return
+    }
+
+    const update = () => {
+      const startedMs = new Date(ts).getTime()
+      const elapsed = Math.floor((Date.now() - startedMs) / 1000)
+      setSecondsLeft(Math.max(0, 30 - elapsed))
+    }
+
+    update()
+    const interval = setInterval(update, 1000)
+    return () => clearInterval(interval)
+  }, [event?.turn_started_at, event?.draft_status, event?.current_pick])
 
   useEffect(() => {
     supabase.auth.getUser().then(res => {
@@ -112,7 +139,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (!session?.user) {
-          router.push("/login")
+          router.push("/")
           return
         }
 
@@ -127,7 +154,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
         const data = await res.json()
 
         if (!data.allowed) {
-          router.push("/login")
+          router.push("/")
           return
         }
 
@@ -233,12 +260,21 @@ export default function DraftClient({ slug }: DraftClientProps) {
   async function refreshDraftState(eventId: string) {
     const { data: eventData } = await supabase
       .from("fantasy_events")
-      .select("current_pick")
+      .select("current_pick, turn_started_at, draft_status")
       .eq("id", eventId)
       .single()
 
     if (eventData) {
-      setEvent(prev => (prev ? { ...prev, current_pick: eventData.current_pick } : prev))
+      setEvent(prev =>
+        prev
+          ? {
+              ...prev,
+              current_pick: eventData.current_pick,
+              turn_started_at: eventData.turn_started_at,
+              draft_status: eventData.draft_status,
+            }
+          : prev
+      )
     }
 
     const { data: pkRaw } = await supabase
@@ -266,13 +302,14 @@ export default function DraftClient({ slug }: DraftClientProps) {
 
   useEffect(() => {
     if (!event?.id) return
-    if (!myTurn) {
-      const interval = setInterval(() => {
-        refreshDraftState(event.id)
-      }, 1000)
-      return () => clearInterval(interval)
-    }
-  }, [event?.id, myTurn])
+    if (event.draft_status !== "closed") return
+
+    const interval = setInterval(() => {
+      refreshDraftState(event.id)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [event?.id, event?.draft_status])
 
   useEffect(() => {
     if (!event?.id) return
@@ -289,7 +326,10 @@ export default function DraftClient({ slug }: DraftClientProps) {
         payload => {
           const newPick = payload.new.current_pick
           const oldPick = payload.old.current_pick
-          if (newPick !== oldPick) {
+          const newStatus = payload.new.draft_status
+          const oldStatus = payload.old.draft_status
+
+          if (newPick !== oldPick || newStatus !== oldStatus) {
             refreshDraftState(event.id)
           }
         }
@@ -346,6 +386,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
 
     const res = await fetch("/api/pickPlayer", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         eventId: event?.id,
         playerId: selectedPlayer.id,
@@ -406,9 +447,38 @@ export default function DraftClient({ slug }: DraftClientProps) {
     return `${pick.players.first_name} ${pick.players.last_name}`
   }
 
+  useEffect(() => {
+    if (!event?.id) return
+    if (event.draft_status !== "closed") return
+
+    let cancelled = false
+
+    const tick = async () => {
+      try {
+        await fetch("/api/autoDraft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventId: event.id }),
+        })
+      } catch {
+      }
+    }
+
+    tick()
+
+    const interval = setInterval(() => {
+      if (!cancelled) tick()
+    }, 5000)
+
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [event?.id, event?.draft_status])
+
   return (
     <>
-      <div className="p-6 flex flex-col gap-6">
+      <div className="p-6 flex flex-col gap-6 bg-[#234C6A]">
         <header className="bg-white shadow-md p-6 border border-gray-200 text-center rounded-lg">
         <h1 className="text-4xl font-bold">
             Draft Room — {event?.name ?? "Loading..."}
@@ -437,8 +507,15 @@ export default function DraftClient({ slug }: DraftClientProps) {
                 {currentUser?.profiles?.username ?? "—"}
                 </strong>
             </p>
-            </div>
 
+            </div>
+            <div className="bg-white shadow-md p-6 border border-gray-200 rounded-lg">
+              {event?.draft_status === "closed" && (
+                <p className="text-gray-600 text-center">
+                  Auto-pick in: <strong>{secondsLeft ?? "…"}</strong>s
+                </p>
+              )}
+            </div>
             <div className="bg-white shadow-md p-6 border border-gray-200 rounded-lg">
             <h2 className="text-xl font-semibold mb-4">Your Team</h2>
             <p><strong>Lead:</strong> {slot("Lead")}</p>
@@ -452,7 +529,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
             {myTurn ? (
             <>
               <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-                <table className="w-full ext-left border-collapse rounded-lg overflow-hidden">
+                <table className="w-full text-left border-collapse rounded-lg overflow-hidden">
                 <thead>
                     <tr className="bg-gray-100 text-gray-700">
                     <th className="py-3 px-4">#</th>
@@ -499,8 +576,8 @@ export default function DraftClient({ slug }: DraftClientProps) {
             </>
             ) : (
             <div className="text-center py-10">
-                <h2 className="text-xl font-semibold mb-2">Waiting for the next pick...</h2>
-                <p className="text-gray-600">It’s not your turn yet.</p>
+                <h2 className="text-xl text-white font-semibold mb-2">Waiting for the next pick...</h2>
+                <p className="text-white">It’s not your turn yet.</p>
             </div>
             )}
         </div>
@@ -548,7 +625,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
                 disabled={isSubmitting}
                 onClick={handleConfirm}
                 className={`w-full py-2 rounded-md text-white 
-                  ${isSubmitting ? "bg-gray-400" : "bg-[#1f4785] hover:bg-[#163766]"}
+                  ${isSubmitting ? "bg-gray-400" : "bg-[#234C6A ] hover:bg-[#163766]"}
                 `}
               >
                 {isSubmitting ? "Submitting..." : "Confirm Pick"}

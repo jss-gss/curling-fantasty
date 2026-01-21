@@ -7,20 +7,15 @@ export async function POST(req: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { eventId, playerId, userId } = await req.json()
+  const { eventId } = await req.json()
 
-  if (!eventId || !playerId || !userId) {
-    return NextResponse.json(
-      { error: "Missing eventId, playerId, or userId" },
-      { status: 400 }
-    )
+  if (!eventId) {
+    return NextResponse.json({ error: "Missing eventId" }, { status: 400 })
   }
 
-  const { data, error } = await supabase.rpc("make_pick_and_advance", {
+  const { data, error } = await supabase.rpc("autopick_if_expired", {
     p_event_id: eventId,
-    p_user_id: userId,
-    p_player_id: playerId,
-    p_is_auto: false,
+    p_turn_seconds: 30,
   })
 
   if (error) {
@@ -28,7 +23,7 @@ export async function POST(req: Request) {
   }
 
   if (!data?.ok) {
-    return NextResponse.json({ error: data?.error ?? "Pick failed" }, { status: 400 })
+    return NextResponse.json({ error: data?.error ?? "Autopick failed" }, { status: 400 })
   }
 
   return NextResponse.json(data)
