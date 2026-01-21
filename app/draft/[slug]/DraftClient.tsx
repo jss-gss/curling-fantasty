@@ -660,7 +660,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
                 disabled={isSubmitting}
                 onClick={handleConfirm}
                 className={`w-full py-2 rounded-md text-white 
-                  ${isSubmitting ? "bg-gray-400" : "bg-[#234C6A ] hover:bg-[#163766]"}
+                  ${isSubmitting ? "bg-gray-400" : "bg-[#234C6A] hover:bg-[#163766]"}
                 `}
               >
                 {isSubmitting ? "Submitting..." : "Confirm Pick"}
