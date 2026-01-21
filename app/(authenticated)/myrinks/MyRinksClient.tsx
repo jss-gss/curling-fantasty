@@ -109,7 +109,6 @@ export default function PicksPage() {
             first_name,
             last_name,
             position,
-            player_picture,
             total_player_fantasy_pts,
             teams ( id, team_name )
           )
@@ -339,7 +338,6 @@ export default function PicksPage() {
                        <thead className="bg-gray-100 text-gray-700">
                         <tr>
                           <th className="py-2 px-3 text-left">Position</th>
-                          <th className="py-2 px-3 text-left"></th>
                           <th className="py-2 px-3 text-left">Name</th>
                           <th className="py-2 px-3 text-left">Team</th>
                           <th className="py-2 px-3 text-left bg-blue-200">Recent Draw</th>
@@ -362,10 +360,6 @@ export default function PicksPage() {
                             return (
                               <tr key={player.id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                                 <td className="py-2 px-3">{player.position ?? "N/A"}</td>
-
-                                <td className="py-2 px-3">
-                                  <div className="w-8 h-8 bg-gray-300 rounded-full" />
-                                </td>
 
                                 <td className="py-2 px-3 font-medium">
                                   {player.first_name} {player.last_name}
@@ -494,7 +488,6 @@ export default function PicksPage() {
                         <thead className="bg-gray-100 text-gray-700">
                           <tr>
                             <th className="py-2 px-3 text-left">Position</th>
-                            <th className="py-2 px-3 text-left"></th>
                             <th className="py-2 px-3 text-left">Name</th>
                             <th className="py-2 px-3 text-left">Team</th>
                             <th className="py-2 px-3 text-left bg-blue-200">Recent Draws</th>
@@ -510,7 +503,7 @@ export default function PicksPage() {
                           {picks.map((p: any, idx: number) => {
                             const player = p.players
                             if (!player) return null
-
+                            
                             const team = player.teams
                             const teamId = team?.id
 
@@ -538,10 +531,6 @@ export default function PicksPage() {
                             return (
                               <tr key={player.id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                                 <td className="py-2 px-3">{player.position ?? "N/A"}</td>
-
-                                <td className="py-2 px-3">
-                                  <div className="w-8 h-8 bg-gray-300 rounded-full" />
-                                </td>
 
                                 <td className="py-2 px-3 font-medium">
                                   {player.first_name} {player.last_name}

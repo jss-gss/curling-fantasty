@@ -33,7 +33,6 @@ type Player = {
   last_name: string
   position: string
   team_id: string
-  profile_image_url?: string
 }
 
 type FantasyEventUser = {
@@ -584,7 +583,6 @@ export default function DraftClient({ slug }: DraftClientProps) {
                 <thead>
                     <tr className="bg-gray-100 text-gray-700">
                     <th className="py-3 px-4">#</th>
-                    <th className="py-3 px-4">Pic</th>
                     <th className="py-3 px-4">Name</th>
                     <th className="py-3 px-4">Team</th>
                     <th className="py-3 px-4">Position</th>
@@ -597,13 +595,6 @@ export default function DraftClient({ slug }: DraftClientProps) {
                         className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
                     >
                         <td className="py-3 px-4">{index + 1}</td>
-                        <td className="py-3 px-4">
-                        <img
-                            src={p.player_picture || "/default-player.png"}
-                            className="w-10 h-10 rounded-full object-cover"
-                            alt={`${p.first_name} ${p.last_name}`}
-                        />
-                        </td>
                         <td
                         className="py-3 px-4 font-medium text-blue-700 cursor-pointer hover:underline"
                         onClick={() => {
@@ -645,24 +636,12 @@ export default function DraftClient({ slug }: DraftClientProps) {
                 ✕
               </button>
 
-              <h3 className="text-xl font-semibold mb-4">Add Player</h3>
+              <h3 className="text-xl mb-4">Add Player</h3>
 
-              {/* Image + Name */}
+              {/* Name */}
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
-                  {selectedPlayer.profile_image_url ? (
-                    <img
-                      src={selectedPlayer.profile_image_url}
-                      alt={`${selectedPlayer.first_name} ${selectedPlayer.last_name}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div />
-                  )}
-                </div>
-
                 <div>
-                  <p className="text-lg font-medium">
+                  <p className="text-lg font-semibold font-medium">
                     {selectedPlayer.first_name} {selectedPlayer.last_name}
                   </p>
                   <p className="text-gray-600">

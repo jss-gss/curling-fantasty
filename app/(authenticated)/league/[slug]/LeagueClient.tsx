@@ -59,7 +59,6 @@ type Player = {
   last_name: string
   team_id: string
   position: string
-  player_picture: string | null
   total_player_fantasy_pts: number
   teams?: {
     id: string
@@ -153,7 +152,6 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                     last_name,
                     team_id,
                     position,
-                    player_picture,
                     total_player_fantasy_pts,
                     teams (
                     id,
@@ -629,7 +627,6 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                                         <thead className="bg-blue-200 text-gray-700">
                                         <tr>
                                             <th className="py-2 px-3 text-left">Position</th>
-                                            <th className="py-2 px-3 text-left"></th>
                                             <th className="py-2 px-3 text-left">Name</th>
                                             <th className="py-2 px-3 text-left">Team</th>
                                             <th className="py-2 px-3 text-center">Fantasy Pts</th>
@@ -647,20 +644,6 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                                                 className={pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}
                                             >
                                                 <td className="py-2 px-3">{player.position}</td>
-
-                                                <td className="py-2 px-3">
-                                                {player.player_picture ? (
-                                                    <Image
-                                                    src={player.player_picture}
-                                                    alt={player.first_name}
-                                                    width={32}
-                                                    height={32}
-                                                    className="rounded-full object-cover border border-gray-300"
-                                                    />
-                                                ) : (
-                                                    <div className="w-8 h-8 bg-gray-300 rounded-full" />
-                                                )}
-                                                </td>
 
                                                 <td className="py-2 px-3">
                                                 {player.first_name} {player.last_name}
@@ -804,7 +787,6 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                                     <thead className="bg-blue-200 text-gray-700">
                                     <tr>
                                         <th className="py-2 px-3 text-left">Position</th>
-                                        <th className="py-2 px-3 text-left"></th>
                                         <th className="py-2 px-3 text-left">Name</th>
                                         <th className="py-2 px-3 text-left">Team</th>
                                         <th className="py-2 px-3 text-center">Fantasy Pts</th>
@@ -822,19 +804,6 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                                             className={pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}
                                         >
                                             <td className="py-2 px-3">{player.position}</td>
-                                            <td className="py-2 px-3">
-                                            {player.player_picture ? (
-                                                <Image
-                                                src={player.player_picture}
-                                                alt={player.first_name}
-                                                width={32}
-                                                height={32}
-                                                className="rounded-full object-cover border border-gray-300"
-                                                />
-                                            ) : (
-                                                <div className="w-8 h-8 bg-gray-300 rounded-full" />
-                                            )}
-                                            </td>
                                             <td className="py-2 px-3">
                                             {player.first_name} {player.last_name}
                                             </td>

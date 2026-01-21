@@ -203,7 +203,7 @@ export default function LeagueLeaderboardPage() {
 
   return (
     <>
-      <div className="pt-16 max-w-5xl mx-auto px-6 py-10">
+      <div className="pt-16 max-w-5xl mx-auto py-10">
         <h1 className="text-3xl font-bold mb-8">Leaderboards</h1>
 
         <div className="flex items-center justify-between mb-8">
@@ -235,14 +235,14 @@ export default function LeagueLeaderboardPage() {
             {/* Divider */}
             <div className="h-6 w-px bg-gray-300" />
 
-            <span className="font-medium">Filter By:</span>
+            <span className="font-small">Filter By:</span>
 
             {/* Event Filter */}
             <div className="relative">
               <select
                 value={filterEvent}
                 onChange={(e) => setFilterEvent(e.target.value)}
-                className="px-4 py-2 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
+                className="px-4 py-2 text-gray-700 border border-gray-300 font-small appearance-none pr-8 rounded-md"
               >
                 <option value="ALL">Event</option>
                 {events.map((ev) => (
@@ -263,7 +263,7 @@ export default function LeagueLeaderboardPage() {
               <select
                 value={filterPosition}
                 onChange={(e) => setFilterPosition(e.target.value)}
-                className="px-4 py-2 text-gray-700 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
+                className="px-4 py-2 text-gray-700 border border-gray-300 font-small appearance-none pr-8 rounded-md"
               >
                 <option value="ALL">Position</option>
                 {positions.map((pos) => (
@@ -286,14 +286,14 @@ export default function LeagueLeaderboardPage() {
             {/* Divider */}
             <div className="h-6 w-px bg-gray-300" />
 
-            <span className="font-medium">Filter By:</span>
+            <span className="font-small">Filter By:</span>
 
             {/* League Scope Filter */}
             <div className="relative">
               <select
                 value={filterLeagueScope}
                 onChange={(e) => setFilterLeagueScope(e.target.value as "ALL" | "MINE")}
-                className="px-4 py-2 border border-gray-300 font-medium appearance-none pr-8 rounded-md"
+                className="px-4 py-2 border border-gray-300 font-small appearance-none pr-8 rounded-md"
               >
                 <option value="ALL">All Leagues</option>
                 <option value="MINE">My Leagues</option>
@@ -585,7 +585,6 @@ export default function LeagueLeaderboardPage() {
                         <thead className="bg-gray-100 text-gray-700">
                           <tr>
                             <th className="py-2 px-3 text-left">Rank</th>
-                            <th className="py-2 px-3 text-left"></th>
                             <th className="py-2 px-3 text-left">Name</th>
                             <th className="py-2 px-3 text-left">Team</th>
                             <th className="py-2 px-3 text-left">Total Points</th>
@@ -599,10 +598,6 @@ export default function LeagueLeaderboardPage() {
                               className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                             >
                               <td className="py-2 px-3 font-medium">{idx + 1}</td>
-
-                              <td className="py-2 px-3">
-                                <div className="w-8 h-8 bg-gray-300 rounded-full" />
-                              </td>
 
                             <td className="py-2 px-3 font-medium">
                               {row.first_name} {row.last_name}
