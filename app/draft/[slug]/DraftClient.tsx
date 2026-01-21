@@ -119,9 +119,42 @@ export default function DraftClient({ slug }: DraftClientProps) {
   }, [event?.turn_started_at, event?.draft_status, event?.current_pick])
 
   useEffect(() => {
-    supabase.auth.getUser().then(res => {
-    })
-  }, [])
+    let cancelled = false
+
+    const boot = async () => {
+      const { data, error } = await supabase.auth.getUser()
+      const user = data?.user
+
+      if (cancelled) return
+
+      if (error || !user) {
+        router.push("/")
+        return
+      }
+
+      const res = await fetch("/api/check-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, userId: user.id }),
+      })
+
+      const access = await res.json()
+
+      if (!access.allowed) {
+        router.push("/")
+        return
+      }
+
+      setUserId(user.id)
+      loadAll(user.id)
+    }
+
+    boot()
+
+    return () => {
+      cancelled = true
+    }
+  }, [slug, router])
 
   const currentIndex = useMemo(
     () => (event ? (event.current_pick ?? 1) - 1 : 0),
