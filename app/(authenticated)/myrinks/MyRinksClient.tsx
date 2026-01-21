@@ -135,6 +135,7 @@ export default function PicksPage() {
           slug,
           name,
           is_public,
+          created_by,
           draft_status,
           curling_events ( id, name, year, location )
         `)
@@ -305,7 +306,7 @@ export default function PicksPage() {
                             </span>
                           )}
 
-                          {league.is_commissioner && (
+                          {league.isCommissioner && (
                             <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
                               draw master
                             </span>

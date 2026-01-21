@@ -3,18 +3,33 @@ import { NextResponse } from "next/server"
 
 export async function GET() {
   const now = new Date().toISOString()
-
   const { data, error } = await supabase
     .from("games")
     .select(`
       id,
       game_datetime,
-      team1:team1_id(team_name),
-      team2:team2_id(team_name)
+
+      team1:team1_id (
+        team_name,
+        curling_event:curling_event_id (
+          name,
+          year,
+          location
+        )
+      ),
+
+      team2:team2_id (
+        team_name,
+        curling_event:curling_event_id (
+          name,
+          year,
+          location
+        )
+      )
     `)
     .gte("game_datetime", now)
     .order("game_datetime", { ascending: true })
-    .limit(10)
+    .limit(6)
 
   if (error) return NextResponse.json([])
 

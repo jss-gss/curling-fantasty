@@ -9,7 +9,7 @@ interface CreateLeagueModalProps {
   onDelete?: () => void;
   events: any[];
   isNew: boolean;
-  league?: any; // used when editing
+  league?: any;
 }
 
 export default function CreateLeagueModal({
@@ -29,7 +29,6 @@ export default function CreateLeagueModal({
   const [usernames, setUsernames] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
 
-  // Lock scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => {
@@ -37,23 +36,19 @@ export default function CreateLeagueModal({
     };
   }, [isOpen]);
 
-  // Prefill fields when editing
   useEffect(() => {
     if (!isNew && league) {
       setEventId(league.curling_event_id);
       setName(league.name);
       setDescription(league.description || "");
-      
       const localET = new Date(league.draft_date)
         .toLocaleString("sv-SE", { timeZone: "America/New_York" })
         .replace(" ", "T")
-        .slice(0, 16)
-      setDraftDate(localET)
-
-      setIsPublic(league.is_public)
-      setUsernames("")
+        .slice(0, 16);
+      setDraftDate(localET);
+      setIsPublic(league.is_public);
+      setUsernames("");
     }
-
     if (isNew) {
       setEventId("");
       setName("");
@@ -74,20 +69,28 @@ export default function CreateLeagueModal({
     if (!draftDate) newErrors.push("Please choose a draft date.");
 
     const selectedEvent = events.find((ev) => ev.id === eventId);
+
     if (selectedEvent && draftDate) {
-      function parseLocalDateTime(dt: string) {
+      function parseETDateTime(dt: string) {
         const [datePart, timePart] = dt.split("T");
         const [year, month, day] = datePart.split("-").map(Number);
         const [hour, minute] = timePart.split(":").map(Number);
-        return new Date(year, month - 1, day, hour, minute);
+        return new Date(Date.UTC(year, month - 1, day, hour + 5, minute));
       }
 
-      const draft = parseLocalDateTime(draftDate);
-      const start = new Date(selectedEvent.start_date);
-      const now = new Date();
+      function parseSupabaseDateAsET(dateString: string) {
+        const [year, month, day] = dateString.split("-").map(Number);
+        return new Date(Date.UTC(year, month - 1, day, 5, 0, 0));
+      }
+
+      const draft = parseETDateTime(draftDate);
+      const start = parseSupabaseDateAsET(selectedEvent.start_date);
+      const nowET = parseETDateTime(
+        new Date().toLocaleString("sv-SE", { timeZone: "America/New_York" }).replace(" ", "T")
+      );
 
       if (draft >= start) newErrors.push("Draft date must be before the event start date.");
-      if (draft < now) newErrors.push("Draft date cannot be in the past.");
+      if (draft < nowET) newErrors.push("Draft date cannot be in the past.");
     }
 
     if (newErrors.length > 0) {
@@ -106,8 +109,8 @@ export default function CreateLeagueModal({
       usernames
     });
   };
-  
-  const futureEvents = events.filter(ev => new Date(ev.start_date) > new Date())
+
+  const futureEvents = events.filter(ev => new Date(ev.start_date) > new Date());
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">

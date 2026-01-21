@@ -6,9 +6,7 @@ export async function POST(req: Request) {
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-  console.log("SERVICE ROLE KEY:", process.env.SUPABASE_SERVICE_ROLE_KEY)
-
-
+  
   const { eventId, playerId, userId } = await req.json()
 
   if (!eventId || !playerId || !userId) {

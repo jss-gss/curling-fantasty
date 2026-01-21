@@ -343,12 +343,6 @@ export default function DraftClient({ slug }: DraftClientProps) {
     setIsSubmitting(true)
     setShowModal(false)
     setPlayers(prev => prev.filter(p => p.id !== selectedPlayer.id))
-console.log("Submitting pick:", {
-  eventId: event?.id,
-  playerId: selectedPlayer?.id,
-  userId
-})
-
 
     const res = await fetch("/api/pickPlayer", {
       method: "POST",

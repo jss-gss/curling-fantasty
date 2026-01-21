@@ -367,16 +367,28 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
 
     const enrolled = league.fantasy_event_users.some(u => u.user_id === userId)
     const invited = league.fantasy_event_user_invites.some(inv => inv.user_id === userId)
-    const blocked = !league.is_public && !enrolled && !invited
+    const isDraftOpen = league.draft_status === "open"
 
-    if (blocked) return null
+    const canAccess =
+    league.is_public ||
+    enrolled ||
+    (invited && isDraftOpen) ||
+    league.created_by === userId
+
+    if (!canAccess) {
+        return (
+            <div className="text-center p-6 rounded-lg text-red-700">
+            You no longer have access to this private league.
+            </div>
+        )
+    }
 
     function formatDate(dateString: string) {
         const [year, month, day] = dateString.split("-")
         return `${month}/${day}/${year}`
     }
 
-    function InvitedRow({ userId }: { userId: string }) {
+    function InvitedRow({ userId, index }: { userId: string; index: number }) {
         const [profile, setProfile] = useState<any>(null)
 
         useEffect(() => {
@@ -392,23 +404,23 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
 
         return (
             <tr className="bg-gray-50">
-            <td className="py-2 px-3">
+                <td className="py-2 px-3 text-gray-700 font-medium">{index}</td>
+
+                <td className="py-2 px-3">
                 {profile.avatar_url ? (
-                <img
+                    <img
                     src={profile.avatar_url}
                     alt={profile.username}
                     className="w-8 h-8 rounded-full object-cover border border-gray-300"
-                />
+                    />
                 ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
                     {profile.username.charAt(0).toUpperCase()}
-                </div>
+                    </div>
                 )}
-            </td>
+                </td>
 
-            <td className="py-2 px-3">{profile.username}</td>
-
-            <td className="py-2 px-3 text-gray-500 italic">Invited</td>
+                <td className="py-2 px-3">{profile.username}</td>
             </tr>
         )
     }
@@ -484,21 +496,25 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
             {/* Invited Users (Private Leagues Only) */}
             {league.is_public === false && invited.length > 0 && (
                 <div>
-                <h2 className="text-lg font-semibold mb-3">Invited</h2>
+                <h2 className="text-lg font-semibold mb-3">Invited Players</h2>
                 <div className="overflow-x-auto rounded-lg">
                     <table className="w-full text-left text-sm border-collapse">
                     <thead className="bg-gray-100 text-gray-700">
                         <tr>
+                        <th className="py-2 px-3">#</th>
                         <th className="py-2 px-3"></th>
                         <th className="py-2 px-3">Username</th>
-                        <th className="py-2 px-3">Status</th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        {invited.map(inv => (
-                        <InvitedRow key={inv.user_id} userId={inv.user_id} />
-                        ))}
+                    {invited.map((inv, index) => (
+                        <InvitedRow
+                        key={inv.user_id}
+                        userId={inv.user_id}
+                        index={index + 1}
+                        />
+                    ))}
                     </tbody>
                     </table>
                 </div>

@@ -27,7 +27,8 @@ export default function NextMajorEvent() {
 
     function update() {
       const now = new Date().getTime()
-      const eventTime = new Date(event.start_date).getTime()
+      const [year, month, day] = event.start_date.split("T")[0].split("-").map(Number)
+      const eventTime = new Date(year, month - 1, day, 0, 0, 0).getTime()
       const diff = eventTime - now
 
       if (diff <= 0) {
@@ -53,7 +54,7 @@ export default function NextMajorEvent() {
   return (
     <div className="w-full text-center">
       <h3 className="text-sm font-bold text-[#1f4785] mb-2">
-        NEXT MAJOR EVENT
+        Next Major Event
       </h3>
 
       <p className="text-xs text-gray-800 font-medium mb-3">
@@ -62,14 +63,14 @@ export default function NextMajorEvent() {
 
       <div className="flex gap-3 justify-center">
         <div className="flex flex-col items-center">
-          <div className="bg-gray-100 border border-gray-300 px-3 py-2 text-xl font-bold rounded-lg">
+          <div className="bg-blue-50 border border-blue-300 px-3 py-2 text-xl font-bold rounded-lg">
             {timeLeft.days}
           </div>
           <span className="text-[11px] text-gray-700 mt-1">days</span>
         </div>
 
         <div className="flex flex-col items-center">
-          <div className="bg-gray-100 border border-gray-300 px-3 py-2 text-xl font-bold rounded-lg">
+          <div className="bg-blue-50 border border-blue-300 px-3 py-2 text-xl font-bold rounded-lg">
             {timeLeft.hours}
           </div>
           <span className="text-[11px] text-gray-700 mt-1">hours</span>

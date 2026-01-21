@@ -2,6 +2,18 @@
 
 import { useEffect, useState } from "react"
 
+function toET(dateString: string) {
+  return new Date(dateString).toLocaleString("en-US", {
+    timeZone: "America/New_York",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  }) + " ET"
+}
+
 export default function GameTicker() {
   const [games, setGames] = useState<any[]>([])
 
@@ -13,36 +25,32 @@ export default function GameTicker() {
 
   if (!games.length) return null
 
-  return (
-  <div className="w-full bg-[#f3f4f6] border-y border-gray-200 py-2">
-      <div className="max-w-screen-xl mx-auto flex items-center gap-6 px-4 overflow-x-auto whitespace-nowrap">
+return (
+  <div className="bg-white shadow-md p-4 rounded-lg">
+    <h3 className="text-sm font-bold text-center text-[#1f4785] mb-2">
+      Upcoming Round Robin Games
+    </h3>
 
-        {/* LEFT LABEL */}
-        <span className="font-semibold text-lg" style={{ color: "#1f4785" }}>
-          UPCOMING GAMES
-        </span>
-
-        {/* GAME LIST */}
-        <div className="flex gap-6">
-          {games.map((g) => {
-            const date = new Date(g.game_datetime)
-            const formatted = date.toLocaleString("en-US", {
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: false,
-            })
-
-            return (
-              <span key={g.id} className="text-lg text-gray-700">
-                {g.team1.team_name} vs {g.team2.team_name} • {formatted}
-              </span>
-            )
-          })}
-        </div>
-
-      </div>
+    <div className="flex flex-col gap-[clamp(0.5rem,1vw,1rem)] text-center">
+      {games.map((g) => {
+        return (
+          <div
+            key={g.id}
+            className="bg-blue-50 p-3 border border-blue-300 rounded-md"
+          >
+            <div className="font-semibold text-xs text-base mb-1">
+              {g.team1.team_name} vs {g.team2.team_name}
+            </div>
+            <div className="text-xs mb-1 text-black">
+              {g.team1.curling_event.year} {g.team1.curling_event.name}
+            </div>
+            <div className="text-xs text-black">
+              {toET(g.game_datetime)}
+            </div>
+          </div>
+        )
+      })}
     </div>
-  )
+  </div>
+)
 }

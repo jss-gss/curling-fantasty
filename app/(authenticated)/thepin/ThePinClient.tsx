@@ -1,15 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import type { User } from "@supabase/supabase-js"
 import { useRouter, useSearchParams } from "next/navigation"
 import NextMajorEvent from "@/components/NextMajorEvent"
 import WelcomeModal from "@/components/WelcomeModal"
+import GameTicker from "@/components/GameTicker"
 import AchievementModal from "@/components/AchievementModal"
 import { getAchievementIcon } from "@/lib/getAchievementIcon"
 import type { AchievementId } from "@/lib/achievementIcons"
-import GameTicker from "@/components/GameTicker"
 
 function Countdown({ target }: { target: Date }) {
   const [timeLeft, setTimeLeft] = useState("")
@@ -54,6 +54,19 @@ export default function ThePinClient() {
   const [triviaQuestion, setTriviaQuestion] = useState<any>(null)
   const [triviaLoading, setTriviaLoading] = useState(true)
   const [triviaFeedback, setTriviaFeedback] = useState<"correct" | "wrong" | null>(null)
+  const [upcomingGames, setUpcomingGames] = useState<any[]>([])
+
+  const updates = [{ id: 1, text: "• First version released!", date: "01/21/2026" }]
+  const greetings = ["Hi", "Welcome back", "Good to see you", "Hey there", "Glad you're here", "Nice to see you again", "Ready to curl?", ]
+
+  useEffect(() => {
+    fetch("/api/upcoming-games")
+      .then(res => res.json())
+      .then(data => {
+        console.log("upcoming games:", data)
+        setUpcomingGames(data)
+      })
+  }, [])
 
   useEffect(() => {
     const loadTrivia = async () => {
@@ -88,6 +101,10 @@ export default function ThePinClient() {
   function goToDraft(slug: string) {
     router.push(`/draft/${slug}`)
   }
+
+  const greeting = useMemo(() => {
+    return greetings[Math.floor(Math.random() * greetings.length)]
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -277,7 +294,7 @@ export default function ThePinClient() {
       user.id,
       triviaQuestion.id,
       userAnswer
-    );
+    )
 
     setTriviaFeedback(correct ? "correct" : "wrong");
 
@@ -342,7 +359,6 @@ export default function ThePinClient() {
 
   return (
     <>
-    <GameTicker />
       <div
         className="w-full min-h-screen bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/webpage/pin-page.png')" }}
@@ -388,6 +404,15 @@ export default function ThePinClient() {
                 </li>
                 <li>
                   <a
+                    href="https://www.curling.ca/2026scotties/"
+                    target="_blank"
+                    className="hover:text-[#AA2B1D] underline"
+                  >
+                    2026 Scotties ↗
+                  </a>
+                </li>
+                <li>
+                  <a
                     href="https://www.olympics.com/en/milano-cortina-2026/schedule/cur"
                     target="_blank"
                     className="hover:text-[#AA2B1D] underline"
@@ -412,151 +437,187 @@ export default function ThePinClient() {
           </aside>
 
           <div className="flex flex-col flex-1 justify-between">
-            <main className="bg-white shadow-md p-8 rounded-lg flex-grow">
-              {loading ? (
-                <p className="w-full flex justify-center mt-20 text-gray-600">
-                  Loading...
-                </p>
-              ) : (
-                <>
-                  <h1 className="text-3xl font-bold mb-4">
-                    Hi, {profile?.username}!
-                  </h1>
-                  <p className="text-gray-700 mb-6">
-                    Here’s what’s happening around the rings today.
+            <div className="flex flex-row flex-1 gap-6 items-stretch">
+              <main className="bg-white shadow-md p-8 rounded-lg flex-grow">
+                {loading ? (
+                  <p className="w-full flex justify-center mt-20 text-gray-600">
+                    Loading...
                   </p>
+                ) : (
+                  <>
+                    <h1 className="text-3xl font-bold mb-4">
+                      {greeting}, {profile?.username}!
+                    </h1>
+                    <p className="text-gray-700 mb-6">
+                      Here’s what’s happening around the rings today.
+                    </p>
 
-                  {privateInvites.length > 0 && (
-                    <div className="mb-6">
-                      <div className="space-y-4">
-                        {privateInvites.map(league => {
-                          const invite = league.fantasy_event_user_invites.find(
-                            (inv: { id: string; user_id: string }) =>
-                              inv.user_id === user?.id
-                          )
+                    {privateInvites.length > 0 && (
+                      <div className="mb-6">
+                        <div className="space-y-4">
+                          {privateInvites.map(league => {
+                            const invite = league.fantasy_event_user_invites.find(
+                              (inv: { id: string; user_id: string }) =>
+                                inv.user_id === user?.id
+                            )
 
-                          return (
-                            <div
-                              key={league.id}
-                              className="p-5 rounded-lg bg-blue-50 border border-blue-200 flex justify-between items-start"
-                            >
-                              <div className="flex flex-col gap-1">
-                                <h2 className="text-lg font-bold text-blue-900">
-                                  You’ve been invited!
-                                </h2>
-                                <p className="text-sm text-gray-700">
-                                  Join{" "}
-                                  <span className="font-semibold">
-                                    {league.name}
-                                  </span>{" "}
-                                  – a private league created by{" "}
-                                  {league.sender?.is_public ? (
-                                    <span
-                                      onClick={() =>
-                                        router.push(
-                                          `/profile/${league.sender.username}`
-                                        )
-                                      }
-                                      className="font-semibold text-blue-700 cursor-pointer hover:underline"
-                                    >
-                                      {league.sender.username}
-                                    </span>
-                                  ) : (
+                            return (
+                              <div
+                                key={league.id}
+                                className="p-5 rounded-lg bg-blue-50 border border-blue-200 flex justify-between items-start"
+                              >
+                                <div className="flex flex-col gap-1">
+                                  <h2 className="text-lg font-bold text-blue-900">
+                                    You’ve been invited!
+                                  </h2>
+                                  <p className="text-sm text-gray-700">
+                                    Join{" "}
                                     <span className="font-semibold">
-                                      {league.sender?.username ?? "someone"}
-                                    </span>
-                                  )}
-                                  .
+                                      {league.name}
+                                    </span>{" "}
+                                    – a private league created by{" "}
+                                    {league.sender?.is_public ? (
+                                      <span
+                                        onClick={() =>
+                                          router.push(`/profile/${league.sender.username}`)
+                                        }
+                                        className="font-semibold text-blue-700 cursor-pointer hover:underline"
+                                      >
+                                        {league.sender.username}
+                                      </span>
+                                    ) : (
+                                      <span className="font-semibold">
+                                        {league.sender?.username ?? "someone"}
+                                      </span>
+                                    )}
+                                    .
+                                  </p>
+                                </div>
+
+                                <div className="flex flex-col items-end gap-2">
+                                  <button
+                                    onClick={() => dismissInvite(invite.id)}
+                                    className="text-gray-500 hover:text-gray-700 text-xl leading-none"
+                                    aria-label="Ignore invite"
+                                  >
+                                    ×
+                                  </button>
+
+                                 <button
+                                    onClick={() => {
+                                      dismissInvite(invite.id)
+                                      router.push(`/league/${league.slug}`)
+                                    }}
+                                    className="bg-[#1f4785] text-white px-4 py-2 rounded-md hover:bg-[#163766] transition text-sm"
+                                  >
+                                    View Details
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <section>
+                      {!nextDraft && (
+                        <p className="text-gray-600">
+                          No upcoming drafts –{" "}
+                          <a
+                            href="/leagueplay"
+                            className="text-[#ac0000] underline"
+                          >
+                            find a league
+                          </a>
+                        </p>
+                      )}
+                    </section>
+                    <hr className="my-8 border-gray-300" />
+                    <section>
+                      {!triviaLoading && triviaQuestion && (
+                        <div>
+                          <h2 className="text-md font-semibold">
+                            Test Your Book Knowledge!
+                          </h2>
+
+                          <div className="p-4 rounded-lg relative flex items-center">
+                            <div className={`${triviaFeedback ? "opacity-0" : "opacity-100"} w-full`}>
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <button
+                                  onClick={() => handleTriviaAnswer(true)}
+                                  className="text-green-600 text-md font-semibold hover:text-green-800"
+                                >
+                                  TRUE
+                                </button>
+
+                                <span className="text-md text-gray-700">or</span>
+
+                                <button
+                                  onClick={() => handleTriviaAnswer(false)}
+                                  className="text-red-600 text-md font-semibold hover:text-red-800"
+                                >
+                                  FALSE
+                                </button>
+
+                                <span className="text-md font-semibold text-gray-700">:</span>
+
+                                <p className="text-md text-gray-800 flex-1">
+                                  {triviaQuestion.question}
                                 </p>
                               </div>
-
-                              <div className="flex flex-col items-end gap-2">
-                                <button
-                                  onClick={() => dismissInvite(invite.id)}
-                                  className="text-gray-500 hover:text-gray-700 text-xl leading-none"
-                                  aria-label="Ignore invite"
-                                >
-                                  ×
-                                </button>
-
-                                <button
-                                  onClick={() =>
-                                    router.push(`/league/${league.slug}`)
-                                  }
-                                  className="bg-[#1f4785] text-white px-4 py-2 rounded-md hover:bg-[#163766] transition text-sm"
-                                >
-                                  View Details
-                                </button>
-                              </div>
                             </div>
-                          )
-                        })}
+
+                            {triviaFeedback && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <p
+                                  className={`text-md ${
+                                    triviaFeedback === "correct" ? "text-green-600" : "text-red-600"
+                                  }`}
+                                >
+                                  {triviaFeedback === "correct" ? "Correct!" : "Just missed that one!"}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          <hr className="my-4 border-gray-300" />
+                        </div>
+                      )}
+                    </section>
+                    <section>
+                      <div>
+                        <p className="text-gray-600">
+                          Need a refresher on how fantasy points are calculated? Read up on{" "}
+                          <a href="/howitworks" className="text-[#234C6A] underline">
+                            how it works
+                          </a>
+                          .
+                        </p>
                       </div>
-                    </div>
-                  )}
+                    </section>
+                    <hr className="my-6 border-gray-300" />
+                    <section>
+                      <div className="mb-8">
+                        <h2 className="text-lg font-semibold mb-3">What’s New Around the Site</h2>
 
-                  <section>
-                    {!nextDraft && (
-                      <p className="text-gray-600">
-                        No upcoming drafts –{" "}
-                        <a
-                          href="/leagueplay"
-                          className="text-[#ac0000] underline"
-                        >
-                          find a league
-                        </a>
-                      </p>
-                    )}
-                  </section>
-                </>
-              )}
-            </main>
-
-            {!triviaLoading && triviaQuestion && (
-              <div className="bg-white shadow-md p-4 rounded-lg mt-4 relative flex items-center">
-
-                {/* Normal content (hidden when feedback is active) */}
-                <div className={`${triviaFeedback ? "opacity-0" : "opacity-100"} w-full`}>
-                  <div className="flex items-center gap-3 flex-wrap">
-
-                    <button
-                      onClick={() => handleTriviaAnswer(true)}
-                      className="text-green-600 text-xl font-semibold hover:text-green-800"
-                    >
-                      TRUE
-                    </button>
-
-                    <span className="text-xl text-gray-700">or</span>
-
-                    <button
-                      onClick={() => handleTriviaAnswer(false)}
-                      className="text-red-600 text-xl font-semibold hover:text-red-800"
-                    >
-                      FALSE
-                    </button>
-
-                    <span className="text-xl font-semibold text-gray-700">:</span>
-
-                    <p className="text-lg text-gray-800 flex-1">
-                      {triviaQuestion.question}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Centered feedback overlay */}
-                {triviaFeedback && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <p
-                      className={`text-2xl ${
-                        triviaFeedback === "correct" ? "text-green-600" : "text-red-600"
-                      }`}
-                    >
-                      {triviaFeedback === "correct" ? "Bang! Bang!" : "Flash!"}
-                    </p>
-                  </div>
+                        <ul className="space-y-2">
+                          {updates.map(u => (
+                            <li key={u.id} className="text-sm text-gray-700">
+                              <span className="font-medium">{u.text}</span>
+                              <span className="text-gray-500 ml-2 text-xs">({u.date})</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </section>
+                    <hr className="my-6 border-gray-300" />
+                  </>
                 )}
-              </div>
-            )}
+              </main>
+              {upcomingGames.length > 0 && (
+                <GameTicker />
+              )}
+            </div>
 
             {nextDraft && (
               <div className="bg-white shadow-md p-6 rounded-lg mt-4 flex items-center justify-between">
@@ -572,7 +633,9 @@ export default function ThePinClient() {
                   </h2>
 
                   <div className="flex items-center gap-2">
-                    <h3 className="text-md mt-1 font-semibold">
+                    <h3
+                      className="text-md mt-2 font-semibold hover:underline cursor-pointer"
+                      onClick={() => router.push(`/league/${nextDraft.slug}`)}>
                       {nextDraft.name}
                     </h3>
 
@@ -621,6 +684,7 @@ export default function ThePinClient() {
           </div>
         </div>
       </div>
+
       {achievementModal && achievementFromDB && (
         <AchievementModal
             open={true}
