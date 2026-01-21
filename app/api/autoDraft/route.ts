@@ -6,9 +6,6 @@ export async function POST(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-console.log("autoDraft hit", new Date().toISOString())
-console.log("SUPABASE_URL?", !!process.env.SUPABASE_URL)
-console.log("SRK?", !!process.env.SUPABASE_SERVICE_ROLE_KEY)
 
   const { eventId } = await req.json()
 

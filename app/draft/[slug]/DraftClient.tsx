@@ -410,8 +410,19 @@ export default function DraftClient({ slug }: DraftClientProps) {
     return map
   }, [teams])
 
+  useEffect(() => {
+    if (!userId || !event?.id) return
+
+    const myPickCount =
+      (picks ?? []).filter((p: any) => p.user_id === userId).length
+
+    if (myPickCount >= 4) {
+      router.push("/myrinks")
+    }
+  }, [picks, userId, event?.id])
+
   async function handleConfirm() {
-    if (!userId || !selectedPlayer) return
+    if (!userId || !selectedPlayer || !event?.id) return
 
     setIsSubmitting(true)
     setShowModal(false)
@@ -421,25 +432,24 @@ export default function DraftClient({ slug }: DraftClientProps) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        eventId: event?.id,
+        eventId: event.id,
         playerId: selectedPlayer.id,
         userId,
       }),
     })
 
-    const data = await res.json()
+    const data = await res.json().catch(() => ({}))
 
     setSelectedPlayer(null)
     setIsSubmitting(false)
 
-    if (!res.ok || !event) return
+    if (!res.ok) {
+      return
+    }
 
     await refreshDraftState(event.id)
 
-    if (
-      selectedPlayer.first_name === "Rachel" &&
-      selectedPlayer.last_name === "Homan"
-    ) {
+    if (selectedPlayer.first_name === "Rachel" && selectedPlayer.last_name === "Homan") {
       const homanRow = achievements.find((a: any) => a.code === "HOMAN_WARRIOR")
 
       if (homanRow) {
@@ -453,19 +463,25 @@ export default function DraftClient({ slug }: DraftClientProps) {
         if (!existing) {
           await supabase.from("user_achievements").insert({
             user_id: userId,
-            achievement_id: homanRow.id
+            achievement_id: homanRow.id,
           })
         }
       }
 
       setAchievementModal("HOMAN_WARRIOR")
-
       setPendingRedirect(true)
-
       return
     }
 
-    if (data.userFinished || data.draftFinished) {
+    const myPickCount =
+      (picks ?? []).filter((p: any) => p.user_id === userId).length
+
+    if (myPickCount >= 4) {
+      router.push("/myrinks")
+      return
+    }
+
+    if (data?.draftFinished) {
       router.push("/myrinks")
     }
   }
