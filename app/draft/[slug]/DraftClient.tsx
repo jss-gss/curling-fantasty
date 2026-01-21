@@ -475,6 +475,11 @@ export default function DraftClient({ slug }: DraftClientProps) {
     }
   }, [event?.id, event?.draft_status])
 
+  function formatDate(dateString: string) {
+    const [year, month, day] = dateString.split("-")
+    return `${month}/${day}/${year}`
+  }
+
   return (
     <>
       <div className="p-6 flex flex-col gap-6 bg-[#234C6A]">
@@ -484,9 +489,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
         </h1>
         <p className="text-gray-600 mt-1">
             The {curlingEvent?.name ?? ""} event begins on{" "}
-            {curlingEvent
-            ? new Date(curlingEvent.start_date).toLocaleDateString()
-            : "TBD"}
+            {formatDate(curlingEvent.start_date)}{" "}
         </p>
         </header>
 
