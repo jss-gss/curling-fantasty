@@ -157,7 +157,6 @@ export default function LeaguesPage() {
         .order("draft_date", { ascending: true });
 
       if (error) {
-        console.error("Error loading leagues:", error);
         setLeagues([]);
         setLoading(false);
         return;

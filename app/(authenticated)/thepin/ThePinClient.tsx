@@ -63,7 +63,6 @@ export default function ThePinClient() {
     fetch("/api/upcoming-games")
       .then(res => res.json())
       .then(data => {
-        console.log("upcoming games:", data)
         setUpcomingGames(data)
       })
   }, [])

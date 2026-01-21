@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing eventId" }, { status: 400 })
   }
 
-  const { data, error } = await supabase.rpc("autopick_if_expired", {
+  const { data, error } = await supabase.rpc("autodraft_if_expired", {
     p_event_id: eventId,
     p_turn_seconds: 30,
   })
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   }
 
   if (!data?.ok) {
-    return NextResponse.json({ error: data?.error ?? "Autopick failed" }, { status: 400 })
+    return NextResponse.json({ error: data?.error ?? "Auto draft failed" }, { status: 400 })
   }
 
   return NextResponse.json(data)

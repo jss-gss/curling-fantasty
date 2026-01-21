@@ -395,7 +395,6 @@ export default function DraftClient({ slug }: DraftClientProps) {
     })
 
     const data = await res.json()
-    console.log("Response:", res.status, data)
 
     setSelectedPlayer(null)
     setIsSubmitting(false)
