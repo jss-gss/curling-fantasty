@@ -9,7 +9,6 @@ export default function HowItWorksPage() {
   return (
     <div className="min-h-screen">
 
-      {/* HEADER */}
       <section className="w-full py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold text-[#1f4785] mb-4">
@@ -18,7 +17,6 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      {/* GETTING STARTED — 3 WHITE CARDS WITH IMAGES */}
       <section className="w-full max-w-6xl mx-auto mb-35 px-4">
         <h2 className="text-3xl font-bold mb-10 text-center">
           Tips on Getting Started
@@ -52,21 +50,24 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      <h3 className="text-3xl font-bold text-center text-[#1f4785] mb-6">
-        How the Platform Was Designed
-      </h3>
+      <section className="w-full flex justify-center mb-20 px-4">
+        <div className="w-full max-w-4xl">
+          <h3 className="text-3xl font-bold text-center text-[#1f4785] mb-6">
+            How the Platform Was Designed
+          </h3>
 
-      <p className="text-gray-700 text-lg leading-relaxed text-center">
-        The platform is built around a simple, event‑first lifecycle. Each fantasy 
-        league is tied to a single competition, ensuring that drafts, rosters, and 
-        scoring all stay focused on one defined event. Because curling events run in 
-        a round‑robin format, the application flow follows that same structure - users 
-        join an event, draft from only the athletes competing in that specific field, 
-        and track performance as the event progresses. This avoids mixing data across 
-        tournaments or genders and keeps every league self‑contained and easy to follow. 
-      </p>
+          <p className="text-gray-700 text-lg leading-relaxed text-center">
+            The platform is built around a simple, event‑first lifecycle. Each fantasy 
+            league is tied to a single competition, ensuring that drafts, rosters, and 
+            scoring all stay focused on one defined event. Because curling events run in 
+            a round‑robin format, the application flow follows that same structure - users 
+            join an event, draft from only the athletes competing in that specific field, 
+            and track performance as the event progresses. This avoids mixing data across 
+            tournaments or genders and keeps every league self‑contained and easy to follow. 
+          </p>
+        </div>
+      </section>
 
-      {/* DRAFTING YOUR RINK — BLUE CARD STYLE */}
       <section className="w-full flex justify-center mb-20 px-4">
         <div className="w-full max-w-6xl bg-[#0a2342] text-white py-12 px-8 rounded-xl shadow-inner">
 
@@ -76,11 +77,11 @@ export default function HowItWorksPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
-            {/* Enter the Draft */}
             <div className="bg-[#12345a] p-6 rounded-lg shadow-lg text-center">
               <h3 className="text-xl font-semibold mb-3">Enter the Draft</h3>
               <p className="opacity-80">
                 Join a league’s draft room. Draft positions are randomly assigned before drafting begins.
+                Each pick has a 30‑second timer, and if you miss your turn, auto‑draft will select an available player - though joining live is the best way to shape your rink.
               </p>
             </div>
 
@@ -105,7 +106,6 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      {/* SCORING — 6 WHITE CARDS WITH IMAGES */}
       <section className="w-full py-16 mb-20">
         <div className="max-w-6xl mx-auto px-4">
 
