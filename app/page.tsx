@@ -258,7 +258,7 @@ export default function LandingPage() {
                   />
                 </div>
                 <p className="text-base font-semibold text-gray-800 mb-1">Four Foot Finisher</p>
-                <p className="text-sm text-gray-600">You're gold! Finish first in a leauge of at least eight.</p>
+                <p className="text-sm text-gray-600">You're gold! Finish first in a league of at least eight.</p>
               </div>
 
               <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-2xl">
@@ -271,7 +271,7 @@ export default function LandingPage() {
                   />
                 </div>
                 <p className="text-base font-semibold text-gray-800 mb-1">Eight Foot Finisher</p>
-                <p className="text-sm text-gray-600">Silver looks good on you! Finish second in a leauge of at least eight.</p>
+                <p className="text-sm text-gray-600">Silver looks good on you! Finish second in a league of at least eight.</p>
               </div>
               <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-2xl">
                 <div className="w-20 h-20 relative mb-4">
@@ -283,7 +283,7 @@ export default function LandingPage() {
                   />
                 </div>
                 <p className="text-base font-semibold text-gray-800 mb-1">Twelve Foot Finisher</p>
-                <p className="text-sm text-gray-600">Hitting the rings and the podium! Finish third in a leauge of at least eight.</p>
+                <p className="text-sm text-gray-600">Hitting the rings and the podium! Finish third in a league of at least eight.</p>
               </div>
 
               <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-2xl">
