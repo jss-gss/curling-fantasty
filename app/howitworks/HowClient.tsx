@@ -76,33 +76,29 @@ export default function HowItWorksPage() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
             <div className="bg-[#12345a] p-6 rounded-lg shadow-lg text-center">
               <h3 className="text-xl font-semibold mb-3">Enter the Draft</h3>
               <p className="opacity-80">
                 Join a league’s draft room. Draft positions are randomly assigned before drafting begins.
-                Each pick has a 30‑second timer, and if you miss your turn, auto‑draft will select an available player - though joining live is the best way to shape your rink.
               </p>
             </div>
 
-            {/* Pick Your Players */}
             <div className="bg-[#12345a] p-6 rounded-lg shadow-lg text-center">
               <h3 className="text-xl font-semibold mb-3">Pick Your Players</h3>
               <p className="opacity-80">
                 Choose one curler for each position - lead, second, vice, and skip - until your rink is complete.
+                Each pick has a 30‑second timer, and if you miss your turn, auto‑draft will select an available player.
+                Joining live gives you the best control over your lineup.
               </p>
             </div>
 
-            {/* Lock In & Watch */}
             <div className="bg-[#12345a] p-6 rounded-lg shadow-lg text-center">
               <h3 className="text-xl font-semibold mb-3">Lock In & Watch</h3>
               <p className="opacity-80">
-                When drafting ends, your lineup is locked. No changes, just follow the action and score points.
+                When drafting ends, your lineup is locked. No changes - just follow the action and score points.
               </p>
             </div>
-
           </div>
-
         </div>
       </section>
 
