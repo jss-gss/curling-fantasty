@@ -16,7 +16,7 @@ console.log("SRK?", !!process.env.SUPABASE_SERVICE_ROLE_KEY)
     return NextResponse.json({ error: "Missing eventId" }, { status: 400 })
   }
   
-  const { data, error } = await supabase.rpc("autodraft_if_expired", {
+  const { data, error } = await supabase.rpc("autopick_if_expired", {
     p_event_id: eventId,
     p_turn_seconds: 30,
   })
