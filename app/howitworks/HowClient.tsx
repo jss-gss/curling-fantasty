@@ -17,7 +17,7 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      <section className="w-full max-w-6xl mx-auto mb-35 px-4">
+      <section className="w-full max-w-6xl mx-auto mb-20 px-4">
         <h2 className="text-3xl font-bold mb-10 text-center">
           Tips on Getting Started
         </h2>
@@ -57,18 +57,12 @@ export default function HowItWorksPage() {
           </h3>
 
           <p className="text-gray-700 text-lg leading-relaxed text-center">
-            The platform is built around a simple, event‑first lifecycle. Each fantasy 
-            league is tied to a single competition, ensuring that drafts, rosters, and 
-            scoring all stay focused on one defined event. Because curling events run in 
-            a round‑robin format, the application flow follows that same structure - users 
-            join an event, draft from only the athletes competing in that specific field, 
-            and track performance as the event progresses. This avoids mixing data across 
-            tournaments or genders and keeps every league self‑contained and easy to follow. 
+            The platform follows a simple event‑first structure. Each fantasy league is tied to one competition, and all drafting and scoring come only from the athletes in that event. Because curling events begin with a round‑robin, the platform tracks that stage exclusively - users join an event, draft from its field, and follow scoring as the round‑robin unfolds. This keeps every league focused, consistent, and free from mixing data across tournaments or divisions.
           </p>
         </div>
       </section>
 
-      <section className="w-full flex justify-center mb-20 px-4">
+      <section className="w-full flex justify-center mb-10 px-4">
         <div className="w-full max-w-6xl bg-[#0a2342] text-white py-12 px-8 rounded-xl shadow-inner">
 
           <h2 className="text-3xl font-bold mb-10 text-center">
@@ -86,23 +80,32 @@ export default function HowItWorksPage() {
             <div className="bg-[#12345a] p-6 rounded-lg shadow-lg text-center">
               <h3 className="text-xl font-semibold mb-3">Pick Your Players</h3>
               <p className="opacity-80">
-                Choose one curler for each position - lead, second, vice, and skip - until your rink is complete.
-                Each pick has a 30‑second timer, and if you miss your turn, auto‑draft will select an available player.
-                Joining live gives you the best control over your lineup.
+                Choose one curler for each position – lead, second, vice, and skip – until your rink is complete.
               </p>
             </div>
 
             <div className="bg-[#12345a] p-6 rounded-lg shadow-lg text-center">
               <h3 className="text-xl font-semibold mb-3">Lock In & Watch</h3>
               <p className="opacity-80">
-                When drafting ends, your lineup is locked. No changes - just follow the action and score points.
+                When drafting ends, your lineup is locked. No changes – just follow the action and score points.
               </p>
             </div>
           </div>
+
+          <div className="mt-10 bg-[#12345a] p-6 rounded-lg shadow-lg">
+            <h3 className="text-xl font-semibold mb-3 text-center">Nuances & Pro Tips</h3>
+            <ul className="opacity-80 space-y-2 mx-auto text-center">
+              <li>The draft starts automatically on schedule, but it needs at least one participant online to keep progressing smoothly.</li>
+              <li>You have 30 seconds to make each pick.</li>
+              <li>If you’re offline or the timer expires, the system autopicks an available player for you.</li>
+              <li>You can enter the draft directly from The Pin page when the draft opens.</li>
+            </ul>
+          </div>
+
         </div>
       </section>
 
-      <section className="w-full py-16 mb-20">
+      <section className="w-full py-16 mb-12">
         <div className="max-w-6xl mx-auto px-4">
 
           <h2 className="text-3xl font-bold text-center text-[#1f4785] mb-12">
@@ -236,7 +239,7 @@ export default function HowItWorksPage() {
            individual statistics, yet every player can influence every stone through 
            sweeping, communication, and strategic decision-making. Shooting percentage 
            is one of the only collected measure of personal execution, so comparing 
-           a player's percentage to their team's overall performance helps capture 
+           a player's percentage to their team's overall performance can show 
            their broader influence on each end. This approach balances the limitations 
            of available data while highlighting players who elevate their rink, resulting 
            in a scoring model that rewards meaningful contribution across all positions. 

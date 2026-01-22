@@ -341,20 +341,48 @@ export default function ThePinClient() {
       }
   }
 
-    const enqueueModal = (code: AchievementId) => {
-          setModalQueue(prev => [...prev, code])
+const enqueueModal = (code: AchievementId) => {
+      setModalQueue(prev => [...prev, code])
+  }
+
+  useEffect(() => {
+      if (!achievementModal && modalQueue.length > 0) {
+      const timer = setTimeout(() => {
+          setAchievementModal(modalQueue[0])
+          setModalQueue(prev => prev.slice(1))
+      }, 800)
+
+      return () => clearTimeout(timer)
       }
-  
-      useEffect(() => {
-          if (!achievementModal && modalQueue.length > 0) {
-          const timer = setTimeout(() => {
-              setAchievementModal(modalQueue[0])
-              setModalQueue(prev => prev.slice(1))
-          }, 800)
-  
-          return () => clearTimeout(timer)
-          }
-      }, [achievementModal, modalQueue])
+  }, [achievementModal, modalQueue])
+
+  useEffect(() => {
+    if (!nextDraft) return
+
+    const channel = supabase
+      .channel("draft-status")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "fantasy_events",
+          filter: `id=eq.${nextDraft.id}`
+        },
+        payload => {
+          setUpcomingDrafts(prev =>
+            prev.map(d =>
+              d.id === payload.new.id ? payload.new : d
+            )
+          )
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [nextDraft?.id])
 
   return (
     <>

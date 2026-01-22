@@ -475,7 +475,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                         <td className="py-2 px-3">
                             {u.profiles.is_public ? (
                             <a
-                                href={`/profile/${u.profiles.id}`}
+                                href={`/profile/${u.profiles.username}`}
                                 className="text-blue-600 hover:underline"
                             >
                                 {u.profiles.username}
