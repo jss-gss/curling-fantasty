@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   
   const { data, error } = await supabase.rpc("autopick_if_expired", {
     p_event_id: eventId,
-    p_turn_seconds: 30,
+    p_turn_seconds: 45,
   })
 
   if (error) {

@@ -96,7 +96,7 @@ export default function HowItWorksPage() {
             <h3 className="text-xl font-semibold mb-3 text-center">Nuances & Pro Tips</h3>
             <ul className="opacity-80 space-y-2 mx-auto text-center">
               <li>The draft starts automatically on schedule, but it needs at least one participant online to keep progressing smoothly.</li>
-              <li>You have 30 seconds to make each pick.</li>
+              <li>You have 45 seconds to make each pick.</li>
               <li>If you’re offline or the timer expires, the system autopicks an available player for you.</li>
               <li>You can enter the draft directly from The Pin page when the draft opens.</li>
             </ul>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import type { User } from "@supabase/supabase-js";
 import { achievementIcons } from "@/lib/achievementIcons";
@@ -18,6 +18,7 @@ export default function NavBar() {
   const [profile, setProfile] = useState<any>(null);
   const [open, setOpen] = useState(false);
 
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const { setModal } = useAchievementModal();
 
   useEffect(() => {
@@ -37,6 +38,18 @@ export default function NavBar() {
     }
 
     loadUser();
+  }, []);
+
+  // CLICK‑AWAY HANDLER
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const tabs = [
@@ -77,9 +90,9 @@ export default function NavBar() {
             />
           }
         />
-      )
+      );
     }
-  }
+  };
 
   return (
     <div
@@ -105,6 +118,7 @@ export default function NavBar() {
 
         {/* RIGHT — NAVIGATION */}
         <div className="flex gap-12 text-lg font-medium items-center">
+
           {tabs.map((tab) => {
             const active = pathname === tab.href;
 
@@ -125,10 +139,10 @@ export default function NavBar() {
 
           {/* USER DROPDOWN */}
           {user && (
-            <div className="relative">
+            <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setOpen((prev) => !prev)}
-                className="text-white hover:text-[#E3E3E3] font-medium"
+                className="text-white hover:text-[#E3E3E3] mb-1 font-medium h-8 flex items-center"
               >
                 {displayName}
               </button>
@@ -137,7 +151,10 @@ export default function NavBar() {
                 <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
                   <button
                     className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-                    onClick={() => router.push("/profile")}
+                    onClick={() => {
+                      setOpen(false);
+                      router.push("/profile");
+                    }}
                   >
                     Profile
                   </button>
@@ -145,6 +162,7 @@ export default function NavBar() {
                   <button
                     className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
                     onClick={async () => {
+                      setOpen(false);
                       await supabase.auth.signOut();
                       window.location.href = "/";
                     }}
@@ -155,6 +173,7 @@ export default function NavBar() {
               )}
             </div>
           )}
+
         </div>
       </div>
     </div>

@@ -109,7 +109,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
     const update = () => {
       const startedMs = new Date(ts).getTime()
       const elapsed = Math.floor((Date.now() - startedMs) / 1000)
-      setSecondsLeft(Math.max(0, 30 - elapsed))
+      setSecondsLeft(Math.max(0, 45 - elapsed))
     }
 
     update()
