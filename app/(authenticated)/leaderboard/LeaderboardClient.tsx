@@ -368,7 +368,7 @@ export default function LeagueLeaderboardPage() {
 
                                     {league.is_commissioner && (
                                       <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                                        commissioner
+                                        draw master
                                       </span>
                                     )}
 
@@ -429,7 +429,7 @@ export default function LeagueLeaderboardPage() {
 
                                   {league.is_commissioner && (
                                     <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                                      commissioner
+                                      draw master
                                     </span>
                                   )}
                                 </div>
@@ -546,22 +546,27 @@ export default function LeagueLeaderboardPage() {
                   .map(position => {
                     const leaderboard = topCurlers[event.id]?.[position] ?? []
                     const isCompleted = new Date(event.round_robin_end_date) < new Date()
-
+                    const isNotStarted = new Date(event.start_date) > new Date()
                 return (
                   <div
                     key={`${event.id}-${position}`}
                     className="bg-white shadow-md p-6 mb-8 rounded-lg"
                   >
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-semibold mb-1">
-                        {position}
-                      </h2>
-                        {isCompleted && (
-                          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
-                            round robin complete
-                          </span>
-                        )}
-                    </div>
+                    <h2 className="text-xl font-semibold mb-1 flex items-center gap-2">
+                      <span>{position}s</span>
+
+                      {isNotStarted && (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
+                          event not started
+                        </span>
+                      )}
+
+                      {isCompleted && (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
+                          round robin complete
+                        </span>
+                      )}
+                    </h2>
 
                     <div className="text-gray-700 mb-4 flex items-center justify-between">
                       <div className="font-medium">

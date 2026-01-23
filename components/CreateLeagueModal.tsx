@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface CreateLeagueModalProps {
   isOpen: boolean;
@@ -12,6 +12,61 @@ interface CreateLeagueModalProps {
   league?: any;
 }
 
+function parseAsET(dt: string) {
+  const [datePart, timePart] = dt.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute] = timePart.split(":").map(Number);
+
+  const utcGuess = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(utcGuess);
+
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "0";
+
+  const etYear = Number(get("year"));
+  const etMonth = Number(get("month"));
+  const etDay = Number(get("day"));
+  const etHour = Number(get("hour"));
+  const etMinute = Number(get("minute"));
+  const etSecond = Number(get("second"));
+
+  const etWallAsUtc = Date.UTC(etYear, etMonth - 1, etDay, etHour, etMinute, etSecond);
+  const offsetMs = etWallAsUtc - utcGuess.getTime();
+
+  return new Date(Date.UTC(year, month - 1, day, hour, minute, 0) - offsetMs);
+}
+
+function toInputET(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(date);
+
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
+
+  const year = get("year");
+  const month = get("month");
+  const day = get("day");
+  const hour = get("hour");
+  const minute = get("minute");
+
+  return `${year}-${month}-${day}T${hour}:${minute}`;
+}
+
 export default function CreateLeagueModal({
   isOpen,
   onClose,
@@ -19,7 +74,7 @@ export default function CreateLeagueModal({
   onDelete,
   events,
   isNew,
-  league
+  league,
 }: CreateLeagueModalProps) {
   const [eventId, setEventId] = useState("");
   const [name, setName] = useState("");
@@ -28,27 +83,19 @@ export default function CreateLeagueModal({
   const [isPublic, setIsPublic] = useState(true);
   const [usernames, setUsernames] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
-
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
+  const modalRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!isNew && league) {
       setEventId(league.curling_event_id);
       setName(league.name);
       setDescription(league.description || "");
-      const localET = new Date(league.draft_date)
-        .toLocaleString("sv-SE", { timeZone: "America/New_York" })
-        .replace(" ", "T")
-        .slice(0, 16);
-      setDraftDate(localET);
+      setDraftDate(toInputET(new Date(league.draft_date)));
       setIsPublic(league.is_public);
       setUsernames("");
+      return;
     }
+
     if (isNew) {
       setEventId("");
       setName("");
@@ -59,6 +106,21 @@ export default function CreateLeagueModal({
     }
   }, [isNew, league]);
 
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) onClose();
+    }
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSubmit = () => {
@@ -68,29 +130,21 @@ export default function CreateLeagueModal({
     if (!name.trim()) newErrors.push("Please enter a league name.");
     if (!draftDate) newErrors.push("Please choose a draft date.");
 
-    const selectedEvent = events.find((ev) => ev.id === eventId);
+    const selectedEvent = events.find((ev) => String(ev.id) === String(eventId));
 
     if (selectedEvent && draftDate) {
-      function parseETDateTime(dt: string) {
-        const [datePart, timePart] = dt.split("T");
-        const [year, month, day] = datePart.split("-").map(Number);
-        const [hour, minute] = timePart.split(":").map(Number);
-        return new Date(Date.UTC(year, month - 1, day, hour + 5, minute));
+      const draftInstant = parseAsET(draftDate);
+      const nowInstant = new Date();
+
+      const startInstant = parseAsET(`${selectedEvent.start_date}T00:00`);
+
+      if (draftInstant.getTime() >= startInstant.getTime()) {
+        newErrors.push("Draft date must be before the event start date.");
       }
 
-      function parseSupabaseDateAsET(dateString: string) {
-        const [year, month, day] = dateString.split("-").map(Number);
-        return new Date(Date.UTC(year, month - 1, day, 5, 0, 0));
+      if (draftInstant.getTime() < nowInstant.getTime()) {
+        newErrors.push("Draft date cannot be in the past.");
       }
-
-      const draft = parseETDateTime(draftDate);
-      const start = parseSupabaseDateAsET(selectedEvent.start_date);
-      const nowET = parseETDateTime(
-        new Date().toLocaleString("sv-SE", { timeZone: "America/New_York" }).replace(" ", "T")
-      );
-
-      if (draft >= start) newErrors.push("Draft date must be before the event start date.");
-      if (draft < nowET) newErrors.push("Draft date cannot be in the past.");
     }
 
     if (newErrors.length > 0) {
@@ -100,23 +154,32 @@ export default function CreateLeagueModal({
 
     setErrors([]);
 
+    const draftETForSave = parseAsET(draftDate).toISOString();
+
     onSubmit({
       eventId,
       name,
       description,
-      draftDate,
+      draftDate: draftETForSave,
       isPublic,
-      usernames
+      usernames,
     });
   };
 
-  const futureEvents = events.filter(ev => new Date(ev.start_date) > new Date());
+  const futureEvents = events.filter((ev) => {
+    const startInstant = parseAsET(`${ev.start_date}T00:00`);
+    return startInstant.getTime() > Date.now();
+  })
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="relative bg-white p-6 rounded-lg w-full max-w-lg shadow-xl">
-
-        {/* Close Button */}
+    <div
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        ref = {modalRef} className="relative bg-white p-6 rounded-lg w-full max-w-lg shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
@@ -128,7 +191,6 @@ export default function CreateLeagueModal({
           {isNew ? "Be Your Own Draw Master" : "Edit League Details"}
         </h2>
 
-        {/* Errors */}
         {errors.length > 0 && (
           <div className="mb-4 bg-red-100 text-red-700 p-3 rounded">
             <ul className="list-disc ml-5 text-sm">
@@ -139,35 +201,29 @@ export default function CreateLeagueModal({
           </div>
         )}
 
-        {/* Public/Private Toggle */}
         <div className="absolute top-8 right-8 flex items-center gap-1">
           {isNew ? (
             <>
               <span className="text-xs text-gray-500">Private</span>
-
               <button
                 onClick={() => setIsPublic(!isPublic)}
-                className={`w-10 h-5 rounded-full relative transition 
-                  ${isPublic ? "bg-blue-500" : "bg-gray-400"}
-                `}
+                className={`w-10 h-5 rounded-full relative transition ${
+                  isPublic ? "bg-blue-500" : "bg-gray-400"
+                }`}
               >
                 <span
-                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition 
-                    ${isPublic ? "translate-x-5" : ""}
-                  `}
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition ${
+                    isPublic ? "translate-x-5" : ""
+                  }`}
                 />
               </button>
-
               <span className="text-xs text-gray-500">Public</span>
             </>
           ) : (
-            <span className="text-[10px] text-gray-400 italic">
-              Visibility locked after creation
-            </span>
+            <span className="text-[10px] text-gray-400 italic">Visibility locked after creation</span>
           )}
         </div>
 
-        {/* Event Dropdown */}
         {isNew ? (
           <select
             value={eventId}
@@ -185,14 +241,13 @@ export default function CreateLeagueModal({
           <div className="mb-3">
             <div className="p-2 text-lg rounded text-gray-700">
               {(() => {
-                const ev = events.find((e) => e.id === eventId)
+                const ev = events.find((e) => String(e.id) === String(eventId))
                 return ev ? `${ev.year} ${ev.name} in ${ev.location}` : "Unknown Event"
               })()}
             </div>
           </div>
         )}
 
-        {/* League Name */}
         <input
           type="text"
           placeholder="League Name"
@@ -201,7 +256,6 @@ export default function CreateLeagueModal({
           className="w-full border p-2 rounded mb-3"
         />
 
-        {/* Description */}
         <textarea
           placeholder="Description (optional)"
           value={description}
@@ -209,7 +263,6 @@ export default function CreateLeagueModal({
           className="w-full border p-2 rounded mb-3"
         />
 
-        {/* Draft Date */}
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Draft Date <span className="text-gray-500 text-xs italic">in Eastern Time (ET)</span>
         </label>
@@ -221,17 +274,15 @@ export default function CreateLeagueModal({
           className="w-full border p-2 rounded mb-3"
         />
 
-        {/* Private Usernames */}
         {!isPublic && (
           <textarea
-            placeholder="Invite players by entering their usernames (comma‑separated)"
+            placeholder="Invite players by entering their usernames (comma-separated)"
             value={usernames}
             onChange={(e) => setUsernames(e.target.value)}
             className="w-full border p-2 rounded mb-3"
           />
         )}
 
-        {/* Submit */}
         <button
           onClick={handleSubmit}
           className="w-full bg-[#234C6A] hover:bg-[#1B3C53] text-white py-2 rounded-md transition-colors"
@@ -239,7 +290,6 @@ export default function CreateLeagueModal({
           {isNew ? "Create League" : "Save Changes"}
         </button>
 
-        {/* Delete League */}
         {!isNew && (
           <button
             onClick={onDelete}

@@ -448,24 +448,38 @@ export default function DraftClient({ slug }: DraftClientProps) {
 
     await refreshDraftState(event.id)
 
-    if (selectedPlayer.first_name === "Rachel" && selectedPlayer.last_name === "Homan") {
-      const homanRow = achievements.find((a: any) => a.code === "HOMAN_WARRIOR")
+        if (
+      selectedPlayer.first_name?.trim().toLowerCase() === "rachel" &&
+      selectedPlayer.last_name?.trim().toLowerCase() === "homan"
+    ) {
+      const { data: homanRow, error: homanErr } = await supabase
+        .from("achievements")
+        .select("id, code, name, description")
+        .eq("code", "HOMAN_WARRIOR")
+        .single()
 
-      if (homanRow) {
-        const { data: existing } = await supabase
-          .from("user_achievements")
-          .select("id")
-          .eq("user_id", userId)
-          .eq("achievement_id", homanRow.id)
-          .maybeSingle()
-
-        if (!existing) {
-          await supabase.from("user_achievements").insert({
-            user_id: userId,
-            achievement_id: homanRow.id,
-          })
-        }
+      if (homanErr || !homanRow) {
+        console.error("HOMAN_WARRIOR achievement not found or query failed:", homanErr)
+        setAchievementModal("HOMAN_WARRIOR")
+        setPendingRedirect(true)
+        return
       }
+
+      const { error: upsertErr } = await supabase
+        .from("user_achievements")
+        .upsert(
+          { user_id: userId, achievement_id: homanRow.id },
+          { onConflict: "user_id,achievement_id" }
+        )
+
+      if (upsertErr) {
+        console.error("Failed to upsert user_achievements for HOMAN_WARRIOR:", upsertErr)
+      }
+
+      setAchievements(prev => {
+        const exists = prev.some(a => a.code === homanRow.code)
+        return exists ? prev : [...prev, homanRow]
+      })
 
       setAchievementModal("HOMAN_WARRIOR")
       setPendingRedirect(true)
@@ -533,7 +547,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
       <div className="p-6 flex flex-col gap-6 bg-[#234C6A]">
         <header className="bg-white shadow-md p-6 border border-gray-200 text-center rounded-lg">
         <h1 className="text-4xl font-bold">
-            Draft Room — {event?.name ?? "Loading..."}
+            Draft Room - {event?.name ?? "Loading..."}
         </h1>
         <p className="text-gray-600 mt-1">
             The {curlingEvent?.name ?? ""} event begins on{" "}

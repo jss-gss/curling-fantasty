@@ -120,7 +120,7 @@ export default function NavBar() {
         <div className="flex gap-12 text-lg font-medium items-center">
 
           {tabs.map((tab) => {
-            const active = pathname === tab.href;
+            const active = pathname === tab.href
 
             return (
               <Link
@@ -134,7 +134,7 @@ export default function NavBar() {
               >
                 {tab.name}
               </Link>
-            );
+            )
           })}
 
           {/* USER DROPDOWN */}
@@ -153,7 +153,7 @@ export default function NavBar() {
                     className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
                     onClick={() => {
                       setOpen(false);
-                      router.push("/profile");
+                      router.push("/profile")
                     }}
                   >
                     Profile
@@ -163,8 +163,8 @@ export default function NavBar() {
                     className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
                     onClick={async () => {
                       setOpen(false);
-                      await supabase.auth.signOut();
-                      window.location.href = "/";
+                      await supabase.auth.signOut()
+                      window.location.href = "/"
                     }}
                   >
                     Log Out

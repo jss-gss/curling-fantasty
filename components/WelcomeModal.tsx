@@ -20,9 +20,14 @@ export default function WelcomeModal({
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="relative bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
-
+    <div
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="relative bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* X BUTTON */}
         <button
           onClick={onClose}
