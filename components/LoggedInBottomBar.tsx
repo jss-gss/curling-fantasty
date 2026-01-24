@@ -1,6 +1,6 @@
 export default function BottomNav() {
   return (
-    <footer className="hidden lg:flex w-full h-10 bg-[#234C6A] items-center px-8">
+    <footer className="flex w-full h-10 bg-[#234C6A] items-center px-4 lg:px-8">
       <div className="flex items-center gap-3">
         <img
           src="/logos/button-main-logo.png"

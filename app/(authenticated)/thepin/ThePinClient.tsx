@@ -483,7 +483,7 @@ const enqueueModal = (code: AchievementId) => {
                     </p>
 
                     {privateInvites.length > 0 && (
-                      <div className="mb-6 hidden lg:block">
+                      <div className="mb-6">
                         <div className="space-y-4">
                           {privateInvites.map(league => {
                             const invite = league.fantasy_event_user_invites.find(
@@ -568,7 +568,7 @@ const enqueueModal = (code: AchievementId) => {
 
                     <hr className="my-8 border-gray-300 hidden lg:block" />
 
-                    <section className="hidden lg:block">
+                    <section>
                       {!triviaLoading && triviaQuestion && (
                         <div>
                           <h2 className="text-md font-semibold">
@@ -629,7 +629,7 @@ const enqueueModal = (code: AchievementId) => {
                       )}
                     </section>
 
-                    <section className="hidden lg:block">
+                    <section>
                       <div>
                         <p className="text-gray-600">
                           Need a refresher on how fantasy points are calculated?
@@ -649,7 +649,7 @@ const enqueueModal = (code: AchievementId) => {
 
                     <hr className="my-6 border-gray-300 hidden lg:block" />
 
-                    <section className="hidden lg:block">
+                    <section>
                       <div className="mb-8">
                         <h2 className="text-lg font-semibold mb-3">
                           What’s New Around the Site

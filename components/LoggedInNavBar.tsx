@@ -177,7 +177,7 @@ return (
         {user && (
           <button
             onClick={() => setOpenUser(prev => !prev)}
-            className="text-white text-sm font-medium px-2 py-1 rounded-md hover:bg-white/10"
+            className="text-white text-sm font-medium h-9 px-3 rounded-md hover:bg-white/10 flex items-center"
           >
             {displayName}
           </button>
@@ -185,7 +185,7 @@ return (
 
         <button
           onClick={() => setOpenMobile(prev => !prev)}
-          className="text-white text-2xl leading-none px-2 py-1 rounded-md hover:bg-white/10"
+          className="text-white text-2xl leading-none h-9 w-9 rounded-md hover:bg-white/10 flex items-center justify-center"
           aria-label="Open menu"
         >
           ☰
