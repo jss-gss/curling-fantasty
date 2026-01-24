@@ -95,150 +95,154 @@ export default function NavBar() {
     }
   }
 
-return (
-  <div
-    className="w-full border-b border-[#1B3C53] h-16 flex items-center sticky top-0 z-50 overflow-visible"
-    style={{ backgroundColor: "#234C6A" }}
-  >
-    <div className="max-w-screen-xl mx-auto flex items-center px-2 w-full relative">
-      <button
-        onClick={handleLogoClick}
-        className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full overflow-hidden bg-transparent h-14 w-14 lg:h-24 lg:w-24"
-      >
-        <Image
-          src="/logos/button-main-logo.png"
-          alt="BUTTON Logo"
-          width={192}
-          height={192}
-          className="object-contain"
-        />
-      </button>
-
-      <div className="hidden lg:flex items-center gap-12 text-lg font-medium ml-auto">
-        {tabs.map(tab => {
-          const active = pathname === tab.href
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={`pb-1 transition-all ${
-                active
-                  ? "border-b-2 border-[#AA2B1D] text-white"
-                  : "text-white hover:border-b-2 hover:border-[#AA2B1D]"
-              }`}
-            >
-              {tab.name}
-            </Link>
-          )
-        })}
-
-        {user && (
-          <div className="relative" ref={userMenuRef}>
-            <button
-              onClick={() => setOpenUser(prev => !prev)}
-              className={`pb-1 transition-all text-white font-medium h-8 flex items-center ${
-                openUser
-                  ? "border-b-2 border-[#AA2B1D]"
-                  : "hover:border-b-2 hover:border-[#AA2B1D]"
-              }`}
-            >
-              {displayName}
-            </button>
-
-            {openUser && (
-              <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
-                <button
-                  className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-                  onClick={() => {
-                    setOpenUser(false)
-                    router.push("/profile")
-                  }}
-                >
-                  Profile
-                </button>
-
-                <button
-                  className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-                  onClick={async () => {
-                    setOpenUser(false)
-                    await supabase.auth.signOut()
-                    window.location.href = "/"
-                  }}
-                >
-                  Log Out
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="flex lg:hidden items-center gap-3 ml-auto" ref={mobileMenuRef}>
-        {user && (
-          <button
-            onClick={() => setOpenUser(prev => !prev)}
-            className="text-white text-sm font-medium h-9 px-3 rounded-md hover:bg-white/10 flex items-center"
-          >
-            {displayName}
-          </button>
-        )}
-
+  return (
+    <div
+      className="w-full border-b border-[#1B3C53] h-16 flex items-center sticky top-0 z-50 overflow-visible"
+      style={{ backgroundColor: "#234C6A" }}
+    >
+      <div className="max-w-screen-xl mx-auto flex items-center px-2 w-full relative">
         <button
-          onClick={() => setOpenMobile(prev => !prev)}
-          className="text-white text-2xl leading-none h-9 w-9 rounded-md hover:bg-white/10 flex items-center justify-center"
-          aria-label="Open menu"
+          onClick={handleLogoClick}
+          className="absolute left-2 sm:left-3 lg:left-4 top-1/2 -translate-y-1/2 overflow-hidden bg-transparent"
         >
-          ☰
+          <img
+            src="/logos/button-main-logo.png"
+            alt="BUTTON Logo"
+            className="h-8 w-auto lg:h-8"
+          />
         </button>
 
-        {openUser && user && (
-          <div className="absolute right-4 top-14 w-44 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
-            <button
-              className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-              onClick={() => {
-                setOpenUser(false)
-                setOpenMobile(false)
-                router.push("/profile")
-              }}
-            >
-              Profile
-            </button>
+        <div className="hidden lg:flex items-center gap-15 text-lg font-medium ml-auto">
+          {tabs.map(tab => {
+            const active = pathname === tab.href
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`pb-1 transition-all ${
+                  active
+                    ? "border-b-2 border-[#AA2B1D] text-white"
+                    : "text-white hover:border-b-2 hover:border-[#AA2B1D]"
+                }`}
+              >
+                {tab.name}
+              </Link>
+            )
+          })}
 
-            <button
-              className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-              onClick={async () => {
-                setOpenUser(false)
-                setOpenMobile(false)
-                await supabase.auth.signOut()
-                window.location.href = "/"
-              }}
-            >
-              Log Out
-            </button>
-          </div>
-        )}
+          {user && (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setOpenUser(prev => !prev)}
+                className={`pb-1 transition-all text-white font-medium h-8 flex items-center ${
+                  openUser
+                    ? "border-b-2 border-[#AA2B1D]"
+                    : "hover:border-b-2 hover:border-[#AA2B1D]"
+                }`}
+              >
+                {displayName}
+              </button>
 
-        {openMobile && (
-          <div className="absolute right-4 top-14 w-56 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
-            {tabs.map(tab => {
-              const active = pathname === tab.href
-              return (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  onClick={() => setOpenMobile(false)}
-                  className={`block px-3 py-2 rounded-md transition ${
-                    active ? "bg-gray-100 font-semibold" : "hover:bg-gray-100"
-                  }`}
-                >
-                  {tab.name}
-                </Link>
-              )
-            })}
-          </div>
-        )}
+              {openUser && (
+                <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
+                  <button
+                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
+                    onClick={() => {
+                      setOpenUser(false)
+                      router.push("/profile")
+                    }}
+                  >
+                    Profile
+                  </button>
+
+                  <button
+                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
+                    onClick={async () => {
+                      setOpenUser(false)
+                      await supabase.auth.signOut()
+                      window.location.href = "/"
+                    }}
+                  >
+                    Log Out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex lg:hidden items-center gap-2 ml-auto" ref={mobileMenuRef}>
+          {user && (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => {
+                  setOpenUser(prev => !prev)
+                  setOpenMobile(false)
+                }}
+                className="text-white text-sm font-medium h-9 px-3 rounded-md hover:bg-white/10 flex items-center"
+              >
+                {displayName}
+              </button>
+
+              {openUser && (
+                <div className="absolute right-0 top-11 w-44 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
+                  <button
+                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
+                    onClick={() => {
+                      setOpenUser(false)
+                      router.push("/profile")
+                    }}
+                  >
+                    Profile
+                  </button>
+
+                  <button
+                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
+                    onClick={async () => {
+                      setOpenUser(false)
+                      await supabase.auth.signOut()
+                      window.location.href = "/"
+                    }}
+                  >
+                    Log Out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={() => {
+              setOpenMobile(prev => !prev)
+              setOpenUser(false)
+            }}
+            className="text-white h-9 w-9 rounded-md hover:bg-white/10 flex items-center justify-center"
+            aria-label="Open menu"
+          >
+            <span className="leading-none text-2xl -mt-px">☰</span>
+          </button>
+
+          {openMobile && (
+            <div className="absolute right-2 top-14 w-56 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
+              {tabs.map(tab => {
+                const active = pathname === tab.href
+                return (
+                  <Link
+                    key={tab.href}
+                    href={tab.href}
+                    onClick={() => setOpenMobile(false)}
+                    className={`block px-3 py-2 rounded-md transition ${
+                      active ? "bg-gray-100 font-semibold" : "hover:bg-gray-100"
+                    }`}
+                  >
+                    {tab.name}
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-)
+  )
 }
