@@ -72,11 +72,11 @@ export default function ThePinClient() {
 
   useEffect(() => {
     const loadTrivia = async () => {
-      if (!user?.id) return;
-      const q = await getNextTriviaQuestion(user.id);
-      setTriviaQuestion(q);
-      setTriviaLoading(false);
-    };
+      if (!user?.id) return
+      const q = await getNextTriviaQuestion(user.id)
+      setTriviaQuestion(q)
+      setTriviaLoading(false)
+    }
     loadTrivia()
   }, [user])
 
@@ -241,17 +241,17 @@ export default function ThePinClient() {
     const { data: answered } = await supabase
       .from("trivia_user_answers")
       .select("question_id")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
 
-    const answeredIds = answered?.map(a => a.question_id) ?? [];
+    const answeredIds = answered?.map(a => a.question_id) ?? []
 
     const { data: next } = await supabase
       .from("trivia_questions")
       .select("*")
       .not("id", "in", `(${answeredIds.join(",")})`)
-      .limit(1);
+      .limit(1)
 
-    return next?.[0] ?? null;
+    return next?.[0] ?? null
   }
 
   const submitTriviaAnswer = async (userId: string, questionId: string, userAnswer: boolean) => {
@@ -259,9 +259,9 @@ export default function ThePinClient() {
       .from("trivia_questions")
       .select("answer")
       .eq("id", questionId)
-      .single();
+      .single()
 
-    const correct = question!.answer === userAnswer;
+    const correct = question!.answer === userAnswer
 
     await supabase.from("trivia_user_answers").insert({
       user_id: userId,
@@ -269,28 +269,28 @@ export default function ThePinClient() {
       correct
     })
 
-    return correct;
+    return correct
   }
 
   const getTotalTriviaQuestions = async () => {
     const { count } = await supabase
       .from("trivia_questions")
-      .select("*", { count: "exact", head: true });
+      .select("*", { count: "exact", head: true })
 
-    return count ?? 0;
+    return count ?? 0
   }
 
   const getCorrectCount = async (userId: string) => {
     const { data } = await supabase
       .from("trivia_user_answers")
       .select("correct")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
 
-    return data?.filter(r => r.correct).length ?? 0;
+    return data?.filter(r => r.correct).length ?? 0
   }
 
   const handleTriviaAnswer = async (userAnswer: boolean) => {
-    if (!triviaQuestion || !user?.id) return;
+    if (!triviaQuestion || !user?.id) return
 
     const correct = await submitTriviaAnswer(
       user.id,
@@ -298,28 +298,28 @@ export default function ThePinClient() {
       userAnswer
     )
 
-    setTriviaFeedback(correct ? "correct" : "wrong");
+    setTriviaFeedback(correct ? "correct" : "wrong")
 
     setTimeout(async () => {
-      const next = await getNextTriviaQuestion(user.id);
+      const next = await getNextTriviaQuestion(user.id)
 
       if (!next) {
-        await checkStoneColdAward(user.id);
-        setTriviaQuestion(null);
-        setTriviaFeedback(null);
-        return;
+        await checkStoneColdAward(user.id)
+        setTriviaQuestion(null)
+        setTriviaFeedback(null)
+        return
       }
 
-      setTriviaQuestion(next);
-      setTriviaFeedback(null);
+      setTriviaQuestion(next)
+      setTriviaFeedback(null)
     }, 1200)
   }
 
   const checkStoneColdAward = async (userId: string) => {
-    const total = await getTotalTriviaQuestions();
-    const correct = await getCorrectCount(userId);
+    const total = await getTotalTriviaQuestions()
+    const correct = await getCorrectCount(userId)
 
-    const percent = (correct / total) * 100;
+    const percent = (correct / total) * 100
 
     if (percent >= 90) {
       await award("STONE_COLD_KNOW_IT_ALL")
@@ -400,8 +400,8 @@ const enqueueModal = (code: AchievementId) => {
           />
         )}
 
-        <div className="flex w-full max-w-[1450px] mx-auto gap-6 py-10 px-6">
-          <aside className="w-1/5 flex flex-col gap-6">
+        <div className="flex flex-col lg:flex-row w-full max-w-[1450px] mx-auto gap-6 py-6 px-4 lg:py-10 lg:px-6">
+          <aside className="hidden lg:flex w-1/5 flex-col gap-6">
             <div className="bg-white shadow-md p-4 rounded-lg">
               <h2 className="text-xl font-semibold mb-3">Curling Favorites</h2>
               <ul className="space-y-2 text-gray-700">
@@ -467,15 +467,15 @@ const enqueueModal = (code: AchievementId) => {
           </aside>
 
           <div className="flex flex-col flex-1 justify-between">
-            <div className="flex flex-row flex-1 gap-6 items-stretch">
-              <main className="bg-white shadow-md p-8 rounded-lg flex-grow">
+            <div className="flex flex-col lg:flex-row flex-1 gap-6 items-stretch">
+              <main className="bg-white shadow-md p-4 lg:p-8 rounded-lg flex-grow">
                 {loading ? (
                   <p className="w-full flex justify-center mt-20 text-gray-600">
                     Loading...
                   </p>
                 ) : (
                   <>
-                    <h1 className="text-3xl font-bold mb-4">
+                    <h1 className="text-2xl lg:text-3xl font-bold mb-4">
                       {greeting}, {profile?.username}!
                     </h1>
                     <p className="text-gray-700 mb-6">
@@ -483,7 +483,7 @@ const enqueueModal = (code: AchievementId) => {
                     </p>
 
                     {privateInvites.length > 0 && (
-                      <div className="mb-6">
+                      <div className="mb-6 hidden lg:block">
                         <div className="space-y-4">
                           {privateInvites.map(league => {
                             const invite = league.fantasy_event_user_invites.find(
@@ -509,7 +509,9 @@ const enqueueModal = (code: AchievementId) => {
                                     {league.sender?.is_public ? (
                                       <span
                                         onClick={() =>
-                                          router.push(`/profile/${league.sender.username}`)
+                                          router.push(
+                                            `/profile/${league.sender.username}`
+                                          )
                                         }
                                         className="font-semibold text-blue-700 cursor-pointer hover:underline"
                                       >
@@ -533,7 +535,7 @@ const enqueueModal = (code: AchievementId) => {
                                     ×
                                   </button>
 
-                                 <button
+                                  <button
                                     onClick={() => {
                                       dismissInvite(invite.id)
                                       router.push(`/league/${league.slug}`)
@@ -563,8 +565,10 @@ const enqueueModal = (code: AchievementId) => {
                         </p>
                       )}
                     </section>
-                    <hr className="my-8 border-gray-300" />
-                    <section>
+
+                    <hr className="my-8 border-gray-300 hidden lg:block" />
+
+                    <section className="hidden lg:block">
                       {!triviaLoading && triviaQuestion && (
                         <div>
                           <h2 className="text-md font-semibold">
@@ -572,7 +576,11 @@ const enqueueModal = (code: AchievementId) => {
                           </h2>
 
                           <div className="p-4 rounded-lg relative flex items-center">
-                            <div className={`${triviaFeedback ? "opacity-0" : "opacity-100"} w-full`}>
+                            <div
+                              className={`${
+                                triviaFeedback ? "opacity-0" : "opacity-100"
+                              } w-full`}
+                            >
                               <div className="flex items-center gap-3 flex-wrap">
                                 <button
                                   onClick={() => handleTriviaAnswer(true)}
@@ -590,7 +598,9 @@ const enqueueModal = (code: AchievementId) => {
                                   FALSE
                                 </button>
 
-                                <span className="text-md font-semibold text-gray-700">:</span>
+                                <span className="text-md font-semibold text-gray-700">
+                                  :
+                                </span>
 
                                 <p className="text-md text-gray-800 flex-1">
                                   {triviaQuestion.question}
@@ -602,10 +612,14 @@ const enqueueModal = (code: AchievementId) => {
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <p
                                   className={`text-md ${
-                                    triviaFeedback === "correct" ? "text-green-600" : "text-red-600"
+                                    triviaFeedback === "correct"
+                                      ? "text-green-600"
+                                      : "text-red-600"
                                   }`}
                                 >
-                                  {triviaFeedback === "correct" ? "Correct!" : "Just missed that one!"}
+                                  {triviaFeedback === "correct"
+                                    ? "Correct!"
+                                    : "Just missed that one!"}
                                 </p>
                               </div>
                             )}
@@ -614,43 +628,60 @@ const enqueueModal = (code: AchievementId) => {
                         </div>
                       )}
                     </section>
-                    <section>
+
+                    <section className="hidden lg:block">
                       <div>
                         <p className="text-gray-600">
-                          Need a refresher on how fantasy points are calculated? Read up on{" "}
-                          <a href="/howitworks" className="text-[#234C6A] underline">
+                          Need a refresher on how fantasy points are calculated?
+                          Read up on{" "}
+                          <a
+                            href="/howitworks"
+                            className="text-[#234C6A] underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
                             how it works
                           </a>
                           .
                         </p>
                       </div>
                     </section>
-                    <hr className="my-6 border-gray-300" />
-                    <section>
+
+                    <hr className="my-6 border-gray-300 hidden lg:block" />
+
+                    <section className="hidden lg:block">
                       <div className="mb-8">
-                        <h2 className="text-lg font-semibold mb-3">What’s New Around the Site</h2>
+                        <h2 className="text-lg font-semibold mb-3">
+                          What’s New Around the Site
+                        </h2>
 
                         <ul className="space-y-2">
                           {updates.map(u => (
                             <li key={u.id} className="text-sm text-gray-700">
                               <span className="font-medium">{u.text}</span>
-                              <span className="text-gray-500 ml-2 text-xs">({u.date})</span>
+                              <span className="text-gray-500 ml-2 text-xs">
+                                ({u.date})
+                              </span>
                             </li>
                           ))}
                         </ul>
                       </div>
                     </section>
-                    <hr className="my-6 border-gray-300" />
+
+                    <hr className="my-6 border-gray-300 hidden lg:block" />
                   </>
                 )}
               </main>
+
               {upcomingGames.length > 0 && (
-                <GameTicker />
+                <div className="hidden lg:block">
+                  <GameTicker />
+                </div>
               )}
             </div>
 
             {nextDraft && (
-              <div className="bg-white shadow-md p-6 rounded-lg mt-4 flex items-center justify-between">
+              <div className="bg-white shadow-md p-4 lg:p-6 rounded-lg mt-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-semibold mb-1">
                     Your Upcoming Draft on{" "}
@@ -662,10 +693,11 @@ const enqueueModal = (code: AchievementId) => {
                     ET
                   </h2>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h3
                       className="text-md mt-2 font-semibold hover:underline cursor-pointer"
-                      onClick={() => router.push(`/league/${nextDraft.slug}`)}>
+                      onClick={() => router.push(`/league/${nextDraft.slug}`)}
+                    >
                       {nextDraft.name}
                     </h3>
 
@@ -696,8 +728,7 @@ const enqueueModal = (code: AchievementId) => {
                     disabled
                     className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md"
                   >
-                    Draft live in{" "}
-                    <Countdown target={new Date(nextDraft.draft_date)} />
+                    Draft live in <Countdown target={new Date(nextDraft.draft_date)} />
                   </button>
                 )}
 
@@ -717,11 +748,11 @@ const enqueueModal = (code: AchievementId) => {
 
       {achievementModal && achievementFromDB && (
         <AchievementModal
-            open={true}
-            onClose={() => setAchievementModal(null)}
-            title={achievementFromDB.name}
-            description={achievementFromDB.description}
-            icon={getAchievementIcon(achievementModal as AchievementId)}
+          open={true}
+          onClose={() => setAchievementModal(null)}
+          title={achievementFromDB.name}
+          description={achievementFromDB.description}
+          icon={getAchievementIcon(achievementModal as AchievementId)}
         />
       )}
     </>

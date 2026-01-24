@@ -1,8 +1,6 @@
 export default function BottomNav() {
   return (
-    <footer className="w-full h-10 bg-[#234C6A] flex items-center px-8">
-      
-      {/* Left side: logo + tagline */}
+    <footer className="hidden lg:flex w-full h-10 bg-[#234C6A] items-center px-8">
       <div className="flex items-center gap-3">
         <img
           src="/logos/button-main-logo.png"
@@ -15,14 +13,12 @@ export default function BottomNav() {
         </span>
       </div>
 
-      {/* Right side: footer links */}
       <div className="ml-auto flex items-center gap-12">
         <FooterItem label="How It Works" href="/howitworks" />
         <FooterItem label="About" href="/about" />
         <FooterItem label="Terms of Service" href="/termsofservice" />
         <FooterItem label="Privacy Policy" href="/privacypolicy" />
       </div>
-
     </footer>
   )
 }
