@@ -572,7 +572,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                                 key={`${u.user_id}-main`}
                                 className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                             >
-                                <td className="py-2 px-3 font-medium">{idx + 1}</td>
+                                <td className="py-2 px-3 font-medium">{u.rank}</td>
 
                                 <td className="py-2 px-3">
                                 {profile.avatar_url ? (

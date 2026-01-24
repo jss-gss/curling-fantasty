@@ -548,12 +548,18 @@ export default function ProfileClient() {
                 />
 
                 {/* Avatar Upload */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
-                  className="border border-gray-300 rounded-md px-4 py-2"
-                />
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                    className="absolute inset-0 z-10 opacity-0 cursor-pointer"
+                  />
+
+                  <div className="border border-gray-300 rounded-md px-4 py-2 text-gray-500">
+                    {avatarFile ? avatarFile.name : "Upload profile picture"}
+                  </div>
+                </div>
 
                 {/* YEARS PLAYED */}
                 <input

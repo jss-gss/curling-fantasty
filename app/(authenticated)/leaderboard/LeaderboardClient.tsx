@@ -20,6 +20,7 @@ type League = {
 
 type LeaderboardRow = {
   user_id: string
+  rank: number
   total_points: number
   profile: {
     id: string
@@ -160,6 +161,7 @@ export default function LeagueLeaderboardPage() {
       .map((t: any): LeaderboardRow => ({
         user_id: t.user_id,
         total_points: t.total_points,
+        rank: t.rank,
         profile: profileMap[t.user_id]
       }))
       .sort((a: LeaderboardRow, b: LeaderboardRow) => b.total_points - a.total_points)
@@ -467,7 +469,7 @@ export default function LeagueLeaderboardPage() {
                                             }
                                           >
                                             <td className="py-2 px-3 font-medium">
-                                              {idx + 1}
+                                              {row.rank}
                                             </td>
 
                                             <td className="py-2 px-3">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
@@ -12,31 +12,54 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
+  const [resetSuccess, setResetSuccess] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("reset") === "success") {
+      setResetSuccess(true)
+    }
+  }, [])
 
   async function handleLogin() {
     setLoading(true)
     setErrorMsg("")
+    setResetSuccess(false)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
-    if (error) {
+    if (error || !data?.user) {
       setErrorMsg("Invalid email or password.")
       setLoading(false)
       return
     }
 
-    router.push("/thepin");
+    router.push("/thepin")
     setLoading(false)
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat px-4" style={{ backgroundImage: "url('/webpage/login-page.png')" }} >
-      <main className="w-full max-w-lg bg-white shadow-xl rounded-xl p-10">
+  const handleForgot = async () => {
+    if (!email) {
+      setErrorMsg("Enter your email first, then click Forgot Password.")
+      return
+    }
 
-        {/* Logo */}
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+
+    setErrorMsg(`A link to reset your password has been sent to ${email}`)
+  }
+
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat px-4"
+      style={{ backgroundImage: "url('/webpage/login-page.png')" }}
+    >
+      <main className="w-full max-w-lg bg-white shadow-xl rounded-xl p-10">
         <div className="flex justify-center mb-6">
           <Image
             src="/logos/button-home-logo.png"
@@ -55,44 +78,65 @@ export default function LoginPage() {
           Log in to continue your fantasy curling journey.
         </p>
 
-        {/* Error Message */}
+        {resetSuccess && (
+          <p className="text-green-600 mb-4 text-center font-medium">
+            Password reset successfully.
+          </p>
+        )}
+
         {errorMsg && (
           <p className="text-[#AA2B1D] mb-4 text-center font-medium">
             {errorMsg}
           </p>
         )}
 
-        {/* Form */}
-        <div className="flex flex-col gap-4">
-
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleLogin()
+          }}
+          className="flex flex-col gap-4"
+        >
           <input
             type="email"
             placeholder="Email"
-            className="border border-[#456882] rounded-md px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#234C6A]"
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="border border-[#456882] rounded-md px-4 py-2"
           />
 
           <input
             type="password"
             placeholder="Password"
-            className="border border-[#456882] rounded-md px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#234C6A]"
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="border border-[#456882] rounded-md px-4 py-2"
           />
 
           <button
-            onClick={handleLogin}
+            type="submit"
             disabled={loading}
-            className="mt-4 px-6 py-3 bg-[#234C6A] text-white text-lg rounded-md hover:bg-[#1B3C53] transition disabled:bg-gray-400"
+            className="mt-4 px-6 py-3 bg-[#234C6A] text-white text-lg rounded-md"
           >
             {loading ? "Logging in..." : "Log In"}
           </button>
-        </div>
+        </form>
 
         <p className="mt-6 text-center text-[#1B3C53]">
           Don’t have an account?{" "}
           <a href="/signup" className="text-[#AA2B1D] font-semibold hover:underline">
             Sign up
           </a>
+        </p>
+
+        <p className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={handleForgot}
+            className="text-[#AA2B1D] font-semibold hover:underline"
+          >
+            Forgot Password?
+          </button>
         </p>
       </main>
     </div>

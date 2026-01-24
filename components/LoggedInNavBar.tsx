@@ -90,9 +90,9 @@ export default function NavBar() {
             />
           }
         />
-      );
+      )
     }
-  };
+  }
 
   return (
     <div
@@ -142,7 +142,9 @@ export default function NavBar() {
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setOpen((prev) => !prev)}
-                className="text-white hover:text-[#E3E3E3] mb-1 font-medium h-8 flex items-center"
+                className={`pb-1 transition-all text-white font-medium h-8 flex items-center
+                  ${open ? "border-b-2 border-[#AA2B1D]" : "hover:border-b-2 hover:border-[#AA2B1D]"}
+                `}
               >
                 {displayName}
               </button>
@@ -177,5 +179,5 @@ export default function NavBar() {
         </div>
       </div>
     </div>
-  );
+  )
 }

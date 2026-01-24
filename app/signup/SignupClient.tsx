@@ -10,6 +10,7 @@ export default function SignupPage() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [username, setUsername] = useState("")
@@ -19,6 +20,18 @@ export default function SignupPage() {
   async function handleSignup() {
     setLoading(true)
     setErrorMsg("")
+
+    if (!password || !confirmPassword) {
+      setErrorMsg("Please enter your password twice.")
+      setLoading(false)
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMsg("Passwords do not match.")
+      setLoading(false)
+      return
+    }
 
     const { data: existingUser } = await supabase
       .from("profiles")
@@ -64,15 +77,16 @@ export default function SignupPage() {
       return
     }
 
-    router.push("/thepin/?welcome=true");
+    router.push("/thepin/?welcome=true")
     setLoading(false)
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat px-4" style={{ backgroundImage: "url('/webpage/signup-page.png')" }} >
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat px-4"
+      style={{ backgroundImage: "url('/webpage/signup-page.png')" }}
+    >
       <main className="w-full max-w-lg bg-white shadow-xl rounded-xl p-10">
-
-        {/* Logo */}
         <div className="flex justify-center mb-6">
           <Image
             src="/logos/button-home-logo.png"
@@ -86,65 +100,74 @@ export default function SignupPage() {
         <h1 className="text-3xl font-bold text-[#234C6A] text-center mb-2">
           Create Your Account
         </h1>
-
-        <p className="text-center text-[#1B3C53] mb-6">
-          Join the competition and start building your fantasy curling legacy.
-        </p>
-
-        {/* Error Message */}
+        
         {errorMsg && (
           <p className="text-[#AA2B1D] mb-4 text-center font-medium">
             {errorMsg}
           </p>
         )}
 
-        {/* Form */}
-        <div className="flex flex-col gap-4">
-
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleSignup()
+          }}
+          className="flex flex-col gap-4"
+        >
           <input
             type="email"
             placeholder="Email"
-            className="border border-[#456882] rounded-md px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#234C6A]"
+            className="border border-[#456882] rounded-md px-4 py-2"
             onChange={(e) => setEmail(e.target.value)}
           />
 
           <input
             type="password"
             placeholder="Password"
-            className="border border-[#456882] rounded-md px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#234C6A]"
+            className="border border-[#456882] rounded-md px-4 py-2"
             onChange={(e) => setPassword(e.target.value)}
           />
 
           <input
+            type="password"
+            placeholder="Confirm Password"
+            className="border border-[#456882] rounded-md px-4 py-2"
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+
+          <input
             placeholder="First Name"
-            className="border border-[#456882] rounded-md px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#234C6A]"
+            className="border border-[#456882] rounded-md px-4 py-2"
             onChange={(e) => setFirstName(e.target.value)}
           />
 
           <input
             placeholder="Last Name"
-            className="border border-[#456882] rounded-md px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#234C6A]"
+            className="border border-[#456882] rounded-md px-4 py-2"
             onChange={(e) => setLastName(e.target.value)}
           />
 
           <input
             placeholder="Username"
-            className="border border-[#456882] rounded-md px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#234C6A]"
+            className="border border-[#456882] rounded-md px-4 py-2"
             onChange={(e) => setUsername(e.target.value)}
           />
 
           <button
-            onClick={handleSignup}
+            type="submit"
             disabled={loading}
             className="mt-4 px-6 py-3 bg-[#234C6A] text-white text-lg rounded-md hover:bg-[#1B3C53] transition disabled:bg-gray-400"
           >
             {loading ? "Creating account..." : "Sign Up"}
           </button>
-        </div>
+        </form>
 
         <p className="mt-6 text-center text-[#1B3C53]">
           Already have an account?{" "}
-          <a href="/login" className="text-[#AA2B1D] font-semibold hover:underline">
+          <a
+            href="/login"
+            className="text-[#AA2B1D] font-semibold hover:underline"
+          >
             Log in
           </a>
         </p>
