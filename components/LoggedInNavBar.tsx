@@ -19,8 +19,10 @@ export default function NavBar() {
   const [openUser, setOpenUser] = useState(false)
   const [openMobile, setOpenMobile] = useState(false)
 
-  const userMenuRef = useRef<HTMLDivElement | null>(null)
+  const desktopUserMenuRef = useRef<HTMLDivElement | null>(null)
+  const mobileUserMenuRef = useRef<HTMLDivElement | null>(null)
   const mobileMenuRef = useRef<HTMLDivElement | null>(null)
+
   const { setModal } = useAchievementModal()
 
   useEffect(() => {
@@ -45,12 +47,29 @@ export default function NavBar() {
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       const t = e.target as Node
-      if (userMenuRef.current && !userMenuRef.current.contains(t)) setOpenUser(false)
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(t)) setOpenMobile(false)
+
+      const insideDesktopUser =
+        desktopUserMenuRef.current &&
+        desktopUserMenuRef.current.contains(t)
+
+      const insideMobileUser =
+        mobileUserMenuRef.current &&
+        mobileUserMenuRef.current.contains(t)
+
+      if (!insideDesktopUser && !insideMobileUser) {
+        setOpenUser(false)
+      }
+
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(t)
+      ) {
+        setOpenMobile(false)
+      }
     }
 
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
+    document.addEventListener("click", handleClickOutside)
+    return () => document.removeEventListener("click", handleClickOutside)
   }, [])
 
   const tabs = [
@@ -131,7 +150,7 @@ export default function NavBar() {
           })}
 
           {user && (
-            <div className="relative" ref={userMenuRef}>
+            <div className="relative" ref={desktopUserMenuRef}>
               <button
                 onClick={() => setOpenUser(prev => !prev)}
                 className={`pb-1 transition-all text-white font-medium h-8 flex items-center ${
@@ -173,7 +192,7 @@ export default function NavBar() {
 
         <div className="flex lg:hidden items-center gap-2 ml-auto" ref={mobileMenuRef}>
           {user && (
-            <div className="relative" ref={userMenuRef}>
+            <div className="relative" ref={mobileUserMenuRef}>
               <button
                 onClick={() => {
                   setOpenUser(prev => !prev)
@@ -210,7 +229,6 @@ export default function NavBar() {
               )}
             </div>
           )}
-
           <button
             onClick={() => {
               setOpenMobile(prev => !prev)
