@@ -566,7 +566,7 @@ const enqueueModal = (code: AchievementId) => {
                       )}
                     </section>
 
-                    <hr className="my-8 border-gray-300 hidden lg:block" />
+                    <hr className="my-8 border-gray-300 lg:block" />
 
                     <section>
                       {!triviaLoading && triviaQuestion && (
@@ -647,7 +647,7 @@ const enqueueModal = (code: AchievementId) => {
                       </div>
                     </section>
 
-                    <hr className="my-6 border-gray-300 hidden lg:block" />
+                    <hr className="my-6 border-gray-300 lg:block" />
 
                     <section>
                       <div className="mb-8">
@@ -668,16 +668,28 @@ const enqueueModal = (code: AchievementId) => {
                       </div>
                     </section>
 
-                    <hr className="my-6 border-gray-300 hidden lg:block" />
+                    <hr className="my-6 border-gray-300 lg:block" />
                   </>
                 )}
               </main>
 
-              {upcomingGames.length > 0 && (
+            {upcomingGames.length > 0 && (
+              <>
+                {/* Mobile: ticker in the main flow */}
+                <div className="lg:hidden mt-4">
+                  <GameTicker variant="mobile" />
+                </div>
+
+                {/* Desktop: keep existing placement */}
                 <div className="hidden lg:block">
                   <GameTicker />
                 </div>
-              )}
+              </>
+            )}
+            </div>
+
+            <div className="lg:hidden bg-white shadow-md p-4 rounded-lg mt-4">
+              <NextMajorEvent />
             </div>
 
             {nextDraft && (

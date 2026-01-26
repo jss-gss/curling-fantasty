@@ -84,6 +84,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
     const [achievementModal, setAchievementModal] = useState<AchievementId | null>(null)
     const achievementFromDB = achievements.find(a => a.code === achievementModal)
     const [modalQueue, setModalQueue] = useState<AchievementId[]>([])
+    const [gamesPlayedByPlayer, setGamesPlayedByPlayer] = useState<Record<string, number>>({})
     const hasRun = useRef(false)
     const positions = ["skip", "third", "second", "lead"] as const
     type Position = (typeof positions)[number]
@@ -174,6 +175,70 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
 
         fetchLeague()
     }, [slug, userId])
+
+    useEffect(() => {
+    if (!league?.curling_events?.id) return
+    if (!league.fantasy_picks || league.fantasy_picks.length === 0) {
+        setGamesPlayedByPlayer({})
+        return
+    }
+
+    const loadGamesPlayedForLeagueEvent = async () => {
+        const eventId = league.curling_events!.id
+        const playerIds = Array.from(new Set(league.fantasy_picks.map(p => p.player_id)))
+
+        if (playerIds.length === 0) {
+        setGamesPlayedByPlayer({})
+        return
+        }
+
+        const { data: teams, error: teamsErr } = await supabase
+        .from("teams")
+        .select("id")
+        .eq("curling_event_id", eventId)
+
+        if (teamsErr || !teams || teams.length === 0) {
+        setGamesPlayedByPlayer({})
+        return
+        }
+
+        const teamIds = teams.map(t => t.id)
+
+        const inList = `(${teamIds.join(",")})`
+        const { data: games, error: gamesErr } = await supabase
+        .from("games")
+        .select("id")
+        .or(`team1_id.in.${inList},team2_id.in.${inList}`)
+
+        if (gamesErr || !games || games.length === 0) {
+        setGamesPlayedByPlayer({})
+        return
+        }
+
+        const gameIds = games.map(g => g.id)
+
+        const { data: draws, error: drawsErr } = await supabase
+        .from("draws")
+        .select("player_id, game_id")
+        .in("player_id", playerIds)
+        .in("game_id", gameIds)
+
+        if (drawsErr || !draws) {
+        setGamesPlayedByPlayer({})
+        return
+        }
+
+        const counts: Record<string, number> = {}
+        for (const d of draws as any[]) {
+        const pid = String(d.player_id)
+        counts[pid] = (counts[pid] ?? 0) + 1
+        }
+
+        setGamesPlayedByPlayer(counts)
+    }
+
+    loadGamesPlayedForLeagueEvent()
+    }, [league?.id, league?.curling_events?.id])
 
     useEffect(() => {
         const fetchAchievements = async () => {
@@ -629,6 +694,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                                             <th className="py-2 px-3 text-left">Position</th>
                                             <th className="py-2 px-3 text-left">Name</th>
                                             <th className="py-2 px-3 text-left">Team</th>
+                                            <th className="py-2 px-3 text-center">Games Played</th>
                                             <th className="py-2 px-3 text-center">Fantasy Pts</th>
                                         </tr>
                                         </thead>
@@ -643,18 +709,24 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                                                 key={p.player_id}
                                                 className={pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}
                                             >
-                                                <td className="py-2 px-3">{player.position}</td>
-
                                                 <td className="py-2 px-3">
-                                                {player.first_name} {player.last_name}
+                                                    {player.position}
                                                 </td>
 
                                                 <td className="py-2 px-3">
-                                                {team?.team_name ?? player.team_id}
+                                                    {player.first_name} {player.last_name}
+                                                </td>
+
+                                                <td className="py-2 px-3">
+                                                    {team?.team_name ?? player.team_id}
                                                 </td>
 
                                                 <td className="py-2 px-3 text-center">
-                                                {player.total_player_fantasy_pts}
+                                                    {gamesPlayedByPlayer[String(player.id)] ?? 0}
+                                                </td>
+
+                                                <td className="py-2 px-3 text-center">
+                                                    {player.total_player_fantasy_pts}
                                                 </td>
                                             </tr>
                                             )
@@ -789,6 +861,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                                         <th className="py-2 px-3 text-left">Position</th>
                                         <th className="py-2 px-3 text-left">Name</th>
                                         <th className="py-2 px-3 text-left">Team</th>
+                                        <th className="py-2 px-3 text-center">Games Played</th>
                                         <th className="py-2 px-3 text-center">Fantasy Pts</th>
                                     </tr>
                                     </thead>
@@ -803,15 +876,20 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                                             key={p.player_id}
                                             className={pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}
                                         >
-                                            <td className="py-2 px-3">{player.position}</td>
                                             <td className="py-2 px-3">
-                                            {player.first_name} {player.last_name}
+                                                {player.position}
                                             </td>
                                             <td className="py-2 px-3">
-                                            {team?.team_name ?? player.team_id}
+                                                {player.first_name} {player.last_name}
+                                            </td>
+                                            <td className="py-2 px-3">
+                                                {team?.team_name ?? player.team_id}
                                             </td>
                                             <td className="py-2 px-3 text-center">
-                                            {player.total_player_fantasy_pts}
+                                                {gamesPlayedByPlayer[String(player.id)] ?? 0}
+                                            </td>
+                                            <td className="py-2 px-3 text-center">
+                                                {player.total_player_fantasy_pts}
                                             </td>
                                         </tr>
                                         )
@@ -832,92 +910,127 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
     }
 
     return (
-    <>
-        <div className="w-full px-6 py-10 flex flex-col items-center">
+        <>
+            <div className="w-full px-3 sm:px-6 py-6 sm:py-10 flex flex-col items-center">
+            <div className="w-full max-w-screen-xl bg-white shadow-md p-4 sm:p-8 border border-gray-200 rounded-lg">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <h1 className="text-xl sm:text-2xl font-bold break-words">{league.name}</h1>
 
-        <div className="w-full max-w-screen-xl bg-white shadow-md p-8 border border-gray-200 rounded-lg">
+                <div className="flex flex-wrap gap-2">
+                    {league.is_public ? (
+                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                        public
+                    </span>
+                    ) : (
+                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                        private
+                    </span>
+                    )}
 
-            {/* HEADER */}
-            <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{league.name}</h1>
+                    {league.draft_status === "completed" && (
+                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
+                        completed
+                    </span>
+                    )}
 
-            {league.is_public ? (
-                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-                public
-                </span>
-            ) : (
-                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
-                private
-                </span>
-            )}
+                    {isCommissioner && (
+                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                        draw master
+                    </span>
+                    )}
+                </div>
+                </div>
 
-            {league.draft_status === "completed" && (
-                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
-                completed
-                </span>
-            )}
+                {league.description && (
+                <p className="text-gray-700 text-sm mt-1 italic">{league.description}</p>
+                )}
 
-            {isCommissioner && (
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                draw master
-              </span>
-            )}
+                <p className="text-sm sm:text-md text-gray mt-2">
+                {league.curling_events?.year} {league.curling_events?.name} in{" "}
+                {league.curling_events?.location}
+                </p>
 
+                <div className="mt-2 text-sm text-gray-600">
+                <div className="space-y-1 sm:hidden">
+                    <div>
+                    <strong>Created By:</strong>{" "}
+                    {league.sender?.is_public ? (
+                        <a
+                        href={`/profile/${league.sender.username}`}
+                        className="text-blue-600 hover:underline"
+                        >
+                        {league.sender.username}
+                        </a>
+                    ) : (
+                        <span>{league.sender?.username}</span>
+                    )}
+                    </div>
+
+                    <div>
+                    <strong>Draft:</strong>{" "}
+                    {new Date(league.draft_date).toLocaleString("en-US", {
+                        timeZone: "America/New_York",
+                        dateStyle: "short",
+                        timeStyle: "short"
+                    })}{" "}
+                    ET
+                    </div>
+
+                    <div>
+                    <strong>Event Starts:</strong>{" "}
+                    {formatDate(league.curling_events?.start_date ?? "")}
+                    </div>
+
+                    <div>
+                    <strong>Round Robin Ends:</strong>{" "}
+                    {formatDate(league.curling_events?.round_robin_end_date ?? "")}
+                    </div>
+
+                    <div>
+                    <strong>Players:</strong> {(league.fantasy_event_users?.length ?? 0)} /{" "}
+                    {league.max_users}
+                    </div>
+                </div>
+
+                <p className="hidden sm:block">
+                    <strong>Created By:</strong>{" "}
+                    {league.sender?.is_public ? (
+                    <a
+                        href={`/profile/${league.sender.username}`}
+                        className="text-blue-600 hover:underline"
+                    >
+                        {league.sender.username}
+                    </a>
+                    ) : (
+                    <span>{league.sender?.username}</span>
+                    )}
+                    <strong> • Draft:</strong>{" "}
+                    {new Date(league.draft_date).toLocaleString("en-US", {
+                    timeZone: "America/New_York",
+                    dateStyle: "short",
+                    timeStyle: "short"
+                    })}{" "}
+                    ET <strong> • Event Starts:</strong>{" "}
+                    {formatDate(league.curling_events?.start_date ?? "")}
+                    <strong> • Round Robin Ends:</strong>{" "}
+                    {formatDate(league.curling_events?.round_robin_end_date ?? "")}
+                    <strong> • Players:</strong>{" "}
+                    {(league.fantasy_event_users?.length ?? 0)} / {league.max_users}
+                </p>
+                </div>
+
+                <div className="mt-4">
+                {league.draft_status === "open" && <OpenLeagueView league={league} />}
+                {league.draft_status === "closed" && <ClosedLeagueView />}
+                {league.draft_status === "locked" && <LockedLeagueView league={league} />}
+                {["completed", "archived"].includes(league.draft_status) && (
+                    <FinalLeaderboardView league={league} />
+                )}
+                </div>
+            </div>
             </div>
 
-            {/* DESCRIPTION */}
-            {league.description && (
-            <p className="text-gray-700 text-sm mt-1 italic">{league.description}</p>
-            )}
-
-            {/* EVENT TITLE */}
-            <p className="text-md text-gray mt-2">
-            {league.curling_events?.year} {league.curling_events?.name} in{" "}
-            {league.curling_events?.location}
-            </p>
-
-            {/* META LINE */}
-            <p className="text-sm text-gray-600 mt-2">
-            <strong>Created By:</strong>{" "}
-            {league.sender?.is_public ? (
-                <a
-                href={`/profile/${league.sender.username}`}
-                className="text-blue-600 hover:underline"
-                >
-                {league.sender.username}
-                </a>
-            ) : (
-                <span>{league.sender?.username}</span>
-            )}
-            <strong> • Draft:</strong>{" "}
-            {new Date(league.draft_date).toLocaleString("en-US", {
-                timeZone: "America/New_York",
-                dateStyle: "short",
-                timeStyle: "short",
-            })}{" "}
-            ET{" "}
-            <strong> • Event Starts:</strong>{" "}
-            {formatDate(league.curling_events?.start_date ?? "")}
-            <strong> • Round Robin Ends:</strong>{" "}
-            {formatDate(league.curling_events?.round_robin_end_date ?? "")}
-            <strong> • Players:</strong>{" "}
-            {(league.fantasy_event_users?.length ?? 0)} / {league.max_users}
-            </p>
-
-            {/* BODY CONTENT */}
-            <div className="mt-4">
-            {league.draft_status === "open" && <OpenLeagueView league={league} />}
-            {league.draft_status === "closed" && <ClosedLeagueView />}
-            {league.draft_status === "locked" && <LockedLeagueView league={league} />}
-            {["completed", "archived"].includes(league.draft_status) && (
-                <FinalLeaderboardView league={league} />
-            )}
-            </div>
-
-        </div>
-        </div> 
-        
-       {achievementModal && achievementFromDB && (
+            {achievementModal && achievementFromDB && (
             <AchievementModal
                 open={true}
                 onClose={() => setAchievementModal(null)}
@@ -925,7 +1038,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                 description={achievementFromDB.description}
                 icon={getAchievementIcon(achievementModal as AchievementId)}
             />
-        )}
-    </>
+            )}
+        </>
     )
 }

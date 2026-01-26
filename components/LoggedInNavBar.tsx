@@ -108,7 +108,7 @@ export default function NavBar() {
           <img
             src="/logos/button-main-logo.png"
             alt="BUTTON Logo"
-            className="h-8 w-auto lg:h-8"
+            className="h-6 w-auto lg:h-8"
           />
         </button>
 
