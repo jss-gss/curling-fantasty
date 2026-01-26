@@ -387,7 +387,7 @@ export default function PicksPage() {
                     </div>
 
                     <div className="overflow-x-auto rounded-lg">
-                      <table className="min-w-[760px] w-full border-collapse text-sm">
+                      <table className="min-w-[760px] w-full border-collapse text-xs sm:text-sm">
                         <thead className="bg-gray-100 text-gray-700">
                           <tr>
                             <th className="py-2 px-2 sm:px-3 text-left">Position</th>
@@ -590,7 +590,7 @@ export default function PicksPage() {
                   </div>
 
                   <div className="overflow-x-auto rounded-lg">
-                    <table className="min-w-[1040px] w-full border-collapse text-sm">
+                    <table className="min-w-[1040px] w-full border-collapse text-xs sm:text-sm">
                       <thead className="bg-gray-100 text-gray-700">
                         <tr>
                           <th className="py-2 px-2 sm:px-3 text-left">Position</th>

@@ -461,13 +461,15 @@ export default function LeagueLeaderboardPage() {
                                   )}
 
                                   <div className="overflow-x-auto rounded-lg">
-                                    <table className="min-w-[420px] sm:min-w-[520px] w-full border-collapse text-xs sm:text-sm">
+                                    <table className="w-full border-collapse table-fixed sm:table-auto text-xs sm:text-sm">
                                       <thead className="bg-gray-100 text-gray-700">
                                         <tr>
-                                          <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Rank</th>
-                                          <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left"></th>
-                                          <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Username</th>
-                                          <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Total Points</th>
+                                          <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[34px] sm:w-auto">Rank</th>
+                                          <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[44px] sm:w-auto"></th>
+                                          <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[140px] sm:w-auto">Username</th>
+                                          <th className="py-1 px-1 sm:py-2 sm:px-3 w-[72px] sm:w-auto">
+                                            <div className="flex justify-center whitespace-nowrap">Total Points</div>
+                                          </th>
                                         </tr>
                                       </thead>
 
@@ -475,47 +477,43 @@ export default function LeagueLeaderboardPage() {
                                         {leaderboards[league.id]?.map((row, idx) => {
                                           const profile = row.profile
                                           return (
-                                            <tr
-                                              key={row.user_id}
-                                              className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                                            >
-                                              <td className="py-1.5 px-2 sm:py-2 sm:px-3 font-medium">
+                                            <tr key={row.user_id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                              <td className="py-1 px-1 sm:py-2 sm:px-3 font-medium tabular-nums w-[34px] sm:w-auto">
                                                 {row.rank}
                                               </td>
 
-                                              <td className="py-1.5 px-2 sm:py-2 sm:px-3">
+                                              <td className="py-1 px-1 sm:py-2 sm:px-3 w-[44px] sm:w-auto">
                                                 {profile?.avatar_url ? (
                                                   <Image
                                                     src={profile.avatar_url}
                                                     alt={`${profile.username} avatar`}
                                                     width={32}
                                                     height={32}
-                                                    className="rounded-full object-cover border border-gray-300"
+                                                    className="rounded-full object-cover border border-gray-300 w-7 h-7 sm:w-8 sm:h-8"
                                                   />
                                                 ) : (
-                                                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                                                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-300 flex items-center justify-center text-[11px] sm:text-xs text-gray-600">
                                                     {profile?.username?.charAt(0)?.toUpperCase() ?? "?"}
                                                   </div>
                                                 )}
                                               </td>
 
-                                              <td className="py-1.5 px-2 sm:py-2 sm:px-3 font-medium">
-                                                {profile?.is_public ? (
-                                                  <Link
-                                                    href={`/profile/${profile.username}`}
-                                                    className="text-blue-600 hover:underline"
-                                                  >
-                                                    {profile.username}
-                                                  </Link>
-                                                ) : (
-                                                  <span className="text-gray-500">
-                                                    {profile.username}
-                                                  </span>
-                                                )}
+                                              <td className="py-1 px-1 sm:py-2 sm:px-3 font-medium w-[140px] sm:w-auto">
+                                                <div className="truncate">
+                                                  {profile?.is_public ? (
+                                                    <Link href={`/profile/${profile.username}`} className="text-blue-600 hover:underline">
+                                                      {profile.username}
+                                                    </Link>
+                                                  ) : (
+                                                    <span className="text-gray-500">{profile.username}</span>
+                                                  )}
+                                                </div>
                                               </td>
 
-                                              <td className="py-1.5 px-2 sm:py-2 sm:px-3 font-semibold">
-                                                {row.total_points}
+                                              <td className="py-1 px-1 sm:py-2 sm:px-3 w-[72px] sm:w-auto">
+                                                <div className="flex justify-center tabular-nums font-semibold">
+                                                  {row.total_points}
+                                                </div>
                                               </td>
                                             </tr>
                                           )
@@ -596,13 +594,21 @@ export default function LeagueLeaderboardPage() {
                           </div>
 
                           <div className="overflow-x-auto rounded-lg">
-                            <table className="min-w-[420px] sm:min-w-[520px] w-full border-collapse text-xs sm:text-sm">
+                            <table className="w-full border-collapse table-fixed sm:table-auto text-xs sm:text-sm">
                               <thead className="bg-gray-100 text-gray-700">
                                 <tr>
-                                  <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Rank</th>
-                                  <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Name</th>
-                                  <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Team</th>
-                                  <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Total Points</th>
+                                  <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[40px] sm:w-auto">
+                                    Rank
+                                  </th>
+                                  <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[150px] sm:w-auto">
+                                    Name
+                                  </th>
+                                  <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[140px] sm:w-auto">
+                                    Team
+                                  </th>
+                                  <th className="py-1 px-1 sm:py-2 sm:px-3 w-[90px] sm:w-auto">
+                                    <div className="flex justify-center whitespace-nowrap">Total Points</div>
+                                  </th>
                                 </tr>
                               </thead>
 
@@ -612,15 +618,25 @@ export default function LeagueLeaderboardPage() {
                                     key={row.curler_id}
                                     className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                                   >
-                                    <td className="py-1.5 px-2 sm:py-2 sm:px-3 font-medium">{idx + 1}</td>
-
-                                    <td className="py-1.5 px-2 sm:py-2 sm:px-3 font-medium">
-                                      {row.first_name} {row.last_name}
+                                    <td className="py-1 px-1 sm:py-2 sm:px-3 font-medium tabular-nums w-[40px] sm:w-auto">
+                                      {idx + 1}
                                     </td>
 
-                                    <td className="py-1.5 px-2 sm:py-2 sm:px-3">{row.team_name}</td>
+                                    <td className="py-1 px-1 sm:py-2 sm:px-3 font-medium w-[150px] sm:w-auto">
+                                      <div className="truncate">
+                                        {row.first_name} {row.last_name}
+                                      </div>
+                                    </td>
 
-                                    <td className="py-1.5 px-2 sm:py-2 sm:px-3 font-semibold">{row.total_points}</td>
+                                    <td className="py-1 px-1 sm:py-2 sm:px-3 w-[140px] sm:w-auto">
+                                      <div className="truncate">{row.team_name}</div>
+                                    </td>
+
+                                    <td className="py-1 px-1 sm:py-2 sm:px-3 w-[90px] sm:w-auto">
+                                      <div className="flex justify-center tabular-nums font-semibold">
+                                        {row.total_points}
+                                      </div>
+                                    </td>
                                   </tr>
                                 ))}
                               </tbody>

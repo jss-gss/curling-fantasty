@@ -612,181 +612,173 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
             {}
         )
 
-return (
-  <div className="rounded-lg overflow-x-auto sm:overflow-hidden">
-    <table className="min-w-[520px] sm:min-w-[640px] w-full border-collapse table-fixed sm:table-auto text-[10px] sm:text-sm">
-      <thead className="bg-gray-100 text-gray-700">
-        <tr>
-          <th className="pl-1 pr-2 py-1 sm:px-3 sm:py-2 text-left w-[32px] sm:w-auto">
-            Rank
-          </th>
-          <th className="pl-3 pr-2 py-1 sm:px-3 sm:py-2 text-left w-[64px] sm:w-auto"></th>
-          <th className="pl-2 pr-0.5 py-1 sm:px-3 sm:py-2 text-left w-[118px] sm:w-auto">
-            Username
-          </th>
-          <th className="pl-0.5 pr-1 py-1 sm:px-3 sm:py-2 w-[64px] sm:w-auto">
-            <div className="flex justify-center whitespace-nowrap">Total Points</div>
-          </th>
-          <th className="pl-0.5 pr-1 py-1 sm:px-3 sm:py-2 w-[64px] sm:w-auto">
-            <div className="flex justify-center whitespace-nowrap">Total Games</div>
-          </th>
-          <th className="px-2 py-1 sm:px-3 sm:py-2 text-right whitespace-nowrap w-[56px] sm:w-10">
-            Drafted
-          </th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {league.fantasy_event_users
-          .sort((a, b) => a.rank - b.rank)
-          .map((u, idx) => {
-            const picks = picksByUser[u.user_id] || []
-            const profile = u.profiles
-            const isOpen = openRows[u.user_id]
-            const totalGames = picks.reduce(
-              (sum, p) => sum + (gamesPlayedByPlayer[String(p.player_id)] ?? 0),
-              0
-            )
-
-            return [
-              <tr
-                key={`${u.user_id}-main`}
-                className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-              >
-                <td className="pl-1 pr-2 py-1 sm:px-3 sm:py-2 w-[32px] sm:w-auto">
-                  <div className="flex tabular-nums font-medium">
-                    {u.rank}
-                  </div>
-                </td>
-
-                <td className="pl-3 pr-2 py-1 sm:px-3 sm:py-2 w-[64px] sm:w-auto">
-                  {profile.avatar_url ? (
-                    <Image
-                      src={profile.avatar_url}
-                      alt={profile.username}
-                      width={32}
-                      height={32}
-                      className="rounded-full object-cover border border-gray-300 w-7 h-7 sm:w-8 sm:h-8"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-300 flex items-center justify-center text-[10px] sm:text-xs text-gray-600">
-                      {profile.username.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </td>
-
-                <td className="pl-2 pr-0.5 py-1 sm:px-3 sm:py-2 font-medium w-[118px] sm:w-auto">
-                    <div className="truncate">
-                        {profile.is_public ? (
-                        <Link
-                            href={`/profile/${profile.username}`}
-                            className="text-blue-600 hover:underline"
-                        >
-                            {profile.username}
-                        </Link>
-                        ) : (
-                        <span className="text-gray-500">{profile.username}</span>
-                        )}
-                    </div>
-                </td>
-
-                <td className="pl-0.5 pr-1 py-1 sm:px-3 sm:py-2 w-[64px] sm:w-auto">
-                    <div className="flex justify-center tabular-nums font-semibold">
-                        {u.points}
-                    </div>
-                </td>
-
-                <td className="pl-0.5 pr-1 py-1 sm:px-3 sm:py-2 w-[64px] sm:w-auto">
-                    <div className="flex justify-center tabular-nums">
-                        {totalGames}
-                    </div>
-                </td>
-
-                <td className="px-2 py-1 sm:px-3 sm:py-2 text-right w-[56px] sm:w-10">
-                  <button
-                    onClick={() => toggleRow(u.user_id)}
-                    className="text-base sm:text-lg font-bold text-gray-700 hover:text-black"
-                  >
-                    {isOpen ? "−" : "+"}
-                  </button>
-                </td>
-              </tr>,
-
-              isOpen && (
-                <tr key={`${u.user_id}-picks`}>
-                  <td
-                    colSpan={6}
-                    className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                  >
-                    <div className="w-full flex justify-center py-2 sm:py-4">
-                      <div className="w-[96%] sm:w-[75%]">
-                        <table className="w-full border-collapse overflow-hidden rounded-lg text-[11px] sm:text-sm table-fixed sm:table-auto">
-                          <thead className="bg-blue-200 text-gray-700">
-                            <tr>
-                              <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[70px] sm:w-auto">
-                                Position
-                              </th>
-                              <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[130px] sm:w-auto">
-                                Name
-                              </th>
-                              <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[170px] sm:w-auto">
-                                Team
-                              </th>
-                              <th className="px-2 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[92px] sm:w-auto">
-                                Games Played
-                              </th>
-                              <th className="px-2 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[84px] sm:w-auto">
-                                Fantasy Pts
-                              </th>
-                            </tr>
-                          </thead>
-
-                          <tbody>
-                            {picks.map((p, pIdx) => {
-                              const player = p.players
-                              const team = player.teams
-
-                              return (
-                                <tr
-                                  key={p.player_id}
-                                  className={pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}
-                                >
-                                  <td className="px-2 py-1 sm:px-3 sm:py-2">
-                                    {player.position}
-                                  </td>
-
-                                  <td className="px-2 py-1 sm:px-3 sm:py-2">
-                                    {player.first_name} {player.last_name}
-                                  </td>
-
-                                  <td className="px-2 py-1 sm:px-3 sm:py-2">
-                                    {team?.team_name ?? player.team_id}
-                                  </td>
-
-                                  <td className="px-2 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
-                                    {gamesPlayedByPlayer[String(player.id)] ?? 0}
-                                  </td>
-
-                                  <td className="px-2 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
-                                    {player.total_player_fantasy_pts}
-                                  </td>
-                                </tr>
-                              )
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </td>
+        return (
+        <div className="rounded-lg overflow-x-auto sm:overflow-hidden">
+            <table className="min-w-[520px] sm:min-w-[640px] w-full border-collapse table-fixed sm:table-auto text-[13px] sm:text-sm">
+            <thead className="bg-gray-100 text-gray-700">
+                <tr>
+                <th className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 text-left w-[24px] sm:w-auto">
+                    Rank
+                </th>
+                <th className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 text-left w-[44px] sm:w-auto"></th>
+                <th className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 text-left w-[96px] sm:w-auto">
+                    Username
+                </th>
+                <th className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
+                    <div className="flex justify-center whitespace-nowrap">Total Points</div>
+                </th>
+                <th className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
+                    <div className="flex justify-center whitespace-nowrap">Total Games</div>
+                </th>
+                <th className="px-1 py-1 sm:px-3 sm:py-2 text-right whitespace-nowrap w-[40px] sm:w-10">
+                    Drafted
+                </th>
                 </tr>
-              ),
-            ].filter(Boolean)
-          })}
-      </tbody>
-    </table>
-  </div>
-)
+            </thead>
 
+            <tbody>
+                {league.fantasy_event_users
+                .sort((a, b) => a.rank - b.rank)
+                .map((u, idx) => {
+                    const picks = picksByUser[u.user_id] || []
+                    const profile = u.profiles
+                    const isOpen = openRows[u.user_id]
+                    const totalGames = picks.reduce(
+                    (sum, p) => sum + (gamesPlayedByPlayer[String(p.player_id)] ?? 0),
+                    0
+                    )
+
+                    return [
+                    <tr
+                        key={`${u.user_id}-main`}
+                        className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                    >
+                        <td className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 w-[24px] sm:w-auto">
+                        <div className="flex tabular-nums font-medium">{u.rank}</div>
+                        </td>
+
+                        <td className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 w-[44px] sm:w-auto">
+                        {profile.avatar_url ? (
+                            <Image
+                            src={profile.avatar_url}
+                            alt={profile.username}
+                            width={32}
+                            height={32}
+                            className="rounded-full object-cover border border-gray-300 w-7 h-7 sm:w-8 sm:h-8"
+                            />
+                        ) : (
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-300 flex items-center justify-center text-[11px] sm:text-xs text-gray-600">
+                            {profile.username.charAt(0).toUpperCase()}
+                            </div>
+                        )}
+                        </td>
+
+                        <td className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 font-medium w-[96px] sm:w-auto">
+                        <div className="truncate">
+                            {profile.is_public ? (
+                            <Link
+                                href={`/profile/${profile.username}`}
+                                className="text-blue-600 hover:underline"
+                            >
+                                {profile.username}
+                            </Link>
+                            ) : (
+                            <span className="text-gray-500">{profile.username}</span>
+                            )}
+                        </div>
+                        </td>
+
+                        <td className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
+                        <div className="flex justify-center tabular-nums font-semibold">
+                            {u.points}
+                        </div>
+                        </td>
+
+                        <td className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
+                        <div className="flex justify-center tabular-nums">{totalGames}</div>
+                        </td>
+
+                        <td className="px-1 py-1 sm:px-3 sm:py-2 text-right w-[40px] sm:w-10">
+                        <button
+                            onClick={() => toggleRow(u.user_id)}
+                            className="text-base sm:text-lg font-bold text-gray-700 hover:text-black"
+                        >
+                            {isOpen ? "−" : "+"}
+                        </button>
+                        </td>
+                    </tr>,
+
+                    isOpen && (
+                        <tr key={`${u.user_id}-picks`}>
+                        <td colSpan={6} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                            <div className="w-full flex justify-center py-2 sm:py-4">
+                            <div className="w-[96%] sm:w-[75%]">
+                                <table className="w-full border-collapse overflow-hidden rounded-lg text-[12px] sm:text-sm table-fixed sm:table-auto">
+                                <thead className="bg-blue-200 text-gray-700">
+                                    <tr>
+                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[70px] sm:w-auto">
+                                        Position
+                                    </th>
+                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[130px] sm:w-auto">
+                                        Name
+                                    </th>
+                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[170px] sm:w-auto">
+                                        Team
+                                    </th>
+                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[92px] sm:w-auto">
+                                        Games Played
+                                    </th>
+                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[84px] sm:w-auto">
+                                        Fantasy Pts
+                                    </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {picks.map((p, pIdx) => {
+                                    const player = p.players
+                                    const team = player.teams
+
+                                    return (
+                                        <tr
+                                        key={p.player_id}
+                                        className={pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}
+                                        >
+                                        <td className="px-2 py-1 sm:px-3 sm:py-2">
+                                            {player.position}
+                                        </td>
+
+                                        <td className="px-2 py-1 sm:px-3 sm:py-2">
+                                            {player.first_name} {player.last_name}
+                                        </td>
+
+                                        <td className="px-2 py-1 sm:px-3 sm:py-2">
+                                            {team?.team_name ?? player.team_id}
+                                        </td>
+
+                                        <td className="px-2 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
+                                            {gamesPlayedByPlayer[String(player.id)] ?? 0}
+                                        </td>
+
+                                        <td className="px-2 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
+                                            {player.total_player_fantasy_pts}
+                                        </td>
+                                        </tr>
+                                    )
+                                    })}
+                                </tbody>
+                                </table>
+                            </div>
+                            </div>
+                        </td>
+                        </tr>
+                    ),
+                    ].filter(Boolean)
+                })}
+            </tbody>
+            </table>
+        </div>
+        )
     }
 
     function FinalLeaderboardView({ league }: { league: League }) {
@@ -806,30 +798,43 @@ return (
         )
 
         return (
-            <div className="rounded-lg overflow-x-auto sm:overflow-hidden">
-            <table className="min-w-[640px] w-full border-collapse text-xs sm:text-sm">
-                <thead className="bg-gray-100 text-gray-700">
+        <div className="rounded-lg overflow-x-auto sm:overflow-hidden">
+            <table className="min-w-[520px] sm:min-w-[640px] w-full border-collapse table-fixed sm:table-auto text-[13px] sm:text-sm">
+            <thead className="bg-gray-100 text-gray-700">
                 <tr>
-                    <th className="px-2 py-1.5 sm:px-3 sm:py-2text-left">Rank</th>
-                    <th className="px-2 py-1.5 sm:px-3 sm:py-2text-left"></th>
-                    <th className="px-2 py-1.5 sm:px-3 sm:py-2text-left">Username</th>
-                    <th className="px-2 py-1.5 sm:px-3 sm:py-2 text-left whitespace-nowrap">Total Points</th>
-                    <th className="px-2 py-1.5 sm:px-3 sm:py-2 text-left whitespace-nowrap">Total Games</th>         
-                    <th className="px-2 py-1.5 sm:px-3 sm:py-2 text-right whitespace-nowrap w-10">Drafted</th>
+                <th className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 text-left w-[24px] sm:w-auto">
+                    Rank
+                </th>
+                <th className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 text-left w-[44px] sm:w-auto"></th>
+                <th className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 text-left w-[96px] sm:w-auto">
+                    Username
+                </th>
+                <th className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
+                    <div className="flex justify-center whitespace-nowrap">Total Points</div>
+                </th>
+                <th className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
+                    <div className="flex justify-center whitespace-nowrap">Total Games</div>
+                </th>
+                <th className="px-1 py-1 sm:px-3 sm:py-2 text-right whitespace-nowrap w-[40px] sm:w-10">
+                    Drafted
+                </th>
                 </tr>
-                </thead>
+            </thead>
 
-                <tbody>
+            <tbody>
                 {league.fantasy_event_users
-                    .sort((a, b) => a.rank - b.rank)
-                    .map((u, idx) => {
+                .sort((a, b) => a.rank - b.rank)
+                .map((u, idx) => {
                     const picks = picksByUser[u.user_id] || []
                     const profile = u.profiles
                     const isOpen = openRows[u.user_id]
-                    const totalGames = picks.reduce((sum, p) => sum + (gamesPlayedByPlayer[String(p.player_id)] ?? 0), 0)
+                    const totalGames = picks.reduce(
+                    (sum, p) => sum + (gamesPlayedByPlayer[String(p.player_id)] ?? 0),
+                    0
+                    )
 
                     const rowStyle =
-                        u.rank === 1
+                    u.rank === 1
                         ? "bg-yellow-100"
                         : u.rank === 2
                         ? "bg-gray-200"
@@ -840,26 +845,29 @@ return (
                         : "bg-gray-50"
 
                     return [
-                        <tr key={`${u.user_id}-main`} className={rowStyle}>
-                        <td className="px-2 py-1.5 sm:px-3 sm:py-2font-medium">{u.rank}</td>
-
-                        <td className="py-2 px-3">
-                            {profile.avatar_url ? (
-                            <Image
-                                src={profile.avatar_url}
-                                alt={profile.username}
-                                width={32}
-                                height={32}
-                                className="rounded-full object-cover border border-gray-300"
-                            />
-                            ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
-                                {profile.username.charAt(0).toUpperCase()}
-                            </div>
-                            )}
+                    <tr key={`${u.user_id}-main`} className={rowStyle}>
+                        <td className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 w-[24px] sm:w-auto">
+                        <div className="flex tabular-nums font-medium">{u.rank}</div>
                         </td>
 
-                        <td className="px-2 py-1.5 sm:px-3 sm:py-2font-medium">
+                        <td className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 w-[44px] sm:w-auto">
+                        {profile.avatar_url ? (
+                            <Image
+                            src={profile.avatar_url}
+                            alt={profile.username}
+                            width={32}
+                            height={32}
+                            className="rounded-full object-cover border border-gray-300 w-7 h-7 sm:w-8 sm:h-8"
+                            />
+                        ) : (
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-300 flex items-center justify-center text-[11px] sm:text-xs text-gray-600">
+                            {profile.username.charAt(0).toUpperCase()}
+                            </div>
+                        )}
+                        </td>
+
+                        <td className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 font-medium w-[96px] sm:w-auto">
+                        <div className="truncate">
                             {profile.is_public ? (
                             <Link
                                 href={`/profile/${profile.username}`}
@@ -870,25 +878,35 @@ return (
                             ) : (
                             <span className="text-gray-500">{profile.username}</span>
                             )}
+                        </div>
                         </td>
 
-                        <td className="px-2 py-1.5 sm:px-3 sm:py-2font-semibold">{u.points}</td>
+                        <td className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
+                        <div className="flex justify-center tabular-nums font-semibold">
+                            {u.points}
+                        </div>
+                        </td>
 
-                        <td className="px-2 py-1.5 sm:px-3 sm:py-2text-right">
-                            <button
+                        <td className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
+                        <div className="flex justify-center tabular-nums">{totalGames}</div>
+                        </td>
+
+                        <td className="px-1 py-1 sm:px-3 sm:py-2 text-right w-[40px] sm:w-10">
+                        <button
                             onClick={() => toggleRow(u.user_id)}
-                            className="text-lg font-bold text-gray-700 hover:text-black"
-                            >
+                            className="text-base sm:text-lg font-bold text-gray-700 hover:text-black"
+                        >
                             {isOpen ? "−" : "+"}
-                            </button>
+                        </button>
                         </td>
-                        </tr>,
-                        isOpen && (
+                    </tr>,
+
+                    isOpen && (
                         <tr key={`${u.user_id}-picks`}>
-                            <td
+                        <td
                             colSpan={6}
                             className={
-                                u.rank === 1
+                            u.rank === 1
                                 ? "bg-yellow-100"
                                 : u.rank === 2
                                 ? "bg-gray-200"
@@ -896,66 +914,74 @@ return (
                                 ? "bg-orange-200"
                                 : "bg-white"
                             }
-                            >
-                            <div className="w-full flex justify-center py-4">
-                                <div className="w-[75%]">
-                                <table className="w-full border-collapse overflow-hidden rounded-lg text-xs sm:text-sm">
-                                    <thead className="bg-blue-200 text-gray-700">
-                                        <tr>
-                                        <th className="px-2 py-1.5 sm:px-3 sm:py-2 text-left">Position</th>
-                                        <th className="px-2 py-1.5 sm:px-3 sm:py-2 text-left">Name</th>
-                                        <th className="px-2 py-1.5 sm:px-3 sm:py-2 text-left">Team</th>
-                                        <th className="px-2 py-1.5 sm:px-3 sm:py-2 text-center whitespace-nowrap">
-                                            Games Played
-                                        </th>
-                                        <th className="px-2 py-1.5 sm:px-3 sm:py-2 text-center whitespace-nowrap">
-                                            Fantasy Pts
-                                        </th>
+                        >
+                            <div className="w-full flex justify-center py-2 sm:py-4">
+                            <div className="w-[96%] sm:w-[75%]">
+                                <table className="w-full border-collapse overflow-hidden rounded-lg text-[12px] sm:text-sm table-fixed sm:table-auto">
+                                <thead className="bg-blue-200 text-gray-700">
+                                    <tr>
+                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[70px] sm:w-auto">
+                                        Position
+                                    </th>
+                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[130px] sm:w-auto">
+                                        Name
+                                    </th>
+                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[170px] sm:w-auto">
+                                        Team
+                                    </th>
+                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[92px] sm:w-auto">
+                                        Games Played
+                                    </th>
+                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[84px] sm:w-auto">
+                                        Fantasy Pts
+                                    </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {picks.map((p, pIdx) => {
+                                    const player = p.players
+                                    const team = player.teams
+
+                                    return (
+                                        <tr
+                                        key={p.player_id}
+                                        className={pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}
+                                        >
+                                        <td className="px-2 py-1 sm:px-3 sm:py-2">
+                                            {player.position}
+                                        </td>
+
+                                        <td className="px-2 py-1 sm:px-3 sm:py-2">
+                                            {player.first_name} {player.last_name}
+                                        </td>
+
+                                        <td className="px-2 py-1 sm:px-3 sm:py-2">
+                                            {team?.team_name ?? player.team_id}
+                                        </td>
+
+                                        <td className="px-2 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
+                                            {gamesPlayedByPlayer[String(player.id)] ?? 0}
+                                        </td>
+
+                                        <td className="px-2 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
+                                            {player.total_player_fantasy_pts}
+                                        </td>
                                         </tr>
-                                    </thead>
-
-                                    <tbody>
-                                        {picks.map((p, pIdx) => {
-                                        const player = p.players
-                                        const team = player.teams
-
-                                        return (
-                                            <tr
-                                            key={p.player_id}
-                                            className={pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}
-                                            >
-                                            <td className="px-2 py-1.5 sm:px-3 sm:py-2">{player.position}</td>
-
-                                            <td className="px-2 py-1.5 sm:px-3 sm:py-2">
-                                                {player.first_name} {player.last_name}
-                                            </td>
-
-                                            <td className="px-2 py-1.5 sm:px-3 sm:py-2">
-                                                {team?.team_name ?? player.team_id}
-                                            </td>
-
-                                            <td className="px-2 py-1.5 sm:px-3 sm:py-2 text-center">
-                                                {gamesPlayedByPlayer[String(player.id)] ?? 0}
-                                            </td>
-
-                                            <td className="px-2 py-1.5 sm:px-3 sm:py-2 text-center">
-                                                {player.total_player_fantasy_pts}
-                                            </td>
-                                            </tr>
-                                        )
-                                        })}
-                                    </tbody>
-                                    </table>
-                                </div>
+                                    )
+                                    })}
+                                </tbody>
+                                </table>
                             </div>
-                            </td>
+                            </div>
+                        </td>
                         </tr>
-                        )
+                    ),
                     ].filter(Boolean)
-                    })}
-                </tbody>
+                })}
+            </tbody>
             </table>
-            </div>
+        </div>
         )
     }
 
@@ -1035,11 +1061,6 @@ return (
                     <strong>Round Robin Ends:</strong>{" "}
                     {formatDate(league.curling_events?.round_robin_end_date ?? "")}
                     </div>
-
-                    <div>
-                    <strong>Players:</strong> {(league.fantasy_event_users?.length ?? 0)} /{" "}
-                    {league.max_users}
-                    </div>
                 </div>
 
                 <p className="hidden sm:block">
@@ -1064,8 +1085,6 @@ return (
                     {formatDate(league.curling_events?.start_date ?? "")}
                     <strong> • Round Robin Ends:</strong>{" "}
                     {formatDate(league.curling_events?.round_robin_end_date ?? "")}
-                    <strong> • Players:</strong>{" "}
-                    {(league.fantasy_event_users?.length ?? 0)} / {league.max_users}
                 </p>
                 </div>
 

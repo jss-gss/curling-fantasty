@@ -60,7 +60,7 @@ export default function ThePinClient() {
     {id: 2, text: "• Time to draft increased from 30 to 45 seconds.", date: "01/24/2026" },
     {id: 3, text: "• Leaderboard ranking fixed.", date: "01/24/2026" }
   ]
-  const greetings = ["Hi", "Welcome back", "Good to see you", "Hey there", "Glad you're here", "Nice to see you again", "Ready to curl?", ]
+  const greetings = ["Hi", "Welcome back", "Good to see you", "Hey there", "Glad you're here", "Nice to see you again", ]
 
   useEffect(() => {
     fetch("/api/upcoming-games")
