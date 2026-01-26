@@ -198,7 +198,7 @@ export default function NavBar() {
                   setOpenUser(prev => !prev)
                   setOpenMobile(false)
                 }}
-                className="text-white text-sm font-medium h-9 px-3 rounded-md hover:bg-white/10 flex items-center"
+                className="text-white text-sm font-medium h-9 px-3 rounded-md hover:text-[#3A6C8F] flex items-center"
               >
                 {displayName}
               </button>
@@ -234,7 +234,7 @@ export default function NavBar() {
               setOpenMobile(prev => !prev)
               setOpenUser(false)
             }}
-            className="text-white h-9 w-9 rounded-md hover:bg-white/10 flex items-center justify-center"
+            className="text-white h-9 w-9 rounded-md hover:text-[#3A6C8F] flex items-center justify-center"
             aria-label="Open menu"
           >
             <span className="leading-none text-2xl -mt-px">☰</span>

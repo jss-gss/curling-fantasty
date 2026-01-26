@@ -212,7 +212,7 @@ export default function LeagueLeaderboardPage() {
           <div className="mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex justify-center sm:justify-start flex-1 overflow-x-auto">
-                <div className="inline-flex gap-3 whitespace-nowrap">
+                <div className="inline-flex gap-2 sm:gap-3 whitespace-nowrap">
                   {[
                     { key: "current", label: "Current Leagues" },
                     { key: "top", label: "Top Curlers" },
@@ -221,7 +221,7 @@ export default function LeagueLeaderboardPage() {
                     <button
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key as any)}
-                      className={`px-4 py-2 rounded-md text-base transition ${
+                      className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-sm sm:text-base transition ${
                         activeTab === tab.key
                           ? "bg-[#1f4785] text-white"
                           : "text-[#1f4785]"
@@ -235,7 +235,11 @@ export default function LeagueLeaderboardPage() {
 
               <div className="flex justify-center sm:justify-end items-center gap-3 text-gray-700 shrink-0">
                 <div className="hidden sm:block h-6 w-px" />
-                <span className="text-sm sm:text-sm whitespace-nowrap">
+                <span
+                  className={`text-sm sm:text-sm whitespace-nowrap ${
+                    activeTab === "top" ? "hidden sm:inline" : ""
+                  }`}
+                >
                   Filter By:
                 </span>
 
@@ -258,8 +262,32 @@ export default function LeagueLeaderboardPage() {
                 )}
 
                 {activeTab === "top" && (
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
+                  <div className="flex flex-col items-center sm:flex-row sm:items-center gap-2 sm:gap-3">
+                    {/* Mobile row 1: "Filter by:" + Event */}
+                    <div className="flex items-center gap-2 sm:hidden">
+                      <span className="text-sm whitespace-nowrap text-gray-700">Filter by:</span>
+
+                      <div className="relative">
+                        <select
+                          value={filterEvent}
+                          onChange={e => setFilterEvent(e.target.value)}
+                          className="px-3 py-2 border border-gray-300 text-sm appearance-none pr-8 rounded-md"
+                        >
+                          <option value="ALL">Event</option>
+                          {events.map(ev => (
+                            <option key={ev.id} value={ev.id}>
+                              {ev.year} {ev.name}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                          ⌵
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Desktop Event */}
+                    <div className="relative hidden sm:block">
                       <select
                         value={filterEvent}
                         onChange={e => setFilterEvent(e.target.value)}
@@ -277,11 +305,12 @@ export default function LeagueLeaderboardPage() {
                       </div>
                     </div>
 
-                    <div className="relative">
+                    {/* Position*/}
+                    <div className="relative sm:block">
                       <select
                         value={filterPosition}
                         onChange={e => setFilterPosition(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 text-sm appearance-none pr-8 rounded-md"
+                        className="px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 text-sm appearance-none pr-8 rounded-md"
                       >
                         <option value="ALL">Position</option>
                         {positions.map(pos => (
@@ -432,13 +461,13 @@ export default function LeagueLeaderboardPage() {
                                   )}
 
                                   <div className="overflow-x-auto rounded-lg">
-                                    <table className="min-w-[520px] w-full border-collapse text-sm">
+                                    <table className="min-w-[420px] sm:min-w-[520px] w-full border-collapse text-xs sm:text-sm">
                                       <thead className="bg-gray-100 text-gray-700">
                                         <tr>
-                                          <th className="py-2 px-3 text-left">Rank</th>
-                                          <th className="py-2 px-3 text-left"></th>
-                                          <th className="py-2 px-3 text-left">Username</th>
-                                          <th className="py-2 px-3 text-left">Total Points</th>
+                                          <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Rank</th>
+                                          <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left"></th>
+                                          <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Username</th>
+                                          <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Total Points</th>
                                         </tr>
                                       </thead>
 
@@ -450,11 +479,11 @@ export default function LeagueLeaderboardPage() {
                                               key={row.user_id}
                                               className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                                             >
-                                              <td className="py-2 px-3 font-medium">
+                                              <td className="py-1.5 px-2 sm:py-2 sm:px-3 font-medium">
                                                 {row.rank}
                                               </td>
 
-                                              <td className="py-2 px-3">
+                                              <td className="py-1.5 px-2 sm:py-2 sm:px-3">
                                                 {profile?.avatar_url ? (
                                                   <Image
                                                     src={profile.avatar_url}
@@ -470,7 +499,7 @@ export default function LeagueLeaderboardPage() {
                                                 )}
                                               </td>
 
-                                              <td className="py-2 px-3 font-medium">
+                                              <td className="py-1.5 px-2 sm:py-2 sm:px-3 font-medium">
                                                 {profile?.is_public ? (
                                                   <Link
                                                     href={`/profile/${profile.username}`}
@@ -485,7 +514,7 @@ export default function LeagueLeaderboardPage() {
                                                 )}
                                               </td>
 
-                                              <td className="py-2 px-3 font-semibold">
+                                              <td className="py-1.5 px-2 sm:py-2 sm:px-3 font-semibold">
                                                 {row.total_points}
                                               </td>
                                             </tr>
@@ -567,13 +596,13 @@ export default function LeagueLeaderboardPage() {
                           </div>
 
                           <div className="overflow-x-auto rounded-lg">
-                            <table className="min-w-[520px] w-full border-collapse text-sm">
+                            <table className="min-w-[420px] sm:min-w-[520px] w-full border-collapse text-xs sm:text-sm">
                               <thead className="bg-gray-100 text-gray-700">
                                 <tr>
-                                  <th className="py-2 px-3 text-left">Rank</th>
-                                  <th className="py-2 px-3 text-left">Name</th>
-                                  <th className="py-2 px-3 text-left">Team</th>
-                                  <th className="py-2 px-3 text-left">Total Points</th>
+                                  <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Rank</th>
+                                  <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Name</th>
+                                  <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Team</th>
+                                  <th className="py-1.5 px-2 sm:py-2 sm:px-3 text-left">Total Points</th>
                                 </tr>
                               </thead>
 
@@ -583,15 +612,15 @@ export default function LeagueLeaderboardPage() {
                                     key={row.curler_id}
                                     className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                                   >
-                                    <td className="py-2 px-3 font-medium">{idx + 1}</td>
+                                    <td className="py-1.5 px-2 sm:py-2 sm:px-3 font-medium">{idx + 1}</td>
 
-                                    <td className="py-2 px-3 font-medium">
+                                    <td className="py-1.5 px-2 sm:py-2 sm:px-3 font-medium">
                                       {row.first_name} {row.last_name}
                                     </td>
 
-                                    <td className="py-2 px-3">{row.team_name}</td>
+                                    <td className="py-1.5 px-2 sm:py-2 sm:px-3">{row.team_name}</td>
 
-                                    <td className="py-2 px-3 font-semibold">{row.total_points}</td>
+                                    <td className="py-1.5 px-2 sm:py-2 sm:px-3 font-semibold">{row.total_points}</td>
                                   </tr>
                                 ))}
                               </tbody>
