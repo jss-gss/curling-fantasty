@@ -710,67 +710,67 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
 
                     isOpen && (
                         <tr key={`${u.user_id}-picks`}>
-                        <td colSpan={6} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                            <td colSpan={6} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                             <div className="w-full flex justify-center py-2 sm:py-4">
-                            <div className="w-[96%] sm:w-[75%]">
+                                <div className="w-[98%] sm:w-[75%]">
                                 <table className="w-full border-collapse overflow-hidden rounded-lg text-[12px] sm:text-sm table-fixed sm:table-auto">
-                                <thead className="bg-blue-200 text-gray-700">
+                                    <thead className="bg-blue-200 text-gray-700">
                                     <tr>
-                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[70px] sm:w-auto">
+                                        <th className="px-1 py-1 sm:px-3 sm:py-2 text-left w-[60px] sm:w-auto">
                                         Position
-                                    </th>
-                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[130px] sm:w-auto">
+                                        </th>
+                                        <th className="px-1 py-1 sm:px-3 sm:py-2 text-left w-[118px] sm:w-auto">
                                         Name
-                                    </th>
-                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[170px] sm:w-auto">
+                                        </th>
+                                        <th className="px-1 py-1 sm:px-3 sm:py-2 text-left w-[120px] sm:w-auto">
                                         Team
-                                    </th>
-                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[92px] sm:w-auto">
-                                        Games Played
-                                    </th>
-                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[84px] sm:w-auto">
-                                        Fantasy Pts
-                                    </th>
+                                        </th>
+                                        <th className="px-1 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[58px] sm:w-auto">
+                                        Games
+                                        </th>
+                                        <th className="px-1 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[58px] sm:w-auto">
+                                        Points
+                                        </th>
                                     </tr>
-                                </thead>
+                                    </thead>
 
-                                <tbody>
+                                    <tbody>
                                     {picks.map((p, pIdx) => {
-                                    const player = p.players
-                                    const team = player.teams
+                                        const player = p.players
+                                        const team = player.teams
 
-                                    return (
+                                        return (
                                         <tr
-                                        key={p.player_id}
-                                        className={pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}
+                                            key={p.player_id}
+                                            className={pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}
                                         >
-                                        <td className="px-2 py-1 sm:px-3 sm:py-2">
+                                            <td className="px-1 py-1 sm:px-3 sm:py-2">
                                             {player.position}
-                                        </td>
+                                            </td>
 
-                                        <td className="px-2 py-1 sm:px-3 sm:py-2">
+                                            <td className="px-1 py-1 sm:px-3 sm:py-2">
                                             {player.first_name} {player.last_name}
-                                        </td>
+                                            </td>
 
-                                        <td className="px-2 py-1 sm:px-3 sm:py-2">
+                                            <td className="px-1 py-1 sm:px-3 sm:py-2">
                                             {team?.team_name ?? player.team_id}
-                                        </td>
+                                            </td>
 
-                                        <td className="px-2 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
+                                            <td className="px-1 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
                                             {gamesPlayedByPlayer[String(player.id)] ?? 0}
-                                        </td>
+                                            </td>
 
-                                        <td className="px-2 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
+                                            <td className="px-1 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
                                             {player.total_player_fantasy_pts}
-                                        </td>
+                                            </td>
                                         </tr>
-                                    )
+                                        )
                                     })}
-                                </tbody>
+                                    </tbody>
                                 </table>
+                                </div>
                             </div>
-                            </div>
-                        </td>
+                            </td>
                         </tr>
                     ),
                     ].filter(Boolean)
