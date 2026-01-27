@@ -280,7 +280,7 @@ export default function CreateLeagueModal({
             <select
               value={eventId}
               onChange={(e) => setEventId(e.target.value)}
-              className="w-full border px-2 py-1.5 sm:p-2 rounded b-3"
+              className="w-full border px-2 py-1.5 sm:p-2 rounded mb-3"
             >
               <option value="">Select Event</option>
               {futureEvents.map((ev) => (
