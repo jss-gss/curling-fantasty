@@ -177,7 +177,7 @@ export default function CreateLeagueModal({
       onClick={onClose}
     >
       <div
-        ref = {modalRef} className="relative bg-white p-6 rounded-lg w-full max-w-lg shadow-xl"
+        ref = {modalRef} className="relative bg-white rounded-lg shadow-xl w-full max-w-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -187,7 +187,7 @@ export default function CreateLeagueModal({
           ×
         </button>
 
-        <h2 className="text-2xl font-bold mb-4">
+        <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">
           {isNew ? "Be Your Own Draw Master" : "Edit League Details"}
         </h2>
 
@@ -201,7 +201,7 @@ export default function CreateLeagueModal({
           </div>
         )}
 
-        <div className="absolute top-8 right-8 flex items-center gap-1">
+        <div className=" flex items-center gap-1 text-xs mb-3 sm:mb-0 sm:absolute sm:top-8 sm:right-8">
           {isNew ? (
             <>
               <span className="text-xs text-gray-500">Private</span>
@@ -228,7 +228,7 @@ export default function CreateLeagueModal({
           <select
             value={eventId}
             onChange={(e) => setEventId(e.target.value)}
-            className="w-full border p-2 rounded mb-3"
+            className="w-full border p-2 sm:p-2 rounded mb-3"
           >
             <option value="">Select Event</option>
             {futureEvents.map((ev) => (
@@ -253,14 +253,14 @@ export default function CreateLeagueModal({
           placeholder="League Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full border p-2 rounded mb-3"
+          className="w-full border p-2 sm:p-2 rounded mb-3"
         />
 
         <textarea
           placeholder="Description (optional)"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full border p-2 rounded mb-3"
+          className="w-full border p-2 sm:p-2 rounded mb-3"
         />
 
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -271,7 +271,7 @@ export default function CreateLeagueModal({
           type="datetime-local"
           value={draftDate}
           onChange={(e) => setDraftDate(e.target.value)}
-          className="w-full border p-2 rounded mb-3"
+          className="w-full border p-2 sm:p-2 rounded mb-3"
         />
 
         {!isPublic && (
@@ -279,7 +279,7 @@ export default function CreateLeagueModal({
             placeholder="Invite players by entering their usernames (comma-separated)"
             value={usernames}
             onChange={(e) => setUsernames(e.target.value)}
-            className="w-full border p-2 rounded mb-3"
+            className="w-full border p-2 sm:p-2 rounded mb-3"
           />
         )}
 
