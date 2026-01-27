@@ -36,7 +36,9 @@ export default function LeagueLeaderboardPage() {
   const router = useRouter()
 
   const [userId, setUserId] = useState<string>("")
-  const [loading, setLoading] = useState(true)
+  const [loadingCurrent, setLoadingCurrent] = useState(true)
+  const [loadingTop, setLoadingTop] = useState(false)
+  const [loadingPast, setLoadingPast] = useState(false)
 
   const [leagues, setLeagues] = useState<League[]>([])
   const [leaderboards, setLeaderboards] = useState<Record<string, LeaderboardRow[]>>({})
@@ -84,7 +86,7 @@ export default function LeagueLeaderboardPage() {
   }, [userId])
 
   async function loadCurrentLeagues() {
-    setLoading(true)
+    setLoadingCurrent(true)
 
     const { data: leagueRows } = await supabase
       .from("fantasy_events")
@@ -168,7 +170,7 @@ export default function LeagueLeaderboardPage() {
     }
 
     setLeaderboards(results)
-    setLoading(false)
+    setLoadingCurrent(false)
   }
 
   useEffect(() => {
@@ -176,7 +178,9 @@ export default function LeagueLeaderboardPage() {
   }, [activeTab])
 
   async function loadTopCurlers() {
-    setLoading(true)
+    if (Object.keys(topCurlers).length > 0) return 
+
+    setLoadingTop(true)
 
     const { data: eventRows } = await supabase
       .from("curling_events")
@@ -200,7 +204,12 @@ export default function LeagueLeaderboardPage() {
 
     setTopCurlers(results)
     setEvents(eventRows ?? [])
-    setLoading(false)
+    setLoadingTop(false)
+  }
+
+  function formatDate(dateString: string) {
+    const [year, month, day] = dateString.split("-")
+    return `${month}/${day}/${year}`
   }
 
   return (
@@ -250,7 +259,7 @@ export default function LeagueLeaderboardPage() {
                       onChange={e =>
                         setFilterLeagueScope(e.target.value as "ALL" | "MINE")
                       }
-                      className="px-4 py-2 sm:px-4 sm:py-2 border border-gray-300 text-sm appearance-none pr-8 rounded-md"
+                      className="px-4 py-2 border border-gray-300 text-sm appearance-none pr-8 rounded-md min-w-[160px]"
                     >
                       <option value="ALL">All Leagues</option>
                       <option value="MINE">My Leagues</option>
@@ -331,13 +340,13 @@ export default function LeagueLeaderboardPage() {
 
           {activeTab === "current" && (
             <>
-              {loading && (
+              {loadingCurrent && (
                 <p className="w-full flex justify-center mt-20 text-gray-600">
                   Loading...
                 </p>
               )}
 
-              {!loading && (
+              {!loadingCurrent && (
                 <>
                   {(() => {
                     const filtered = leagues.filter(league => {
@@ -397,7 +406,7 @@ export default function LeagueLeaderboardPage() {
                                     </div>
 
                                     {league.curling_events && (
-                                      <p className="text-gray-700 text-sm break-words">
+                                      <p className="text-gray-700 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                         {league.curling_events.year} {league.curling_events.name} in{" "}
                                         {league.curling_events.location}
                                       </p>
@@ -454,7 +463,7 @@ export default function LeagueLeaderboardPage() {
                                   </div>
 
                                   {league.curling_events && (
-                                    <div className="text-gray-700 mb-4 text-sm break-words">
+                                    <div className="text-gray-700 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                       {league.curling_events.year} {league.curling_events.name} in{" "}
                                       {league.curling_events.location}
                                     </div>
@@ -540,7 +549,13 @@ export default function LeagueLeaderboardPage() {
 
           {activeTab === "top" && (
             <>
-              {!loading && leagues.length === 0 && (
+              {loadingTop  && (
+                <p className="w-full flex justify-center mt-20 text-gray-600">
+                  Loading...
+                </p>
+              )}
+
+              {!loadingTop  && leagues.length === 0 && (
                 <p className="text-gray-600">No current curlers.</p>
               )}
 
@@ -581,15 +596,11 @@ export default function LeagueLeaderboardPage() {
                             </div>
 
                             <div className="text-sm text-gray-600">
-                              {new Date(event.start_date).toLocaleDateString(undefined, {
-                                month: "short",
-                                day: "numeric"
-                              })}{" "}
+                              {formatDate(event.start_date)
+                              }{" "}
                               –{" "}
-                              {new Date(event.end_date).toLocaleDateString(undefined, {
-                                month: "short",
-                                day: "numeric"
-                              })}
+                              {formatDate(event.end_date)
+                              }
                             </div>
                           </div>
 
@@ -651,13 +662,13 @@ export default function LeagueLeaderboardPage() {
 
           {activeTab === "past" && (
             <>
-              {loading && (
+              {loadingPast && (
                 <p className="w-full flex justify-center mt-20 text-gray-600">
                   Loading...
                 </p>
               )}
 
-              {!loading && leagues.length === 0 && (
+              {!loadingPast && leagues.length === 0 && (
                 <p className="text-gray-600">No past events.</p>
               )}
             </>

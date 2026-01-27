@@ -431,6 +431,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
     const enrolled = league.fantasy_event_users.some(u => u.user_id === userId)
     const invited = league.fantasy_event_user_invites.some(inv => inv.user_id === userId)
     const isDraftOpen = league.draft_status === "open"
+    const playerCount = league.fantasy_event_users?.length ?? 0
 
     const canAccess =
     league.is_public ||
@@ -467,7 +468,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
 
         return (
             <tr className="bg-gray-50">
-                <td className="px-2 py-1.5 sm:px-3 sm:py-2text-gray-700 font-medium">{index}</td>
+                <td className="px-2 py-1.5 sm:px-3 sm:py-2 text-gray-700 font-medium">{index}</td>
 
                 <td className="py-2 px-3">
                 {profile.avatar_url ? (
@@ -521,7 +522,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                         key={u.user_id}
                         className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                         >
-                        <td className="px-2 py-1.5 sm:px-3 sm:py-2font-medium">{idx + 1}</td>
+                        <td className="px-2 py-1.5 sm:px-3 sm:py-2 font-medium">{idx + 1}</td>
 
                         <td className="py-2 px-3">
                             {u.profiles.avatar_url ? (
@@ -1027,6 +1028,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                 </p>
 
                 <div className="mt-2 text-sm text-gray-600">
+                {/* Mobile */}
                 <div className="space-y-1 sm:hidden">
                     <div>
                     <strong>Created By:</strong>{" "}
@@ -1047,7 +1049,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                     {new Date(league.draft_date).toLocaleString("en-US", {
                         timeZone: "America/New_York",
                         dateStyle: "short",
-                        timeStyle: "short"
+                        timeStyle: "short",
                     })}{" "}
                     ET
                     </div>
@@ -1061,8 +1063,18 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                     <strong>Round Robin Ends:</strong>{" "}
                     {formatDate(league.curling_events?.round_robin_end_date ?? "")}
                     </div>
+
+                    <div>
+                    {isDraftOpen && (
+                    <>
+                    <strong>Participants:</strong>{" "}
+                    {playerCount} / {league.max_users}
+                    </>
+                    )}
+                    </div>
                 </div>
 
+                {/* Desktop */}
                 <p className="hidden sm:block">
                     <strong>Created By:</strong>{" "}
                     {league.sender?.is_public ? (
@@ -1079,12 +1091,19 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                     {new Date(league.draft_date).toLocaleString("en-US", {
                     timeZone: "America/New_York",
                     dateStyle: "short",
-                    timeStyle: "short"
+                    timeStyle: "short",
                     })}{" "}
-                    ET <strong> • Event Starts:</strong>{" "}
+                    ET                    
+                    <strong> • Event Starts:</strong>{" "}
                     {formatDate(league.curling_events?.start_date ?? "")}
                     <strong> • Round Robin Ends:</strong>{" "}
                     {formatDate(league.curling_events?.round_robin_end_date ?? "")}
+                    {isDraftOpen && (
+                    <>
+                        <strong> • Participants:</strong>{" "}
+                        {playerCount} / {league.max_users}
+                    </>
+                    )}
                 </p>
                 </div>
 

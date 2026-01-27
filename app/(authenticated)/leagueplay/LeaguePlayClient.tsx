@@ -134,16 +134,16 @@ export default function LeaguesPage() {
 
   useEffect(() => {
     async function loadLeagues() {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await supabase.auth.getUser()
 
       if (!userData.user) {
-        setUser(null);
-        setLeagues([]);
-        setLoading(false);
-        return;
+        setUser(null)
+        setLeagues([])
+        setLoading(false)
+        return
       }
 
-      setUser(userData.user);
+      setUser(userData.user)
 
       const { data: leagueData, error } = await supabase
         .from("fantasy_events")
@@ -154,18 +154,18 @@ export default function LeaguesPage() {
           fantasy_event_user_invites ( user_id ),
           users:profiles!fantasy_events_created_by_fkey ( id, username, is_public )
         `)
-        .order("draft_date", { ascending: true });
+        .order("draft_date", { ascending: true })
 
       if (error) {
-        setLeagues([]);
-        setLoading(false);
-        return;
+        setLeagues([])
+        setLoading(false)
+        return
       }
 
       if (!leagueData) {
-        setLeagues([]);
-        setLoading(false);
-        return;
+        setLeagues([])
+        setLoading(false)
+        return
       }
 
       const processed = leagueData.map((l) => ({
@@ -178,11 +178,11 @@ export default function LeaguesPage() {
         )
       }))
 
-      setLeagues(processed);
-      setLoading(false);
+      setLeagues(processed)
+      setLoading(false)
     }
 
-    loadLeagues();
+    loadLeagues()
   }, [])
 
   useEffect(() => {
@@ -190,12 +190,12 @@ export default function LeaguesPage() {
       const { data } = await supabase
         .from("curling_events")
         .select("*")
-        .order("start_date", { ascending: true });
+        .order("start_date", { ascending: true })
 
-      setEvents(data || []);
+      setEvents(data || [])
     }
 
-    loadEvents();
+    loadEvents()
   }, [])
 
   async function joinLeague(id: string) {
@@ -253,7 +253,7 @@ export default function LeaguesPage() {
   }
 
   function LeagueCard({ league, commissionerView, invitedView }: any) {
-    const is_commissioner = commissionerView || league.created_by === user?.id;
+    const is_commissioner = commissionerView || league.created_by === user?.id
 
     const isInvited =
       invitedView ||
@@ -265,13 +265,9 @@ export default function LeaguesPage() {
       )
 
 
-    const isOpen = league.draft_status === "open";
-    const isComplete = league.draft_status === "completed";
-    const isFull = (league.fantasy_event_users?.length ?? 0) >= league.max_users;
-    const isJoinable = isOpen && !isFull;
-    const hasEventStarted =
-      league.curling_events &&
-      new Date() >= new Date(league.curling_events.start_date);
+    const isOpen = league.draft_status === "open"
+    const isComplete = league.draft_status === "completed"
+    const isFull = (league.fantasy_event_users?.length ?? 0) >= league.max_users
 
     function renderLeagueAction() {
       if (isComplete) {
@@ -282,92 +278,37 @@ export default function LeaguesPage() {
           >
             View Results
           </button>
-        );
+        )
       }
 
-      if (is_commissioner) {
-        if (isOpen) {
-          return (
-            <button
-              onClick={() => {
-                setEditingLeague(league);
-                setShowModal(true);
-              }}
-              className="bg-[#1f4785] text-white px-6 py-2 rounded-md hover:bg-[#163766] transition"
-            >
-              Edit
-            </button>
-          )
-        }
+      if (league.draft_status !== "open") return null
 
-        if (league.draft_status === "locked" && !hasEventStarted) {
-          return (
-            <button
-              disabled
-              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-            >
-              Picks Locked
-            </button>
-          );
-        }
+      if (is_commissioner) {
+        return (
+          <button
+            onClick={() => {
+              setEditingLeague(league)
+              setShowModal(true)
+            }}
+            className="bg-[#1f4785] text-white px-6 py-2 rounded-md hover:bg-[#163766] transition"
+          >
+            Edit
+          </button>
+        )
       }
 
       if (isInvited) {
-        if (isOpen) {
-          return (
-            <button
-              onClick={() => joinLeague(league.id)}
-              className="bg-[#234C6A] text-white px-6 py-2 rounded-md hover:bg-[#1B3C53] transition"
-            >
-              Join
-            </button>
-          )
-        }
-
         return (
           <button
-            disabled
-            className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
+            onClick={() => joinLeague(league.id)}
+            className="bg-[#234C6A] text-white px-6 py-2 rounded-md hover:bg-[#1B3C53] transition"
           >
-            Closed
+            Join
           </button>
         )
       }
 
       if (league.enrolled) {
-        if (league.draft_status === "closed") {
-          return (
-            <button
-              disabled
-              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-            >
-              Draft In Progress
-            </button>
-          )
-        }
-
-        if (league.draft_status === "locked") {
-          return (
-            <button
-              disabled
-              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-            >
-              {hasEventStarted ? "Event Live" : "Picks Locked"}
-            </button>
-          )
-        }
-
-        if (league.draft_status === "archived") {
-          return (
-            <button
-              disabled
-              className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-            >
-              Archived
-            </button>
-          )
-        }
-
         return (
           <button
             onClick={() => leaveLeague(league.id)}
@@ -378,28 +319,16 @@ export default function LeaguesPage() {
         )
       }
 
-      if (isFull || league.draft_status === "closed") {
-        return (
-          <button
-            disabled
-            className="bg-gray-300 text-gray-600 px-6 py-2 cursor-not-allowed rounded-md"
-          >
-            Closed
-          </button>
-        )
+      if (isFull) {
+        return null 
       }
 
       return (
         <button
-          disabled={!isJoinable}
-          onClick={() => isJoinable && joinLeague(league.id)}
-          className={`px-4 py-2 text-white rounded-md ${
-            isJoinable
-              ? "bg-[#234C6A] hover:bg-[#1B3C53] cursor-pointer"
-              : "bg-gray-400 cursor-not-allowed"
-          }`}
+          onClick={() => joinLeague(league.id)}
+          className="px-4 py-2 text-white rounded-md bg-[#234C6A] hover:bg-[#1B3C53]"
         >
-          {isFull ? "Full" : "Join"}
+          Join
         </button>
       )
     }
@@ -470,8 +399,9 @@ export default function LeaguesPage() {
             {formatDate(league.curling_events.start_date)}{" "}
             <strong>• Round Robin Ends:</strong>{" "}
             {formatDate(league.curling_events.round_robin_end_date)}{" "}
-            <strong> • Players:</strong>{" "}
-            {(league.fantasy_event_users?.length ?? 0)} / {league.max_users}
+            <strong> • Participants:</strong>{" "}
+            {(league.fantasy_event_users?.length ?? 0)}
+            {isOpen && ` / ${league.max_users}`}
           </p>
         </div>
 
@@ -491,38 +421,38 @@ export default function LeaguesPage() {
   }
 
   async function generateUniqueSlug(baseSlug: string, supabase: any) {
-    let slug = baseSlug;
-    let counter = 1;
+    let slug = baseSlug
+    let counter = 1
 
     while (true) {
       const { data } = await supabase
         .from("fantasy_events")
         .select("slug")
         .eq("slug", slug)
-        .maybeSingle();
+        .maybeSingle()
 
-      if (!data) return slug;
+      if (!data) return slug
 
-      counter++;
-      slug = `${baseSlug}-${counter}`;
+      counter++
+      slug = `${baseSlug}-${counter}`
     }
   }
 
   async function handleCreateLeague(payload: any) {
-    if (!user) return;
+    if (!user) return
 
-    const { eventId, name, description, draftDate, isPublic, usernames } = payload;
+    const { eventId, name, description, draftDate, isPublic, usernames, maxUsers } = payload
 
     function parseLocalDateTime(dt: string) {
-      const [datePart, timePart] = dt.split("T");
-      const [year, month, day] = datePart.split("-").map(Number);
-      const [hour, minute] = timePart.split(":").map(Number);
-      return new Date(year, month - 1, day, hour, minute);
+      const [datePart, timePart] = dt.split("T")
+      const [year, month, day] = datePart.split("-").map(Number)
+      const [hour, minute] = timePart.split(":").map(Number)
+      return new Date(year, month - 1, day, hour, minute)
     }
 
-    const utcDraftDate = new Date(draftDate).toISOString();
-    const baseSlug = generateBaseSlug(name);
-    const slug = await generateUniqueSlug(baseSlug, supabase);
+    const utcDraftDate = new Date(draftDate).toISOString()
+    const baseSlug = generateBaseSlug(name)
+    const slug = await generateUniqueSlug(baseSlug, supabase)
 
     const { data: newLeague, error } = await supabase
       .from("fantasy_events")
@@ -535,7 +465,7 @@ export default function LeaguesPage() {
         created_by: user.id,
         is_public: isPublic,
         draft_status: "open",
-        max_users: 10
+        max_users: maxUsers,
       })
       .select(`
         *,
@@ -543,20 +473,20 @@ export default function LeaguesPage() {
         fantasy_event_users ( user_id ),
         users:profiles!fantasy_events_created_by_fkey ( id, username, is_public )
       `)
-      .single();
+      .single()
 
-    if (error) return;
+    if (error) return
 
     if (!isPublic && usernames.trim() !== "") {
       const usernameList = usernames
         .split(",")
         .map((u: string) => u.trim())
-        .filter(Boolean);
+        .filter(Boolean)
 
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, username")
-        .in("username", usernameList);
+        .in("username", usernameList)
 
       if (profiles?.length) {
         await supabase.from("fantasy_event_user_invites").insert(
@@ -564,14 +494,14 @@ export default function LeaguesPage() {
             fantasy_event_id: newLeague.id,
             user_id: p.id
           }))
-        );
+        )
       }
     }
 
     await supabase.from("fantasy_event_users").insert({
       fantasy_event_id: newLeague.id,
       user_id: user.id
-    });
+    })
 
     setLeagues(prev => [
       ...prev,
@@ -580,22 +510,22 @@ export default function LeaguesPage() {
         enrolled: true,
         fantasy_event_users: [{ user_id: user.id }]
       }
-    ]);
+    ])
 
-    setShowModal(false);
+    setShowModal(false)
   }
 
   async function handleUpdateLeague(payload: any) {
-    if (!editingLeague) return;
+    if (!editingLeague) return
 
-    const { eventId, name, description, draftDate, isPublic, usernames } = payload;
+    const { eventId, name, description, draftDate, isPublic, usernames, maxUsers } = payload
 
-    const utcDraftDate = new Date(draftDate).toISOString();
+    const utcDraftDate = new Date(draftDate).toISOString()
 
-    let slug = editingLeague.slug;
+    let slug = editingLeague.slug
     if (name !== editingLeague.name) {
-      const baseSlug = generateBaseSlug(name);
-      slug = await generateUniqueSlug(baseSlug, supabase);
+      const baseSlug = generateBaseSlug(name)
+      slug = await generateUniqueSlug(baseSlug, supabase)
     }
 
     const { data: updatedLeague, error } = await supabase
@@ -606,6 +536,7 @@ export default function LeaguesPage() {
         description,
         draft_date: utcDraftDate,
         is_public: isPublic,
+        max_users: maxUsers,
         slug
       })
       .eq("id", editingLeague.id)
@@ -613,53 +544,53 @@ export default function LeaguesPage() {
         *,
         fantasy_event_user_invites ( user_id )
       `)
-      .single();
+      .single()
 
-    if (error) return;
+    if (error) return
 
     if (!isPublic && usernames?.trim()) {
       const usernameList = usernames
         .split(",")
         .map((u: string) => u.trim())
-        .filter(Boolean);
+        .filter(Boolean)
 
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, username")
-        .in("username", usernameList);
+        .in("username", usernameList)
 
       if (profiles?.length) {
         const alreadyInvited = new Set(
           updatedLeague.fantasy_event_user_invites.map((i: any) => i.user_id)
-        );
+        )
 
         const newInvites = profiles
           .filter((p: any) => !alreadyInvited.has(p.id))
           .map((p: any) => ({
             fantasy_event_id: updatedLeague.id,
             user_id: p.id
-          }));
+          }))
 
         if (newInvites.length > 0) {
-          await supabase.from("fantasy_event_user_invites").insert(newInvites);
+          await supabase.from("fantasy_event_user_invites").insert(newInvites)
         }
       }
     }
 
     setLeagues(prev =>
       prev.map(l => (l.id === editingLeague.id ? { ...l, ...updatedLeague } : l))
-    );
+    )
 
-    setShowModal(false);
-    setEditingLeague(null);
+    setShowModal(false)
+    setEditingLeague(null)
   }
 
   async function handleDeleteLeague(id: string) {
-    await supabase.from("fantasy_events").delete().eq("id", id);
+    await supabase.from("fantasy_events").delete().eq("id", id)
 
-    setLeagues(prev => prev.filter(l => l.id !== id));
-    setShowModal(false);
-    setEditingLeague(null);
+    setLeagues(prev => prev.filter(l => l.id !== id))
+    setShowModal(false)
+    setEditingLeague(null)
   }
 
   return (
