@@ -1,23 +1,23 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import Image from "next/image";
-import confetti from "canvas-confetti";
+import { useEffect } from "react"
+import Image from "next/image"
+import confetti from "canvas-confetti"
 
 export default function WelcomeModal({
   onClose,
   username
 }: {
-  onClose: () => void;
-  username: string;
+  onClose: () => void
+  username: string
 }) {
   useEffect(() => {
     confetti({
       particleCount: 120,
       spread: 70,
       origin: { y: 0.6 }
-    });
-  }, []);
+    })
+  }, [])
 
   return (
     <div
@@ -62,5 +62,5 @@ export default function WelcomeModal({
         </h1>
       </div>
     </div>
-  );
+  )
 }

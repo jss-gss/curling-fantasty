@@ -3,17 +3,16 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-[#0a2342] py-16 px-6">
       <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-10 border border-gray-200">
 
-        <h1 className="text-3xl font-bold text-[#1f4785] mb-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#1f4785] mb-4">
           Privacy Policy
         </h1>
 
         <p className="text-gray-600 mb-8">Last updated: January 2026</p>
 
-        <div className="space-y-10 text-gray-700 leading-relaxed">
-
+        <div className="space-y-10 text-gray-700 leading-relaxed text-sm sm:text-base">
           <section>
-            <h2 className="text-xl font-semibold text-[#1f4785] mb-2">
-              What we collect
+            <h2 className="text-lg sm:text-xl font-semibold text-[#1f4785] mb-2">
+              What We Collect
             </h2>
             <p>
               We collect only the information needed to run the app and improve your
@@ -25,8 +24,8 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-[#1f4785] mb-2">
-              How we use your information
+            <h2 className="text-lg sm:text-xl font-semibold text-[#1f4785] mb-2">
+              How We Use Your Information
             </h2>
             <p>
               We use your information to create and manage your account, run fantasy
@@ -36,8 +35,8 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-[#1f4785] mb-2">
-              How your data is stored
+            <h2 className="text-lg sm:text-xl font-semibold text-[#1f4785] mb-2">
+              How Your Data Is Stored
             </h2>
             <p>
               Your data is stored securely using modern cloud infrastructure. We take
@@ -46,8 +45,8 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-[#1f4785] mb-2">
-              Third‑party services
+            <h2 className="text-lg sm:text-xl font-semibold text-[#1f4785] mb-2">
+              Third‑Party Services
             </h2>
             <p>
               We use trusted third‑party tools to help run the app. These services only
@@ -56,8 +55,8 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-[#1f4785] mb-2">
-              Your choices
+            <h2 className="text-lg sm:text-xl font-semibold text-[#1f4785] mb-2">
+              Your Choices
             </h2>
             <p>
               You can update your account information, request deletion of your
@@ -66,7 +65,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-[#1f4785] mb-2">
+            <h2 className="text-lg sm:text-xl font-semibold text-[#1f4785] mb-2">
               Contact
             </h2>
             <p>
@@ -77,5 +76,5 @@ export default function PrivacyPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

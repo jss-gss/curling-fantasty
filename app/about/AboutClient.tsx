@@ -3,14 +3,13 @@ export default function AboutPage() {
     <div className="min-h-screen bg-[#0a2342] py-16 px-6">
       <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-10 border border-gray-200">
 
-        <h1 className="text-3xl font-bold text-[#1f4785] mb-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#1f4785] mb-4">
           About
         </h1>
 
-        <div className="space-y-10 text-gray-700 leading-relaxed">
-
+        <div className="space-y-10 text-gray-700 leading-relaxed text-sm sm:text-base">
           <section>
-            <h2 className="text-xl font-semibold text-[#1f4785] mb-2">
+            <h2 className="text-lg sm:text-xl font-semibold text-[#1f4785] mb-2">
               Built by a Curler
             </h2>
             <p>
@@ -21,7 +20,7 @@ export default function AboutPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-[#1f4785] mb-2">
+            <h2 className="text-lg sm:text-xl font-semibold text-[#1f4785] mb-2">
               Why This Exists
             </h2>
             <p>
@@ -33,7 +32,7 @@ export default function AboutPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-[#1f4785] mb-2">
+            <h2 className="text-lg sm:text-xl font-semibold text-[#1f4785] mb-2">
               The Vision
             </h2>
             <p>
@@ -45,7 +44,7 @@ export default function AboutPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-[#1f4785] mb-2">
+            <h2 className="text-lg sm:text-xl font-semibold text-[#1f4785] mb-2">
               A Note to the Community
             </h2>
             <p>
@@ -56,7 +55,7 @@ export default function AboutPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-[#1f4785] mb-2">
+            <h2 className="text-lg sm:text-xl font-semibold text-[#1f4785] mb-2">
               Thank You
             </h2>
             <p>
@@ -67,9 +66,8 @@ export default function AboutPage() {
               And thank you to Brett Mullenix for providing pin ideas and inspiration. 
             </p>
           </section>
-
         </div>
       </div>
     </div>
-  );
+  )
 }

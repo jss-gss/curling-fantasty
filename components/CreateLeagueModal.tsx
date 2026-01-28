@@ -212,13 +212,7 @@ export default function CreateLeagueModal({
     >
       <div
         ref={modalRef}
-        className="
-          relative bg-white rounded-lg shadow-xl
-          w-full max-w-lg
-          mx-3 sm:mx-0
-          p-3 sm:p-6
-          max-h-[90vh] overflow-y-auto
-        "
+        className="relative bg-white rounded-lg shadow-xl w-full max-w-lg mx-3 sm:mx-0 p-3 sm:p-6 max-h-[90vh] overflow-y-auto "
         onClick={(e) => e.stopPropagation()}
       >
         <form
@@ -235,7 +229,7 @@ export default function CreateLeagueModal({
             ×
           </button>
 
-          <h2 className="text-lg sm:text-2xl font-bold mb-3 sm:mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">
             {isNew ? "Be Your Own Draw Master" : "Edit League Details"}
           </h2>
 
@@ -314,8 +308,8 @@ export default function CreateLeagueModal({
             className="w-full border px-2 py-1.5 sm:p-2 rounded mb-1"
           />
 
-          <div className="flex gap-2 mb-3 flex-nowrap">
-            <div className="w-75 shrink-0">
+          <div className="flex flex-col sm:flex-row gap-2 mb-3">
+            <div className="w-full sm:w-75 sm:shrink-0">
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Draft Date <span className="text-gray-500 text-xs italic">(ET)</span>
               </label>
@@ -327,7 +321,7 @@ export default function CreateLeagueModal({
               />
             </div>
 
-            <div className="flex-1 min-w-0">
+            <div className="w-full sm:flex-1 sm:min-w-0">
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Max Participants
                 {selectedEvent && (
@@ -349,7 +343,9 @@ export default function CreateLeagueModal({
                     setMaxUsers(Math.min(Math.max(parsed, minAllowedUsers), maxAllowedUsers))
                   }
                 }}
-                className="w-full border px-2 py-1.5 sm:p-2 rounded"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                className="w-full border px-2 py-1.5 sm:p-2 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 disabled={!selectedEvent}
               />
             </div>

@@ -42,11 +42,11 @@ export default function AchievementModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={onClose}
     >
       <div
-        className="relative bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center"
+        className="relative bg-white rounded-lg shadow-xl p-8 max-w-md w-[calc(100%-2rem)] sm:w-full text-center"
         onClick={(e) => e.stopPropagation()}
       >
         <button

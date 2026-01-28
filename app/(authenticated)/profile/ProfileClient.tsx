@@ -163,6 +163,24 @@ export default function ProfileClient() {
     loadFantasyStats()
   }, [user])
 
+  useEffect(() => {
+    if (isEditing) {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      })
+    }
+  }, [isEditing])
+
+  useEffect(() => {
+    if (!isEditing) {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      })
+    }
+  }, [!isEditing])
+
   async function saveProfileChanges() {
     if (!user) return
     setSaving(true)
@@ -298,65 +316,44 @@ export default function ProfileClient() {
       <div className="pb-14 px-4 sm:px-0">
         <div className="max-w-3xl mx-auto px-4 py-5 sm:p-6 bg-white shadow-md rounded-lg">
           <div className="text-sm sm:text-base">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-[#234C6A]">
-              {isEditing ? "Edit Profile" : "My Profile"}
-            </h1>
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                {/* LEFT */}
+                <h1 className="text-2xl font-bold text-[#234C6A]">
+                  {isEditing ? "Edit Profile" : "My Profile"}
+                </h1>
 
-            {!isEditing && (
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">  
-                {/* PRIVATE / PUBLIC TOGGLE */}
-                <div className="flex items-center gap-1 order-2 sm:order-1">
-                  <span className="text-xs text-gray-500">Private</span>
+                {/* RIGHT — PRIVACY TOGGLE ONLY */}
+                {!isEditing && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-500">Private</span>
 
-                  <button
-                    onClick={async () => {
-                      const newValue = !isPublic
-                      setIsPublic(newValue)
+                    <button
+                      onClick={async () => {
+                        const newValue = !isPublic
+                        setIsPublic(newValue)
 
-                      await supabase
-                        .from("profiles")
-                        .update({ is_public: newValue })
-                        .eq("id", profile.id)
-                    }}
-                    className={`w-10 h-5 rounded-full relative transition ${
-                      isPublic ? "bg-blue-500" : "bg-gray-400"
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition ${
-                        isPublic ? "translate-x-5" : ""
+                        await supabase
+                          .from("profiles")
+                          .update({ is_public: newValue })
+                          .eq("id", profile.id)
+                      }}
+                      className={`w-10 h-5 rounded-full relative transition ${
+                        isPublic ? "bg-blue-500" : "bg-gray-400"
                       }`}
-                    />
-                  </button>
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition ${
+                          isPublic ? "translate-x-5" : ""
+                        }`}
+                      />
+                    </button>
 
-                  <span className="text-xs text-gray-500">Public</span>
-                </div>
-
-                {/* EDIT BUTTON */}
-                <button
-                  onClick={() => {
-                    setNewUsername(profile?.username || "")
-                    setYearsPlayed(profile?.years_played ?? "")
-                    setFavoriteClub(profile?.favorite_club ?? "")
-                    setGoToShot(profile?.go_to_shot?.[0] ?? null)
-                    setTradition(profile?.tradition ?? "")
-                    setFavoriteProTeam(profile?.favorite_pro_team ?? "")
-                    setWouldRather(profile?.would_rather?.[0] ?? null)
-                    setMostCurlingThing(profile?.most_curling_thing ?? "")
-                    setWalkupMusic(profile?.walkup_music ?? "")
-                    setHotTake(profile?.hot_take ?? "")
-                    setIsEditing(true)
-                  }}
-                  className="px-3 py-1 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 whitespace-nowrap"
-                >
-                  Edit Profile
-                </button>
-
+                    <span className="text-xs text-gray-500">Public</span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
+            </div>
           {/* STATIC PROFILE VIEW */}
           {!isEditing && (
             <>
@@ -412,45 +409,45 @@ export default function ProfileClient() {
               </div>
             
               {achievements.some(a => a.achievements.code && achievementIcons[a.achievements.code]) && (
-              <div className="mt-8 border-t pt-6">
-                  <h2 className="text-xl font-semibold text-[#234C6A] mb-3">
-                    Pin Collection
-                  </h2>
+                <div className="mt-8 border-t pt-6">
+                    <h2 className="text-xl font-semibold text-[#234C6A] mb-3">
+                      Pin Collection
+                    </h2>
 
-                  <div className="flex gap-4 flex-wrap">
-                    {achievements.map((a) => {
-                      const code = a.achievements.code
-                      if (!code) return null
+                    <div className="flex gap-4 flex-wrap">
+                      {achievements.map((a) => {
+                        const code = a.achievements.code
+                        if (!code) return null
 
-                      const icon = achievementIcons[code]
-                      if (!icon) return null
+                        const icon = achievementIcons[code]
+                        if (!icon) return null
 
-                      return (
-                        <button
-                          key={a.achievement_id}
-                          onClick={() => {
-                            setSelectedAchievement({
-                              title: a.achievements.name,
-                              description: a.achievements.description,
-                              icon: a.achievements.code ? achievementIcons[a.achievements.code] : null,
-                              earnedAt: a.earned_at
-                            })
-                            setModalOpen(true)
-                          }}
-                          className="hover:scale-105 transition"
-                        >
-                          {a.achievements.code && (
-                            <Image
-                              src={achievementIcons[a.achievements.code]}
-                              alt={a.achievements.name ?? "achievement"}
-                              width={60}
-                              height={60}
-                            />
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
+                        return (
+                          <button
+                            key={a.achievement_id}
+                            onClick={() => {
+                              setSelectedAchievement({
+                                title: a.achievements.name,
+                                description: a.achievements.description,
+                                icon: a.achievements.code ? achievementIcons[a.achievements.code] : null,
+                                earnedAt: a.earned_at
+                              })
+                              setModalOpen(true)
+                            }}
+                            className="hover:scale-105 transition"
+                          >
+                            {a.achievements.code && (
+                              <Image
+                                src={achievementIcons[a.achievements.code]}
+                                alt={a.achievements.name ?? "achievement"}
+                                width={60}
+                                height={60}
+                              />
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
                 </div>
               )}
 
@@ -539,6 +536,53 @@ export default function ProfileClient() {
                 </div>
               )}
             </>
+          )}
+
+          {/* ACTIONS*/}
+          {!isEditing && (
+            <div className="mt-8 border-t pt-6">
+              <h2 className="text-xl font-semibold text-[#234C6A] mb-3">
+                Actions
+              </h2>
+
+              <div className="flex flex-col gap-3 text-sm">
+                <button
+                  onClick={() => {
+                    setNewUsername(profile?.username || "")
+                    setYearsPlayed(profile?.years_played ?? "")
+                    setFavoriteClub(profile?.favorite_club ?? "")
+                    setGoToShot(profile?.go_to_shot?.[0] ?? null)
+                    setTradition(profile?.tradition ?? "")
+                    setFavoriteProTeam(profile?.favorite_pro_team ?? "")
+                    setWouldRather(profile?.would_rather?.[0] ?? null)
+                    setMostCurlingThing(profile?.most_curling_thing ?? "")
+                    setWalkupMusic(profile?.walkup_music ?? "")
+                    setHotTake(profile?.hot_take ?? "")
+                    setIsEditing(true)
+                  }}
+                  className="text-left text-gray-600 hover:text-[#AA2B1D] transition-colors"
+                >
+                  Edit profile
+                </button>
+
+                <button
+                  onClick={() => router.push("/resetpassword")}
+                  className="text-left text-gray-600 hover:text-[#AA2B1D] transition-colors"
+                >
+                  Change password
+                </button>
+
+                <button
+                  onClick={async () => {
+                    await supabase.auth.signOut()
+                    router.push("/login")
+                  }}
+                  className="text-left text-gray-600 hover:text-[#AA2B1D] transition-colors"
+                >
+                  Sign out
+                </button>
+              </div>
+            </div>
           )}
 
           {/* EDIT MODE */}

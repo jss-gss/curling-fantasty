@@ -114,25 +114,26 @@ export default function NavBar() {
     }
   }
 
-  return (
-    <div
-      className="w-full border-b border-[#1B3C53] h-16 flex items-center sticky top-0 z-50 overflow-visible"
-      style={{ backgroundColor: "#234C6A" }}
-    >
-      <div className="max-w-screen-xl mx-auto flex items-center px-2 w-full relative">
-        <button
-          onClick={handleLogoClick}
-          className="absolute left-2 sm:left-3 lg:left-4 top-1/2 -translate-y-1/2 overflow-hidden bg-transparent"
-        >
-          <img
-            src="/logos/button-main-logo.png"
-            alt="BUTTON Logo"
-            className="h-6 w-auto lg:h-8"
-          />
-        </button>
+return (
+  <div
+    className="w-full border-b border-[#1B3C53] h-16 flex items-center sticky top-0 z-50 overflow-visible"
+    style={{ backgroundColor: "#234C6A" }}
+  >
+    <div className="max-w-screen-xl mx-auto flex items-center px-2 w-full relative">
+      <button
+        onClick={handleLogoClick}
+        className="absolute left-2 sm:left-3 lg:left-4 top-1/2 -translate-y-1/2 overflow-hidden bg-transparent"
+      >
+        <img
+          src="/logos/button-main-logo.png"
+          alt="BUTTON Logo"
+          className="h-6 w-auto lg:h-8"
+        />
+      </button>
 
-        <div className="hidden lg:flex items-center gap-15 text-lg font-medium ml-auto">
-          {tabs.map(tab => {
+      <div className="hidden lg:flex items-center gap-15 text-lg font-medium ml-auto">
+        {[...tabs, ...(user ? [{ name: displayName || "Account", href: "/profile" }] : [])].map(
+          (tab) => {
             const active = pathname === tab.href
             return (
               <Link
@@ -147,102 +148,42 @@ export default function NavBar() {
                 {tab.name}
               </Link>
             )
-          })}
+          }
+        )}
+      </div>
 
-          {user && (
-            <div className="relative" ref={desktopUserMenuRef}>
-              <button
-                onClick={() => setOpenUser(prev => !prev)}
-                className={`pb-1 transition-all text-white font-medium h-8 flex items-center ${
-                  openUser
-                    ? "border-b-2 border-[#AA2B1D]"
-                    : "hover:border-b-2 hover:border-[#AA2B1D]"
-                }`}
-              >
-                {displayName}
-              </button>
+      <div className="flex lg:hidden items-center gap-6 ml-auto" ref={mobileMenuRef}>
+        <Link
+          href="/thepin"
+          onClick={() => {
+            setOpenMobile(false)
+            setOpenUser(false)
+          }}
+          className={`text-white text-sm font-medium h-9 flex items-center transition pb-1 ${
+            pathname === "/thepin"
+              ? "border-b-2 border-[#AA2B1D]"
+              : "hover:border-b-2 hover:border-[#AA2B1D]"
+          }`}
+        >
+          The Pin
+        </Link>
 
-              {openUser && (
-                <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
-                  <button
-                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-                    onClick={() => {
-                      setOpenUser(false)
-                      router.push("/profile")
-                    }}
-                  >
-                    Profile
-                  </button>
+        <button
+          onClick={() => {
+            setOpenMobile((prev) => !prev)
+            setOpenUser(false)
+          }}
+          className="text-white h-9 w-9 rounded-md hover:text-[#3A6C8F] flex items-center justify-center"
+          aria-label="Open menu"
+        >
+          <span className="leading-none text-2xl -mt-px">☰</span>
+        </button>
 
-                  <button
-                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-                    onClick={async () => {
-                      setOpenUser(false)
-                      await supabase.auth.signOut()
-                      window.location.href = "/"
-                    }}
-                  >
-                    Log Out
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="flex lg:hidden items-center gap-2 ml-auto" ref={mobileMenuRef}>
-          {user && (
-            <div className="relative" ref={mobileUserMenuRef}>
-              <button
-                onClick={() => {
-                  setOpenUser(prev => !prev)
-                  setOpenMobile(false)
-                }}
-                className="text-white text-sm font-medium h-9 px-3 rounded-md hover:text-[#3A6C8F] flex items-center"
-              >
-                {displayName}
-              </button>
-
-              {openUser && (
-                <div className="absolute right-0 top-11 w-44 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
-                  <button
-                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-                    onClick={() => {
-                      setOpenUser(false)
-                      router.push("/profile")
-                    }}
-                  >
-                    Profile
-                  </button>
-
-                  <button
-                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-                    onClick={async () => {
-                      setOpenUser(false)
-                      await supabase.auth.signOut()
-                      window.location.href = "/"
-                    }}
-                  >
-                    Log Out
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-          <button
-            onClick={() => {
-              setOpenMobile(prev => !prev)
-              setOpenUser(false)
-            }}
-            className="text-white h-9 w-9 rounded-md hover:text-[#3A6C8F] flex items-center justify-center"
-            aria-label="Open menu"
-          >
-            <span className="leading-none text-2xl -mt-px">☰</span>
-          </button>
-
-          {openMobile && (
-            <div className="absolute right-2 top-14 w-56 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
-              {tabs.map(tab => {
+        {openMobile && (
+          <div className="absolute right-2 top-14 w-56 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
+            {tabs
+              .filter((t) => t.href !== "/thepin")
+              .map((tab) => {
                 const active = pathname === tab.href
                 return (
                   <Link
@@ -257,10 +198,24 @@ export default function NavBar() {
                   </Link>
                 )
               })}
-            </div>
-          )}
-        </div>
+            {user && (
+              <Link
+                href="/profile"
+                onClick={() => setOpenMobile(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/profile"
+                    ? "bg-gray-100 font-semibold"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                {displayName || "Account"}
+              </Link>
+            )}
+          </div>
+        )}
       </div>
     </div>
-  )
+  </div>
+)
+
 }
