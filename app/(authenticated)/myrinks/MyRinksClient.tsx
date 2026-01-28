@@ -242,6 +242,8 @@ export default function PicksPage() {
       setRecentByPlayer(recentMap)
       setGamesCountByPlayer(gamesCountMap)
 
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
+
       const { data: nextGames } = await supabase
         .from("games")
         .select(`
@@ -252,7 +254,7 @@ export default function PicksPage() {
           team1:teams!games_team1_id_fkey ( team_name ),
           team2:teams!games_team2_id_fkey ( team_name )
         `)
-        .gt("game_datetime", new Date().toISOString())
+        .gt("game_datetime", fourHoursAgo)
         .order("game_datetime", { ascending: true })
 
       const nextMap: AnyMap<any> = {}
@@ -597,7 +599,7 @@ export default function PicksPage() {
                           <th className="py-2 px-2 sm:px-3 text-left">Name</th>
                           <th className="py-2 px-2 sm:px-3 text-left">Team</th>
                           <th className="py-2 px-2 sm:px-3 text-left bg-blue-200">
-                            Recent Draws
+                            Recent Draw
                           </th>
                           <th className="py-2 px-2 sm:px-3 text-center bg-blue-200">
                             Indv %

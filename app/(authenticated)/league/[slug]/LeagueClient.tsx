@@ -1019,7 +1019,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                 </div>
 
                 {league.description && (
-                <p className="text-gray-700 text-sm mt-1 italic">{league.description}</p>
+                <p className="text-gray-700 text-sm mt-2 italic">{league.description}</p>
                 )}
 
                 <p className="text-sm sm:text-md text-gray mt-2">

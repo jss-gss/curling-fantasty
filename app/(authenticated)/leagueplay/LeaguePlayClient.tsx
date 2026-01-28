@@ -334,17 +334,16 @@ export default function LeaguesPage() {
     }
 
     return (
-      <div className="flex relative items-center justify-between bg-white shadow-md p-6 border border-gray-200 rounded-lg">
-        {/* left side */}
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <h2
-              className="text-2xl font-semibold hover:underline cursor-pointer"
-              onClick={() => router.push(`/league/${league.slug}`)}
-            >
-              {league.name}
-            </h2>
-
+      <div className="bg-white shadow-md border border-gray-200 rounded-lg">
+        <div className="p-4 sm:hidden">
+          <h2
+            className="mt-2 text-lg font-semibold leading-snug hover:underline cursor-pointer break-words"
+            onClick={() => router.push(`/league/${league.slug}`)}
+          >
+            {league.name}
+          </h2>
+          
+          <div className="flex flex-wrap items-center mt-1 gap-2">
             {league.is_public ? (
               <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                 public
@@ -369,44 +368,135 @@ export default function LeaguesPage() {
           </div>
 
           {league.description && (
-            <p className="text-gray-700 text-sm mt-1 italic">{league.description}</p>
+            <p className="text-gray-700 text-sm mt-2 italic break-words">
+              {league.description}
+            </p>
           )}
 
-          <p className="text-md text-gray mt-3">
+          <div className="mt-2 text-sm text-gray-700 break-words">
             {league.curling_events.year} {league.curling_events.name} in{" "}
             {league.curling_events.location}
-          </p>
+          </div>
 
-          <p className="text-sm text-gray-600 mt-3">
-            <strong>Created By:</strong>{" "}
-            {league.users?.is_public ? (
-              <a
-                href={`/profile/${league.users.username}`}
-                className="text-blue-600 hover:underline"
-              >
-                {league.users.username}
-              </a>
-            ) : (
-              <span>{league.users?.username}</span>
-            )}
-            <strong> • Draft:</strong>{" "}
-            {new Date(league.draft_date).toLocaleString("en-US", {
-              timeZone: "America/New_York",
-              dateStyle: "short",
-              timeStyle: "short",
-            })}{" "}
-            ET <strong>• Event Starts:</strong>{" "}
-            {formatDate(league.curling_events.start_date)}{" "}
-            <strong>• Round Robin Ends:</strong>{" "}
-            {formatDate(league.curling_events.round_robin_end_date)}{" "}
-            <strong> • Participants:</strong>{" "}
-            {(league.fantasy_event_users?.length ?? 0)}
-            {isOpen && ` / ${league.max_users}`}
-          </p>
+          <div className="mt-2 space-y-1 text-sm text-gray-600">
+            <div>
+              <span className="font-semibold">Created By:</span>{" "}
+              {league.users?.is_public ? (
+                <a
+                  href={`/profile/${league.users.username}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  {league.users.username}
+                </a>
+              ) : (
+                <span>{league.users?.username}</span>
+              )}
+            </div>
+
+            <div>
+              <span className="font-semibold">Draft:</span>{" "}
+              {new Date(league.draft_date).toLocaleString("en-US", {
+                timeZone: "America/New_York",
+                dateStyle: "short",
+                timeStyle: "short",
+              })}{" "}
+              ET
+            </div>
+
+            <div>
+              <span className="font-semibold">Event Starts:</span>{" "}
+              {formatDate(league.curling_events.start_date)}
+            </div>
+
+            <div>
+              <span className="font-semibold">Round Robin Ends:</span>{" "}
+              {formatDate(league.curling_events.round_robin_end_date)}
+            </div>
+
+            <div>
+              <span className="font-semibold">Participants:</span>{" "}
+              {(league.fantasy_event_users?.length ?? 0)}
+              {isOpen && ` / ${league.max_users}`}
+            </div>
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            {renderLeagueAction()}
+          </div>
         </div>
 
-        {/* right side */}
-        <div className="flex flex-col items-end gap-3">{renderLeagueAction()}</div>
+        <div className="hidden sm:flex relative items-center justify-between bg-white p-6">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <h2
+                className="text-2xl font-semibold hover:underline cursor-pointer"
+                onClick={() => router.push(`/league/${league.slug}`)}
+              >
+                {league.name}
+              </h2>
+
+              {league.is_public ? (
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                  public
+                </span>
+              ) : (
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                  private
+                </span>
+              )}
+
+              {is_commissioner && (
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                  draw master
+                </span>
+              )}
+
+              {isComplete && (
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
+                  completed
+                </span>
+              )}
+            </div>
+
+            {league.description && (
+              <p className="text-gray-700 text-sm mt-1 italic">{league.description}</p>
+            )}
+
+            <p className="text-md text-gray mt-3">
+              {league.curling_events.year} {league.curling_events.name} in{" "}
+              {league.curling_events.location}
+            </p>
+
+            <p className="text-sm text-gray-600 mt-3">
+              <strong>Created By:</strong>{" "}
+              {league.users?.is_public ? (
+                <a
+                  href={`/profile/${league.users.username}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  {league.users.username}
+                </a>
+              ) : (
+                <span>{league.users?.username}</span>
+              )}
+              <strong> • Draft:</strong>{" "}
+              {new Date(league.draft_date).toLocaleString("en-US", {
+                timeZone: "America/New_York",
+                dateStyle: "short",
+                timeStyle: "short",
+              })}{" "}
+              ET <strong>• Event Starts:</strong>{" "}
+              {formatDate(league.curling_events.start_date)}{" "}
+              <strong>• Round Robin Ends:</strong>{" "}
+              {formatDate(league.curling_events.round_robin_end_date)}{" "}
+              <strong> • Participants:</strong>{" "}
+              {(league.fantasy_event_users?.length ?? 0)}
+              {isOpen && ` / ${league.max_users}`}
+            </p>
+          </div>
+
+          <div className="flex flex-col items-end gap-3">{renderLeagueAction()}</div>
+        </div>
       </div>
     )
   }
@@ -608,143 +698,164 @@ export default function LeaguesPage() {
         league={editingLeague}
       />
 
-      <div className="max-w-6xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold mb-8">League Play</h1>
+      <div className="w-full px-3 sm:px-6 py-6 sm:py-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <div className="flex items-center justify-between sm:block">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-6">League Play</h1>
 
-        <div className="flex items-center justify-between mb-10">
-          <div className="flex gap-4">
-            {[
-              { key: "mine", label: "My Leagues" },
-              { key: "explore", label: "Explore Available Leagues" }
-            ].map(tab => (
               <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key as any)}
-                className={`px-4 py-2 rounded-md ${
-                  activeTab === tab.key ? "bg-[#1f4785] text-white" : "text-gray-700"
+                disabled={activeLeagueCount >= 2}
+                onClick={() => {
+                  setEditingLeague(null)
+                  setShowModal(true)
+                }}
+                className={`sm:hidden w-10 h-10 flex items-center justify-center rounded-full text-white text-2xl shadow-md transition ${
+                  activeLeagueCount >= 2
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-[#1f4785] hover:bg-[#163766]"
                 }`}
               >
-                {tab.label}
+                +
               </button>
-            ))}
+            </div>
+
+            <div className="mt-4 flex items-center justify-center sm:justify-between">
+              <div className="flex gap-2 sm:gap-4">
+                {[
+                  { key: "mine", label: "My Leagues" },
+                  { key: "explore", label: "Explore Available Leagues" }
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key as any)}
+                    className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-sm sm:text-base transition ${
+                      activeTab === tab.key ? "bg-[#1f4785] text-white" : "text-gray-700"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative group hidden sm:block">
+                <button
+                  disabled={activeLeagueCount >= 2}
+                  onClick={() => {
+                    setEditingLeague(null)
+                    setShowModal(true)
+                  }}
+                  className={`w-12 h-12 flex items-center justify-center rounded-full text-white text-2xl shadow-md transition ${
+                    activeLeagueCount >= 2
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-[#1f4785] hover:bg-[#163766]"
+                  }`}
+                >
+                  +
+                </button>
+
+                <span
+                  className={`absolute left-1/2 -translate-x-1/2 -bottom-12 whitespace-nowrap px-3 py-1 rounded-md text-sm backdrop-blur-sm transition pointer-events-none ${
+                    activeLeagueCount >= 2 ? "bg-red-200 text-red-800" : "bg-white/60 text-black"
+                  } opacity-0 group-hover:opacity-100`}
+                >
+                  {activeLeagueCount >= 2
+                    ? "Limit reached - max two active drafts"
+                    : "Create League"}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="relative group">
-            <button
-              disabled={activeLeagueCount >= 2}
-              onClick={() => {
-                setEditingLeague(null)
-                setShowModal(true)
-              }}
-              className={`w-12 h-12 flex items-center justify-center rounded-full text-white text-2xl shadow-md transition ${
-                activeLeagueCount >= 2
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-[#1f4785] hover:bg-[#163766]"
-              }`}
-            >
-              +
-            </button>
+          {loading && (
+            <p className="w-full flex justify-center mt-20 text-gray-600">Loading...</p>
+          )}
 
-            <span
-              className={`absolute left-1/2 -translate-x-1/2 -bottom-12 whitespace-nowrap px-3 py-1 rounded-md text-sm backdrop-blur-sm transition pointer-events-none ${
-                activeLeagueCount >= 2 ? "bg-red-200 text-red-800" : "bg-white/60 text-black"
-              } opacity-0 group-hover:opacity-100`}
-            >
-              {activeLeagueCount >= 2
-                ? "Limit reached - max two active drafts"
-                : "Create League"}
-            </span>
-          </div>
-        </div>
+          {activeTab === "mine" && (
+            <>
+              {completedLeagues.length > 0 && (
+                <>
+                  <h3 className="text-xl sm:text-2xl font-bold mb-3 mt-6">Completed Leagues</h3>
+                  <div className="flex flex-col gap-6 mb-10">
+                    {completedLeagues.map(league => (
+                      <LeagueCard key={league.id} league={league} />
+                    ))}
+                  </div>
+                </>
+              )}
 
-        {loading && (
-          <p className="w-full flex justify-center mt-20 text-gray-600">Loading...</p>
-        )}
-
-        {activeTab === "mine" && (
-          <>
-            {completedLeagues.length > 0 && (
-              <>
-                <h3 className="text-xl font-semibold mb-3 mt-6">Completed Leagues</h3>
-                <div className="flex flex-col gap-6 mb-10">
-                  {completedLeagues.map(league => (
+              <h3 className="text-xl sm:text-2xl font-bold mb-3 mt-6">Active Leagues</h3>
+              <div className="flex flex-col gap-6 mb-10">
+                {myActiveLeagues.length > 0 ? (
+                  myActiveLeagues.map(league => (
                     <LeagueCard key={league.id} league={league} />
-                  ))}
-                </div>
-              </>
-            )}
+                  ))
+                ) : (
+                  <p className="text-gray-600">No active leagues.</p>
+                )}
+              </div>
 
-            <h3 className="text-xl font-semibold mb-3 mt-6">Active Leagues</h3>
-            <div className="flex flex-col gap-6 mb-10">
-              {myActiveLeagues.length > 0 ? (
-                myActiveLeagues.map(league => (
-                  <LeagueCard key={league.id} league={league} />
-                ))
-              ) : (
-                <p className="text-gray-600">No active leagues.</p>
-              )}
-            </div>
+              <h3 className="text-xl font-semibold mb-3 mt-6">Upcoming Drafts</h3>
+              <div className="flex flex-col gap-6 mb-10">
+                {myUpcomingDrafts.length > 0 ? (
+                  myUpcomingDrafts.map(league => (
+                    <LeagueCard key={league.id} league={league} />
+                  ))
+                ) : (
+                  <p className="text-gray-600">No upcoming drafts.</p>
+                )}
+              </div>
 
-            <h3 className="text-xl font-semibold mb-3 mt-6">Upcoming Drafts</h3>
-            <div className="flex flex-col gap-6 mb-10">
-              {myUpcomingDrafts.length > 0 ? (
-                myUpcomingDrafts.map(league => (
-                  <LeagueCard key={league.id} league={league} />
-                ))
-              ) : (
-                <p className="text-gray-600">No upcoming drafts.</p>
-              )}
-            </div>
+              <h3 className="text-xl font-semibold mb-3 mt-6">Draw Master Leagues</h3>
+              <div className="flex flex-col gap-6 mb-10">
+                {commissionedLeagues.length > 0 ? (
+                  commissionedLeagues.map(league => (
+                    <LeagueCard key={league.id} league={league} commissionerView />
+                  ))
+                ) : (
+                  <p className="text-gray-600">You haven't created any leagues yet.</p>
+                )}
+              </div>
+            </>
+          )}
 
-            <h3 className="text-xl font-semibold mb-3 mt-6">Draw Master Leagues</h3>
-            <div className="flex flex-col gap-6 mb-10">
-              {commissionedLeagues.length > 0 ? (
-                commissionedLeagues.map(league => (
-                  <LeagueCard key={league.id} league={league} commissionerView />
-                ))
-              ) : (
-                <p className="text-gray-600">You haven't created any leagues yet.</p>
-              )}
-            </div>
-          </>
-        )}
+          {activeTab === "explore" && (
+            <>
+              <h3 className="text-xl font-semibold mb-3 mt-6">Open Leagues</h3>
+              <div className="flex flex-col gap-6 mb-10">
+                {findAvailableLeagues.length > 0 ? (
+                  findAvailableLeagues.map(league => (
+                    <LeagueCard key={league.id} league={league} />
+                  ))
+                ) : (
+                  <p className="text-gray-600">No leagues available.</p>
+                )}
+              </div>
 
-        {activeTab === "explore" && (
-          <>
-            <h3 className="text-xl font-semibold mb-3 mt-6">Open Leagues</h3>
-            <div className="flex flex-col gap-6 mb-10">
-              {findAvailableLeagues.length > 0 ? (
-                findAvailableLeagues.map(league => (
-                  <LeagueCard key={league.id} league={league} />
-                ))
-              ) : (
-                <p className="text-gray-600">No leagues available.</p>
-              )}
-            </div>
+              <h3 className="text-xl font-semibold mb-3 mt-6">Private Invites</h3>
+              <div className="flex flex-col gap-6 mb-10">
+                {privateInvites.length > 0 ? (
+                  privateInvites.map(league => (
+                    <LeagueCard key={league.id} league={league} invitedView />
+                  ))
+                ) : (
+                  <p className="text-gray-600">No private league invites.</p>
+                )}
+              </div>
 
-            <h3 className="text-xl font-semibold mb-3 mt-6">Private Invites</h3>
-            <div className="flex flex-col gap-6 mb-10">
-              {privateInvites.length > 0 ? (
-                privateInvites.map(league => (
-                  <LeagueCard key={league.id} league={league} invitedView />
-                ))
-              ) : (
-                <p className="text-gray-600">No private league invites.</p>
-              )}
-            </div>
-
-            <h3 className="text-xl font-semibold mb-3 mt-6">Full Leagues</h3>
-            <div className="flex flex-col gap-6 mb-10">
-              {fullLeagues.length > 0 ? (
-                fullLeagues.map(league => (
-                  <LeagueCard key={league.id} league={league} />
-                ))
-              ) : (
-                <p className="text-gray-600">No full leagues.</p>
-              )}
-            </div>
-          </>
-        )}
+              <h3 className="text-xl font-semibold mb-3 mt-6">Full Leagues</h3>
+              <div className="flex flex-col gap-6 mb-10">
+                {fullLeagues.length > 0 ? (
+                  fullLeagues.map(league => (
+                    <LeagueCard key={league.id} league={league} />
+                  ))
+                ) : (
+                  <p className="text-gray-600">No full leagues.</p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </>
   )

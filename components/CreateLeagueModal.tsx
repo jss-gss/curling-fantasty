@@ -84,8 +84,8 @@ export default function CreateLeagueModal({
   const [usernames, setUsernames] = useState("")
   const [errors, setErrors] = useState<string[]>([])
   const [maxUsers, setMaxUsers] = useState<number>(0)
+  const [maxUsersInput, setMaxUsersInput] = useState("")
   const modalRef = useRef<HTMLDivElement | null>(null)
-
   const selectedEvent = events.find((ev) => String(ev.id) === String(eventId))
   const maxAllowedUsers = selectedEvent?.num_teams ?? 2
   const currentEnrolled = !isNew ? (league?.fantasy_event_users?.length ?? 0) : 0
@@ -100,6 +100,7 @@ export default function CreateLeagueModal({
       setIsPublic(league.is_public)
       setUsernames("")
       setMaxUsers(league.max_users ?? 2)
+      setMaxUsersInput(String(league.max_users ?? 2))
       return
     }
 
@@ -111,6 +112,7 @@ export default function CreateLeagueModal({
       setIsPublic(true)
       setUsernames("")
       setMaxUsers(2)
+      setMaxUsersInput("2")
     }
   }, [isNew, league])
 
@@ -225,7 +227,6 @@ export default function CreateLeagueModal({
             handleSubmit()
           }}
         >
-          {/* close */}
           <button
             type="button"
             onClick={onClose}
@@ -240,7 +241,7 @@ export default function CreateLeagueModal({
 
           {errors.length > 0 && (
             <div className="mb-4 bg-red-100 text-red-700 p-3 rounded">
-                <ul className="list-disc ml-5 text-xs sm:text-sm">
+              <ul className="list-disc ml-5 text-xs sm:text-sm">
                 {errors.map((err, idx) => (
                   <li key={idx}>{err}</li>
                 ))}
@@ -248,7 +249,6 @@ export default function CreateLeagueModal({
             </div>
           )}
 
-          {/* visibility toggle */}
           <div className="flex items-center gap-1 text-xs mb-3 sm:mb-0 sm:absolute sm:top-8 sm:right-8">
             {isNew ? (
               <>
@@ -275,7 +275,6 @@ export default function CreateLeagueModal({
             )}
           </div>
 
-          {/* event select / event label */}
           {isNew ? (
             <select
               value={eventId}
@@ -315,8 +314,8 @@ export default function CreateLeagueModal({
             className="w-full border px-2 py-1.5 sm:p-2 rounded mb-1"
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            <div>
+          <div className="flex gap-2 mb-3 flex-nowrap">
+            <div className="w-75 shrink-0">
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Draft Date <span className="text-gray-500 text-xs italic">(ET)</span>
               </label>
@@ -328,8 +327,8 @@ export default function CreateLeagueModal({
               />
             </div>
 
-            <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+            <div className="flex-1 min-w-0">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Max Participants
                 {selectedEvent && (
                   <span className="text-xs text-gray-500 ml-1">
@@ -341,10 +340,14 @@ export default function CreateLeagueModal({
                 type="number"
                 min={minAllowedUsers}
                 max={maxAllowedUsers}
-                value={maxUsers}
+                value={maxUsersInput}
                 onChange={(e) => {
-                  const v = Number(e.target.value)
-                  setMaxUsers(Math.min(Math.max(v, minAllowedUsers), maxAllowedUsers))
+                  const raw = e.target.value
+                  setMaxUsersInput(raw)
+                  const parsed = Number(raw)
+                  if (!isNaN(parsed)) {
+                    setMaxUsers(Math.min(Math.max(parsed, minAllowedUsers), maxAllowedUsers))
+                  }
                 }}
                 className="w-full border px-2 py-1.5 sm:p-2 rounded"
                 disabled={!selectedEvent}
@@ -361,7 +364,6 @@ export default function CreateLeagueModal({
             />
           )}
 
-          {/* actions */}
           <button
             type="submit"
             className="w-full bg-[#234C6A] hover:bg-[#1B3C53] text-white py-2 rounded-md transition-colors"

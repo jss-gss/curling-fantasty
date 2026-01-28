@@ -553,39 +553,49 @@ export default function DraftClient({ slug }: DraftClientProps) {
             The {curlingEvent?.name ?? ""} event begins on{" "}
             {formatDate(curlingEvent?.start_date ?? "TBD")}{" "}
         </p>
+          <div className="flex justify-center mt-1 gap-6 text-gray-600 text-left">
+            <p>
+              Current Pick: <strong>{event?.current_pick ?? "…"}</strong>
+            </p>
+
+            <p>
+              User: <strong>{currentUser?.profiles?.username ?? "—"}</strong>
+            </p>
+          </div>
         </header>
 
         <div className="flex gap-6">
         <div className="w-1/4 flex flex-col gap-6">
-            <div className="bg-white shadow-md p-6 border border-gray-200 rounded-lg flex flex-col items-center justify-center h-64 text-center">
+          <div className="bg-white shadow-md p-6 border text-center border-gray-200 rounded-lg">
             <h2 className="text-xl font-semibold mb-3">Your Pick Number</h2>
-            <div className="text-5xl font-bold text-[#162a4a] mb-4">
-                {myPickNumber ?? "—"}
+            <div className="text-5xl font-bold text-[#162a4a]">
+              {myPickNumber ?? "—"}
             </div>
-            <p className="text-gray-600">
-                Current Pick: <strong>{event?.current_pick ?? "…"}</strong>
-            </p>
-            <p className="text-gray-600">
-                User:{" "}
-                <strong>
-                {currentUser?.profiles?.username ?? "—"}
-                </strong>
-            </p>
-
+          </div>
+          <div className="bg-white shadow-md p-6 text-center border border-gray-200 rounded-lg">
+            <div className="text-gray-600 text-center">
+              <span>Round: </span>
+              <span className="font-bold text-[#162a4a]">
+                {selectedPositionFilter === "all" ? "" : selectedPositionFilter}
+              </span>
             </div>
+          </div>
+          <div className="bg-white shadow-md p-6 text-center border border-gray-200 rounded-lg">
+            {event?.draft_status === "closed" && (
+              <div className="text-gray-600 text-center">
+                <span>Auto-pick in: </span>
+                <span className="font-bold text-[#162a4a]">
+                  {secondsLeft ?? "…"}s
+                </span>
+              </div>
+            )}
+         </div>
             <div className="bg-white shadow-md p-6 border border-gray-200 rounded-lg">
-              {event?.draft_status === "closed" && (
-                <p className="text-gray-600 text-center">
-                  Auto-pick in: <strong>{secondsLeft ?? "…"}</strong>s
-                </p>
-              )}
-            </div>
-            <div className="bg-white shadow-md p-6 border border-gray-200 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">Your Team</h2>
-            <p><strong>Lead:</strong> {slot("Lead")}</p>
-            <p><strong>Second:</strong> {slot("Second")}</p>
-            <p><strong>Vice Skip:</strong> {slot("Vice Skip")}</p>
-            <p><strong>Skip:</strong> {slot("Skip")}</p>
+              <h2 className="text-xl font-semibold mb-4">Your Team</h2>
+              <p><strong>Lead:</strong> {slot("Lead")}</p>
+              <p><strong>Second:</strong> {slot("Second")}</p>
+              <p><strong>Vice Skip:</strong> {slot("Vice Skip")}</p>
+              <p><strong>Skip:</strong> {slot("Skip")}</p>
             </div>
         </div>
 
@@ -593,13 +603,15 @@ export default function DraftClient({ slug }: DraftClientProps) {
             {myTurn ? (
             <>
               <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                </div>
+
                 <table className="w-full text-left border-collapse rounded-lg overflow-hidden">
                 <thead>
                     <tr className="bg-gray-100 text-gray-700">
                     <th className="py-3 px-4">#</th>
                     <th className="py-3 px-4">Name</th>
                     <th className="py-3 px-4">Team</th>
-                    <th className="py-3 px-4">Position</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -621,9 +633,6 @@ export default function DraftClient({ slug }: DraftClientProps) {
                         <td className="py-3 px-4">
                         {teamMap[p.team_id] ?? "Unknown"}
                         </td>
-                        <td className="py-3 px-4">
-                        {p.position}
-                        </td>
                     </tr>
                     ))}
                 </tbody>
@@ -639,44 +648,49 @@ export default function DraftClient({ slug }: DraftClientProps) {
         </div>
         </div>
         {showModal && selectedPlayer && (
-          <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="relative bg-white p-6 shadow-xl rounded-lg w-96 border border-gray-200">
+        <div
+          className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="relative bg-white p-6 shadow-xl rounded-lg w-96 border border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* X button */}
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
 
-              {/* X button */}
-              <button
-                onClick={() => setShowModal(false)}
-                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
+            <h3 className="text-xl mb-4">Add Player</h3>
 
-              <h3 className="text-xl mb-4">Add Player</h3>
-
-              {/* Name */}
-              <div className="flex items-center gap-4 mb-6">
-                <div>
-                  <p className="text-lg font-semibold font-medium">
-                    {selectedPlayer.first_name} {selectedPlayer.last_name}
-                  </p>
-                  <p className="text-gray-600">
-                    from <strong>{teamMap[selectedPlayer.team_id]}</strong>
-                  </p>
-                </div>
+            {/* Name */}
+            <div className="flex items-center gap-4 mb-6">
+              <div>
+                <p className="text-lg font-semibold font-medium">
+                  {selectedPlayer.first_name} {selectedPlayer.last_name}
+                </p>
+                <p className="text-gray-600">
+                  from <strong>{teamMap[selectedPlayer.team_id]}</strong>
+                </p>
               </div>
-
-              {/* Confirm button */}
-              <button
-                disabled={isSubmitting}
-                onClick={handleConfirm}
-                className={`w-full py-2 rounded-md text-white 
-                  ${isSubmitting ? "bg-gray-400" : "bg-[#234C6A] hover:bg-[#163766]"}
-                `}
-              >
-                {isSubmitting ? "Submitting..." : "Confirm Pick"}
-              </button>
             </div>
+
+            {/* Confirm button */}
+            <button
+              disabled={isSubmitting}
+              onClick={handleConfirm}
+              className={`w-full py-2 rounded-md text-white 
+                ${isSubmitting ? "bg-gray-400" : "bg-[#234C6A] hover:bg-[#163766]"}
+              `}
+            >
+              {isSubmitting ? "Submitting..." : "Confirm Pick"}
+            </button>
           </div>
-        )}
+        </div>
+      )}
       </div>
 
       {achievementModal && (

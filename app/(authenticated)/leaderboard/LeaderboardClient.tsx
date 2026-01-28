@@ -233,7 +233,7 @@ export default function LeagueLeaderboardPage() {
                       className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-sm sm:text-base transition ${
                         activeTab === tab.key
                           ? "bg-[#1f4785] text-white"
-                          : "text-[#1f4785]"
+                          : "text-gray-700"
                       }`}
                     >
                       {tab.label}
