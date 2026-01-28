@@ -242,7 +242,7 @@ export default function PicksPage() {
       setRecentByPlayer(recentMap)
       setGamesCountByPlayer(gamesCountMap)
 
-      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
+      const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
 
       const { data: nextGames } = await supabase
         .from("games")
@@ -254,7 +254,7 @@ export default function PicksPage() {
           team1:teams!games_team1_id_fkey ( team_name ),
           team2:teams!games_team2_id_fkey ( team_name )
         `)
-        .gt("game_datetime", fourHoursAgo)
+        .gt("game_datetime", threeHoursAgo)
         .order("game_datetime", { ascending: true })
 
       const nextMap: AnyMap<any> = {}
