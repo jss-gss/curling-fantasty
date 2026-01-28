@@ -1,15 +1,16 @@
-"use client";
+"use client"
 
-import { useEffect, ReactNode } from "react";
-import confetti from "canvas-confetti";
+import { useEffect, ReactNode } from "react"
+import confetti from "canvas-confetti"
 
 interface AchievementModalProps {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  description?: string | null;
-  icon: ReactNode;
-  viewOnly?: boolean;
+  open: boolean
+  onClose: () => void
+  title: string
+  description?: string | null
+  icon: ReactNode
+  viewOnly?: boolean
+  earnedAt?: string | null
 }
 
 export default function AchievementModal({
@@ -18,7 +19,8 @@ export default function AchievementModal({
   title,
   description,
   icon,
-  viewOnly = false
+  viewOnly = false,
+  earnedAt
 }: AchievementModalProps) {
   useEffect(() => {
     if (open && !viewOnly) {
@@ -26,11 +28,17 @@ export default function AchievementModal({
         particleCount: 140,
         spread: 80,
         origin: { y: 0.6 }
-      });
+      })
     }
-  }, [open, viewOnly]);
+  }, [open, viewOnly])
 
-  if (!open) return null;
+  if (!open) return null
+
+  function formatDate(dateString: string) {
+    const cleaned = dateString.replace("T", " ").split(" ")[0]; 
+    const [year, month, day] = cleaned.split("-");
+    return `${month}/${day}/${year}`;
+  }
 
   return (
     <div
@@ -66,14 +74,12 @@ export default function AchievementModal({
           <p className="text-gray-600 mb-4">{description}</p>
         )}
 
-        {!viewOnly && (
-          <>
-            <p className="text-sm text-gray-600 italic mb-6">
-              You’re really sweeping up the milestones.
-            </p>
-          </>
+        {viewOnly && earnedAt && (
+          <p className="text-xs text-gray-500 italic mb-4">
+          Earned on {formatDate(earnedAt)}
+          </p>
         )}
       </div>
     </div>
-  );
+  )
 }

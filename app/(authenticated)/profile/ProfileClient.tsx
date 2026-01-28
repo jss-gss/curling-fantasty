@@ -1,21 +1,22 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { achievementIcons } from "@/lib/achievementIcons";
+import { achievementIcons } from "@/lib/achievementIcons"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
-import type { AchievementId } from "@/lib/achievementIcons";
+import type { AchievementId } from "@/lib/achievementIcons"
 import Image from "next/image"
-import AchievementModal from "@/components/AchievementModal";
+import AchievementModal from "@/components/AchievementModal"
 
 type UserAchievement = {
-  achievement_id: string;
+  achievement_id: string
   achievements: {
-    code: AchievementId | null;
-    name: string | null;
-    description: string | null;
+    code: AchievementId | null
+    name: string | null
+    description: string | null
   }
+  earned_at: string
 }
 
 export default function ProfileClient() {
@@ -33,12 +34,13 @@ export default function ProfileClient() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false)
   const [selectedAchievement, setSelectedAchievement] = useState<{
-    title: string | null;
-    description: string | null;
-    icon: string | null;
-  } | null>(null);
+    title: string | null
+    description: string | null
+    icon: string | null
+    earnedAt: string | null
+  } | null>(null)
 
   const [yearsPlayed, setYearsPlayed] = useState("")
   const [favoriteClub, setFavoriteClub] = useState("")
@@ -47,7 +49,7 @@ export default function ProfileClient() {
   const [favoriteProTeam, setFavoriteProTeam] = useState("")
   const [wouldRather, setWouldRather] = useState<string | null>(null)
   const [mostCurlingThing, setMostCurlingThing] = useState("")
-  const [achievements, setAchievements] = useState<UserAchievement[]>([]);  
+  const [achievements, setAchievements] = useState<UserAchievement[]>([])  
   const [walkupMusic, setWalkupMusic] = useState("")
   const [hotTake, setHotTake] = useState("")
   const shotOptions = ["Guard", "Draw", "Takeout", "Plan B"]
@@ -59,65 +61,67 @@ export default function ProfileClient() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push("/login");
-        return;
+        router.push("/login")
+        return
       }
 
       const res = await fetch("/api/check-auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id })
-      });
+      })
 
-      const auth = await res.json();
+      const auth = await res.json()
       if (!auth.allowed) {
-        router.push("/login");
-        return;
+        router.push("/login")
+        return
       }
 
-      setUser(user);
+      setUser(user)
 
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .single()
 
-      setProfile(profileData);
-      setIsPublic(profileData?.is_public);
+      setProfile(profileData)
+      setIsPublic(profileData?.is_public)
 
-      setYearsPlayed(profileData?.years_played ?? "");
-      setFavoriteClub(profileData?.favorite_club ?? "");
-      setGoToShot(profileData?.go_to_shot?.[0] ?? null);
-      setTradition(profileData?.tradition ?? "");
-      setFavoriteProTeam(profileData?.favorite_pro_team ?? "");
-      setWouldRather(profileData?.would_rather?.[0] ?? null);
-      setMostCurlingThing(profileData?.most_curling_thing ?? "");
-      setWalkupMusic(profileData?.walkup_music ?? "");
-      setHotTake(profileData?.hot_take ?? "");
+      setYearsPlayed(profileData?.years_played ?? "")
+      setFavoriteClub(profileData?.favorite_club ?? "")
+      setGoToShot(profileData?.go_to_shot?.[0] ?? null)
+      setTradition(profileData?.tradition ?? "")
+      setFavoriteProTeam(profileData?.favorite_pro_team ?? "")
+      setWouldRather(profileData?.would_rather?.[0] ?? null)
+      setMostCurlingThing(profileData?.most_curling_thing ?? "")
+      setWalkupMusic(profileData?.walkup_music ?? "")
+      setHotTake(profileData?.hot_take ?? "")
 
-      const { data: achievementsData } = await supabase
-        .from("user_achievements")
-        .select(`
-          achievement_id,
-          achievements (
-            code,
-            name,
-            description
-          )
-        `)
-        .eq("user_id", user.id);
+    const { data: achievementsData } = await supabase
+      .from("user_achievements")
+      .select(`
+        achievement_id,
+        earned_at,
+        achievements (
+          code,
+          name,
+          description
+        )
+      `)
+      .eq("user_id", user.id)
 
       setAchievements(
         (achievementsData ?? []).map((a) => {
           const row = Array.isArray(a.achievements)
             ? a.achievements[0]
-            : a.achievements;
+            : a.achievements
 
           return {
             achievement_id: a.achievement_id,
+            earned_at: a.earned_at,
             achievements: {
               code: row?.code ?? null,
               name: row?.name ?? null,
@@ -125,12 +129,12 @@ export default function ProfileClient() {
             },
           }
         })
-      );
+      )
 
       setLoading(false)
     }
 
-    load();
+    load()
   }, [router])
 
   useEffect(() => {
@@ -303,13 +307,13 @@ export default function ProfileClient() {
 
                   <button
                     onClick={async () => {
-                      const newValue = !isPublic;
-                      setIsPublic(newValue);
+                      const newValue = !isPublic
+                      setIsPublic(newValue)
 
                       await supabase
                         .from("profiles")
                         .update({ is_public: newValue })
-                        .eq("id", profile.id);
+                        .eq("id", profile.id)
                     }}
                     className={`w-10 h-5 rounded-full relative transition ${
                       isPublic ? "bg-blue-500" : "bg-gray-400"
@@ -328,17 +332,17 @@ export default function ProfileClient() {
                 {/* EDIT BUTTON */}
                 <button
                   onClick={() => {
-                    setNewUsername(profile?.username || "");
-                    setYearsPlayed(profile?.years_played ?? "");
-                    setFavoriteClub(profile?.favorite_club ?? "");
-                    setGoToShot(profile?.go_to_shot?.[0] ?? null);
-                    setTradition(profile?.tradition ?? "");
-                    setFavoriteProTeam(profile?.favorite_pro_team ?? "");
-                    setWouldRather(profile?.would_rather?.[0] ?? null);
-                    setMostCurlingThing(profile?.most_curling_thing ?? "");
-                    setWalkupMusic(profile?.walkup_music ?? "");
-                    setHotTake(profile?.hot_take ?? "");
-                    setIsEditing(true);
+                    setNewUsername(profile?.username || "")
+                    setYearsPlayed(profile?.years_played ?? "")
+                    setFavoriteClub(profile?.favorite_club ?? "")
+                    setGoToShot(profile?.go_to_shot?.[0] ?? null)
+                    setTradition(profile?.tradition ?? "")
+                    setFavoriteProTeam(profile?.favorite_pro_team ?? "")
+                    setWouldRather(profile?.would_rather?.[0] ?? null)
+                    setMostCurlingThing(profile?.most_curling_thing ?? "")
+                    setWalkupMusic(profile?.walkup_music ?? "")
+                    setHotTake(profile?.hot_take ?? "")
+                    setIsEditing(true)
                   }}
                   className="px-2 py-1 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400"
                 >
@@ -410,11 +414,11 @@ export default function ProfileClient() {
 
                 <div className="flex gap-4 flex-wrap">
                   {achievements.map((a) => {
-                    const code = a.achievements.code;
-                    if (!code) return null;
+                    const code = a.achievements.code
+                    if (!code) return null
 
-                    const icon = achievementIcons[code];
-                    if (!icon) return null;
+                    const icon = achievementIcons[code]
+                    if (!icon) return null
 
                     return (
                       <button
@@ -423,9 +427,10 @@ export default function ProfileClient() {
                           setSelectedAchievement({
                             title: a.achievements.name,
                             description: a.achievements.description,
-                            icon: a.achievements.code ? achievementIcons[a.achievements.code] : null
-                          });
-                          setModalOpen(true);
+                            icon: a.achievements.code ? achievementIcons[a.achievements.code] : null,
+                            earnedAt: a.earned_at
+                          })
+                          setModalOpen(true)
                         }}
                         className="hover:scale-105 transition"
                       >
@@ -723,10 +728,11 @@ export default function ProfileClient() {
                 ) : null
               }
               viewOnly={true}
+              earnedAt={selectedAchievement?.earnedAt ?? null}
             />
           )}
         </div>
       </div>
     </>
-  );
+  )
 }

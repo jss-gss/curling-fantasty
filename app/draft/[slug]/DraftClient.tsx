@@ -81,13 +81,6 @@ export default function DraftClient({ slug }: DraftClientProps) {
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
 
   useEffect(() => {
-    if (!event) return
-    if (event.draft_status === "locked") {
-      router.push("/myrinks")
-    }
-  }, [event?.draft_status])
-
-  useEffect(() => {
     const loadAchievements = async () => {
       const { data } = await supabase
         .from("achievements")
@@ -155,17 +148,32 @@ export default function DraftClient({ slug }: DraftClientProps) {
     }
   }, [slug, router])
 
-  const currentIndex = useMemo(
-    () => (event ? (event.current_pick ?? 1) - 1 : 0),
-    [event]
-  )
+  // snake
+  function snakeDraftIndex(currentPick: number, numUsers: number) {
+    if (numUsers <= 0) return 0
+    const round = Math.floor((currentPick - 1) / numUsers) + 1
+    const offset = (currentPick - 1) % numUsers
+    return round % 2 === 1 ? offset : (numUsers - 1 - offset)
+  }
 
-  const currentUser = useMemo(
-    () => (users.length ? users[currentIndex] ?? null : null),
-    [users, currentIndex]
-  )
+  const { currentUser, myTurn, currentIndex } = useMemo(() => {
+    const pick = event?.current_pick ?? 1
+    const n = users.length
+    const index0 = Math.max(pick - 1, 0)
 
-  const myTurn = currentUser?.user_id === userId
+    if (!event || n === 0) {
+      return { currentUser: null as FantasyEventUser | null, myTurn: false, currentIndex: index0 }
+    }
+
+    const userIndex = snakeDraftIndex(pick, n)
+    const cu = users[userIndex] ?? null
+    const turn = !!(userId && cu?.user_id === userId)
+
+    return { currentUser: cu, myTurn: turn, currentIndex: index0 }
+  }, [event?.current_pick, users, userId])
+
+  const currentPickSlot =
+    currentUser?.draft_position ?? "…"
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
@@ -409,30 +417,21 @@ export default function DraftClient({ slug }: DraftClientProps) {
     return map
   }, [teams])
 
-  useEffect(() => {
-    if (!userId || !event?.id) return
-
-    const myPickCount =
-      (picks ?? []).filter((p: any) => p.user_id === userId).length
-
-    if (myPickCount >= 4) {
-      router.push("/myrinks")
-    }
-  }, [picks, userId, event?.id])
-
   async function handleConfirm() {
     if (!userId || !selectedPlayer || !event?.id) return
 
+    const pickedPlayer = selectedPlayer
+
     setIsSubmitting(true)
     setShowModal(false)
-    setPlayers(prev => prev.filter(p => p.id !== selectedPlayer.id))
+    setPlayers(prev => prev.filter(p => p.id !== pickedPlayer.id))
 
     const res = await fetch("/api/pickPlayer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         eventId: event.id,
-        playerId: selectedPlayer.id,
+        playerId: pickedPlayer.id,
         userId,
       }),
     })
@@ -442,59 +441,44 @@ export default function DraftClient({ slug }: DraftClientProps) {
     setSelectedPlayer(null)
     setIsSubmitting(false)
 
-    if (!res.ok) {
-      return
-    }
+    if (!res.ok) return
 
-    await refreshDraftState(event.id)
+    const isHoman =
+      pickedPlayer.first_name?.trim().toLowerCase() === "rachel" &&
+      pickedPlayer.last_name?.trim().toLowerCase() === "homan"
 
-        if (
-      selectedPlayer.first_name?.trim().toLowerCase() === "rachel" &&
-      selectedPlayer.last_name?.trim().toLowerCase() === "homan"
-    ) {
-      const { data: homanRow, error: homanErr } = await supabase
+    if (isHoman) {
+      setPendingRedirect(true)
+      setAchievementModal("HOMAN_WARRIOR")
+
+      const { data: homanRow } = await supabase
         .from("achievements")
         .select("id, code, name, description")
         .eq("code", "HOMAN_WARRIOR")
         .single()
 
-      if (homanErr || !homanRow) {
-        console.error("HOMAN_WARRIOR achievement not found or query failed:", homanErr)
-        setAchievementModal("HOMAN_WARRIOR")
-        setPendingRedirect(true)
-        return
+      if (homanRow?.id) {
+        await supabase
+          .from("user_achievements")
+          .upsert(
+            { user_id: userId, achievement_id: homanRow.id },
+            { onConflict: "user_id,achievement_id" }
+          )
+
+        setAchievements(prev => {
+          const exists = prev.some(a => a.code === homanRow.code)
+          return exists ? prev : [...prev, homanRow]
+        })
       }
 
-      const { error: upsertErr } = await supabase
-        .from("user_achievements")
-        .upsert(
-          { user_id: userId, achievement_id: homanRow.id },
-          { onConflict: "user_id,achievement_id" }
-        )
-
-      if (upsertErr) {
-        console.error("Failed to upsert user_achievements for HOMAN_WARRIOR:", upsertErr)
-      }
-
-      setAchievements(prev => {
-        const exists = prev.some(a => a.code === homanRow.code)
-        return exists ? prev : [...prev, homanRow]
-      })
-
-      setAchievementModal("HOMAN_WARRIOR")
-      setPendingRedirect(true)
       return
     }
 
-    const myPickCount =
-      (picks ?? []).filter((p: any) => p.user_id === userId).length
+    await refreshDraftState(event.id)
 
-    if (myPickCount >= 4) {
-      router.push("/myrinks")
-      return
-    }
+    const myPickCount = (picks ?? []).filter((p: any) => p.user_id === userId).length
 
-    if (data?.draftFinished) {
+    if (myPickCount >= 4 || data?.draftFinished) {
       router.push("/myrinks")
     }
   }
@@ -546,16 +530,16 @@ export default function DraftClient({ slug }: DraftClientProps) {
     <>
       <div className="p-6 flex flex-col gap-6 bg-[#234C6A]">
         <header className="bg-white shadow-md p-6 border border-gray-200 text-center rounded-lg">
-        <h1 className="text-4xl font-bold">
-            Draft Room - {event?.name ?? "Loading..."}
-        </h1>
-        <p className="text-gray-600 mt-1">
-            The {curlingEvent?.name ?? ""} event begins on{" "}
-            {formatDate(curlingEvent?.start_date ?? "TBD")}{" "}
-        </p>
+          <h1 className="text-4xl font-bold">
+              Draft Room - {event?.name ?? "Loading..."}
+          </h1>
+          <p className="text-gray-600 mt-1">
+              The {curlingEvent?.name ?? ""} event begins on{" "}
+              {formatDate(curlingEvent?.start_date ?? "TBD")}{" "}
+          </p>
           <div className="flex justify-center mt-1 gap-6 text-gray-600 text-left">
             <p>
-              Current Pick: <strong>{event?.current_pick ?? "…"}</strong>
+              Current Pick: <strong>{currentPickSlot}</strong>
             </p>
 
             <p>
@@ -575,7 +559,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
           <div className="bg-white shadow-md p-6 text-center border border-gray-200 rounded-lg">
             <div className="text-gray-600 text-center">
               <span>Round: </span>
-              <span className="font-bold text-[#162a4a]">
+              <span className="font-bold">
                 {selectedPositionFilter === "all" ? "" : selectedPositionFilter}
               </span>
             </div>
@@ -584,7 +568,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
             {event?.draft_status === "closed" && (
               <div className="text-gray-600 text-center">
                 <span>Auto-pick in: </span>
-                <span className="font-bold text-[#162a4a]">
+                <span className="font-bold">
                   {secondsLeft ?? "…"}s
                 </span>
               </div>
@@ -699,11 +683,12 @@ export default function DraftClient({ slug }: DraftClientProps) {
           onClose={() => {
             setAchievementModal(null)
             if (pendingRedirect) {
+              setPendingRedirect(false)
               router.push("/myrinks")
             }
           }}
-          title={achievementFromDB?.name}
-          description={achievementFromDB?.description}
+          title={achievementFromDB?.name ?? "Homan Warrior"}
+          description={achievementFromDB?.description ?? "You drafted Rachel Homan!"}
           icon={getAchievementIcon(achievementModal)}
         />
       )}

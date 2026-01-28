@@ -58,7 +58,8 @@ export default function ThePinClient() {
 
   const updates = [{ id: 1, text: "• First version released!", date: "01/21/2026" },
     {id: 2, text: "• Time to draft increased from 30 to 45 seconds.", date: "01/24/2026" },
-    {id: 3, text: "• Leaderboard ranking fixed.", date: "01/24/2026" }
+    {id: 3, text: "• Leaderboard ranking fixed.", date: "01/24/2026" },
+    {id: 4, text: "• Lots of UI changes for my mobile device users!", date: "01/27/2026" }
   ]
   const greetings = ["Hi", "Welcome back", "Good to see you", "Hey there", "Glad you're here", "Nice to see you again", ]
 

@@ -15,6 +15,7 @@ type UserAchievement = {
     name: string | null
     description: string | null
   }
+  earned_at: string
 }
 
 export default function ProfilePublicClient({ username }: { username: string }) {
@@ -31,6 +32,7 @@ export default function ProfilePublicClient({ username }: { username: string }) 
     title: string | null
     description: string | null
     icon: string | null
+    earnedAt: string | null
   } | null>(null)
 
   const wouldRatherOptions = [
@@ -104,6 +106,7 @@ export default function ProfilePublicClient({ username }: { username: string }) 
         .from("user_achievements")
         .select(`
           achievement_id,
+          earned_at,
           achievements (
             code,
             name,
@@ -120,6 +123,7 @@ export default function ProfilePublicClient({ username }: { username: string }) 
 
           return {
             achievement_id: a.achievement_id,
+            earned_at: a.earned_at,
             achievements: {
               code: row?.code ?? null,
               name: row?.name ?? null,
@@ -172,6 +176,7 @@ export default function ProfilePublicClient({ username }: { username: string }) 
               ) : null
             }
             viewOnly={true}
+            earnedAt={selectedAchievement?.earnedAt ?? null}
           />
         )}
 
@@ -251,6 +256,7 @@ export default function ProfilePublicClient({ username }: { username: string }) 
                     onClick={() => {
                       setSelectedAchievement({
                         title: a.achievements.name,
+                        earnedAt: a.earned_at,
                         description: a.achievements.description,
                         icon
                       })
