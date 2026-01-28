@@ -274,7 +274,11 @@ export default function ProfileClient() {
   }
 
   function toggleShot(option: string) {
-    setGoToShot(goToShot === option ? null : option)
+    setGoToShot(option)
+  }
+
+  function clearShot() {
+    setGoToShot(null)
   }
 
   function selectWouldRather(option: string) {
@@ -291,18 +295,18 @@ export default function ProfileClient() {
 
   return (
     <>
-      <div className="pb-14">
-        <div className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-lg">
+      <div className="pb-14 px-4 sm:px-0">
+        <div className="max-w-3xl mx-auto px-4 py-5 sm:p-6 bg-white shadow-md rounded-lg">
+          <div className="text-sm sm:text-base">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-[#234C6A]">
               {isEditing ? "Edit Profile" : "My Profile"}
             </h1>
 
             {!isEditing && (
-              <div className="flex items-center gap-4">
-                
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">  
                 {/* PRIVATE / PUBLIC TOGGLE */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 order-2 sm:order-1">
                   <span className="text-xs text-gray-500">Private</span>
 
                   <button
@@ -344,7 +348,7 @@ export default function ProfileClient() {
                     setHotTake(profile?.hot_take ?? "")
                     setIsEditing(true)
                   }}
-                  className="px-2 py-1 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400"
+                  className="px-3 py-1 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 whitespace-nowrap"
                 >
                   Edit Profile
                 </button>
@@ -406,47 +410,49 @@ export default function ProfileClient() {
                   </p>
                 )}
               </div>
+            
+              {achievements.some(a => a.achievements.code && achievementIcons[a.achievements.code]) && (
+              <div className="mt-8 border-t pt-6">
+                  <h2 className="text-xl font-semibold text-[#234C6A] mb-3">
+                    Pin Collection
+                  </h2>
 
-             <div className="mt-8 border-t pt-6">
-                <h2 className="text-xl font-semibold text-[#234C6A] mb-3">
-                  Pin Collection
-                </h2>
+                  <div className="flex gap-4 flex-wrap">
+                    {achievements.map((a) => {
+                      const code = a.achievements.code
+                      if (!code) return null
 
-                <div className="flex gap-4 flex-wrap">
-                  {achievements.map((a) => {
-                    const code = a.achievements.code
-                    if (!code) return null
+                      const icon = achievementIcons[code]
+                      if (!icon) return null
 
-                    const icon = achievementIcons[code]
-                    if (!icon) return null
-
-                    return (
-                      <button
-                        key={a.achievement_id}
-                        onClick={() => {
-                          setSelectedAchievement({
-                            title: a.achievements.name,
-                            description: a.achievements.description,
-                            icon: a.achievements.code ? achievementIcons[a.achievements.code] : null,
-                            earnedAt: a.earned_at
-                          })
-                          setModalOpen(true)
-                        }}
-                        className="hover:scale-105 transition"
-                      >
-                        {a.achievements.code && (
-                          <Image
-                            src={achievementIcons[a.achievements.code]}
-                            alt={a.achievements.name ?? "achievement"}
-                            width={60}
-                            height={60}
-                          />
-                        )}
-                      </button>
-                    )
-                  })}
+                      return (
+                        <button
+                          key={a.achievement_id}
+                          onClick={() => {
+                            setSelectedAchievement({
+                              title: a.achievements.name,
+                              description: a.achievements.description,
+                              icon: a.achievements.code ? achievementIcons[a.achievements.code] : null,
+                              earnedAt: a.earned_at
+                            })
+                            setModalOpen(true)
+                          }}
+                          className="hover:scale-105 transition"
+                        >
+                          {a.achievements.code && (
+                            <Image
+                              src={achievementIcons[a.achievements.code]}
+                              alt={a.achievements.name ?? "achievement"}
+                              width={60}
+                              height={60}
+                            />
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* CURLING PROFILE */}
               {(profile?.years_played ||
@@ -608,7 +614,7 @@ export default function ProfileClient() {
 
                     {goToShot !== null && goToShot !== "" && (
                       <button
-                        onClick={() => setGoToShot(null)}
+                        onClick={clearShot}
                         className="mt-2 text-sm text-red-600 underline"
                       >
                         clear selection
@@ -732,6 +738,7 @@ export default function ProfileClient() {
             />
           )}
         </div>
+      </div>
       </div>
     </>
   )

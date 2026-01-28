@@ -158,7 +158,7 @@ export default function ProfilePublicClient({ username }: { username: string }) 
 
   return (
     <>
-      <div className="pb-15">
+      <div className="pb-14 px-4 sm:px-0">
         {selectedAchievement && (
           <AchievementModal
             open={modalOpen}
@@ -180,7 +180,8 @@ export default function ProfilePublicClient({ username }: { username: string }) 
           />
         )}
 
-        <div className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-lg">
+        <div className="max-w-3xl mx-auto px-4 py-5 sm:p-6 bg-white shadow-md rounded-lg">
+          <div className="text-sm sm:text-base">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-[#234C6A]">
               {profile.username}'s Profile
@@ -236,40 +237,42 @@ export default function ProfilePublicClient({ username }: { username: string }) 
               </p>
             )}
           </div>
+          
+          {achievements.some(a => a.achievements.code && achievementIcons[a.achievements.code]) && (
+            <div className="mt-8 border-t pt-6">
+              <h2 className="text-xl font-semibold text-[#234C6A] mb-3">
+                Pin Collection
+              </h2>
 
-          <div className="mt-8 border-t pt-6">
-            <h2 className="text-xl font-semibold text-[#234C6A] mb-3">
-              Pin Collection
-            </h2>
+              <div className="flex gap-4 flex-wrap">
+                {achievements.map((a) => {
+                  const code = a.achievements.code
+                  if (!code) return null
 
-            <div className="flex gap-4 flex-wrap">
-              {achievements.map((a) => {
-                const code = a.achievements.code
-                if (!code) return null
+                  const icon = achievementIcons[code]
+                  if (!icon) return null
 
-                const icon = achievementIcons[code]
-                if (!icon) return null
-
-                return (
-                  <button
-                    key={a.achievement_id}
-                    onClick={() => {
-                      setSelectedAchievement({
-                        title: a.achievements.name,
-                        earnedAt: a.earned_at,
-                        description: a.achievements.description,
-                        icon
-                      })
-                      setModalOpen(true)
-                    }}
-                    className="hover:scale-105 transition"
-                  >
-                    <Image src={icon} alt={code} width={60} height={60} />
-                  </button>
-                )
-              })}
+                  return (
+                    <button
+                      key={a.achievement_id}
+                      onClick={() => {
+                        setSelectedAchievement({
+                          title: a.achievements.name,
+                          earnedAt: a.earned_at,
+                          description: a.achievements.description,
+                          icon
+                        })
+                        setModalOpen(true)
+                      }}
+                      className="hover:scale-105 transition"
+                    >
+                      <Image src={icon} alt={code} width={60} height={60} />
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {(profile.years_played ||
             profile.favorite_club ||
@@ -299,7 +302,7 @@ export default function ProfilePublicClient({ username }: { username: string }) 
 
               {profile.go_to_shot?.[0] && (
                 <p className="text-gray-700">
-                  {profile.username}'s Go-To Shot: {profile.go_to_shot[0]}
+                  Go-To Shot: {profile.go_to_shot[0]}
                 </p>
               )}
 
@@ -353,6 +356,7 @@ export default function ProfilePublicClient({ username }: { username: string }) 
             </div>
           )}
         </div>
+      </div>
       </div>
     </>
   )
