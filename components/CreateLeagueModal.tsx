@@ -143,22 +143,10 @@ export default function CreateLeagueModal({
 
   const handleSubmit = () => {
     const newErrors: string[] = []
-
+    if (!selectedEvent) newErrors.push("Please select an event.")
     if (!name.trim()) newErrors.push("Please enter a league name.")
     if (!draftDate) newErrors.push("Please choose a draft date.")
-
-    const selectedEvent = events.find((ev) => String(ev.id) === String(eventId))
-    
-    if (!selectedEvent) {
-      newErrors.push("Please select an event.")
-    } else {
-      if (maxUsers < 2 || maxUsers > selectedEvent.num_teams) {
-        newErrors.push(
-          `Number of participants must be between 2 and ${selectedEvent.num_teams}.`
-        )
-      }
-    }
-
+    if (maxUsers < 2 || maxUsers > selectedEvent.num_teams) newErrors.push(`Number of participants must be between 2 and ${selectedEvent.num_teams}.`)
     if (!isNew && maxUsers < currentEnrolled) {
       newErrors.push(
         `Max participants cannot be less than the ${currentEnrolled} participants already joined.`
@@ -216,6 +204,7 @@ export default function CreateLeagueModal({
         onClick={(e) => e.stopPropagation()}
       >
         <form
+          noValidate
           onSubmit={(e) => {
             e.preventDefault()
             handleSubmit()
@@ -338,10 +327,11 @@ export default function CreateLeagueModal({
                 onChange={(e) => {
                   const raw = e.target.value
                   setMaxUsersInput(raw)
+
                   const parsed = Number(raw)
-                  if (!isNaN(parsed)) {
-                    setMaxUsers(Math.min(Math.max(parsed, minAllowedUsers), maxAllowedUsers))
-                  }
+                  if (raw === "" || !Number.isFinite(parsed)) return
+
+                  setMaxUsers(parsed)
                 }}
                 inputMode="numeric"
                 pattern="[0-9]*"

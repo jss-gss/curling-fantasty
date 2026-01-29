@@ -334,7 +334,7 @@ export default function LeaguesPage() {
     }
 
     return (
-      <div className="bg-white shadow-md border border-gray-200 rounded-lg">
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-4 sm:hidden">
           <h2
             className="mt-2 text-lg font-semibold leading-snug hover:underline cursor-pointer break-words"

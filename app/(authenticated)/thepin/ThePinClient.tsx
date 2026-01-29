@@ -55,13 +55,13 @@ export default function ThePinClient() {
   const [triviaLoading, setTriviaLoading] = useState(true)
   const [triviaFeedback, setTriviaFeedback] = useState<"correct" | "wrong" | null>(null)
   const [upcomingGames, setUpcomingGames] = useState<any[]>([])
-
   const updates = [{ id: 1, text: "• First version released!", date: "01/21/2026" },
     {id: 2, text: "• Time to draft increased from 30 to 45 seconds.", date: "01/24/2026" },
     {id: 3, text: "• Leaderboard ranking fixed.", date: "01/24/2026" },
     {id: 4, text: "• Lots of UI changes for my mobile device users!", date: "01/27/2026" }
   ]
   const greetings = ["Hi", "Welcome back", "Good to see you", "Hey there", "Glad you're here", "Nice to see you again", ]
+  const [lockedRows, setLockedRows] = useState<any[]>([])
 
   useEffect(() => {
     fetch("/api/upcoming-games")
@@ -345,9 +345,9 @@ export default function ThePinClient() {
       }
   }
 
-const enqueueModal = (code: AchievementId) => {
-      setModalQueue(prev => [...prev, code])
-  }
+  const enqueueModal = (code: AchievementId) => {
+        setModalQueue(prev => [...prev, code])
+    }
 
   useEffect(() => {
       if (!achievementModal && modalQueue.length > 0) {
@@ -376,7 +376,13 @@ const enqueueModal = (code: AchievementId) => {
         payload => {
           setUpcomingDrafts(prev =>
             prev.map(d =>
-              d.id === payload.new.id ? payload.new : d
+              d.id === payload.new.id
+                ? {
+                    ...d,
+                    ...payload.new,
+                    is_commissioner: payload.new.created_by === user?.id,
+                  }
+                : d
             )
           )
         }
@@ -386,12 +392,85 @@ const enqueueModal = (code: AchievementId) => {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [nextDraft?.id])
+  }, [nextDraft?.id, user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    const loadLockedLeagues = async () => {
+      const { data, error } = await supabase
+        .from("fantasy_event_users")
+        .select(`
+          fantasy_event_id,
+          points,
+          rank,
+          fantasy_events!inner (
+            id,
+            slug,
+            name,
+            draft_status,
+            curling_event_id,
+            curling_events (
+              start_date,
+              round_robin_end_date
+            )
+          )
+        `)
+        .eq("user_id", user.id)
+        .eq("fantasy_events.draft_status", "locked")
+
+      if (!error && data) {
+        setLockedRows(data)
+      }
+    }
+
+    loadLockedLeagues()
+  }, [user?.id])
+
+  function startOfDay(dateStr: string) {
+    const [y, m, d] = dateStr.split("-").map(Number)
+    return new Date(y, m - 1, d, 0, 0, 0, 0)
+  }
+
+  function startOfNextDay(dateStr: string) {
+    const [y, m, d] = dateStr.split("-").map(Number)
+    return new Date(y, m - 1, d + 1, 0, 0, 0, 0)
+  }
+
+  const lockedLeagues = useMemo(() => {
+    const now = new Date()
+
+    const rows = lockedRows ?? []
+
+    return rows
+      .map(r => {
+        const ev = (r as any).fantasy_events
+        const ce = ev?.curling_events
+        return {
+          id: ev?.id,
+          slug: ev?.slug,
+          name: ev?.name,
+          my_rank: r.rank,
+          my_points: r.points,
+          start_date: ce?.start_date ?? null,
+          round_robin_end_date: ce?.round_robin_end_date ?? null,
+        }
+      })
+      .filter(lg => !!lg.id && !!lg.slug && !!lg.name)
+      .filter(lg => {
+        if (!lg.start_date || !lg.round_robin_end_date) return false
+        return (
+          now >= startOfDay(lg.start_date) &&
+          now < startOfNextDay(lg.round_robin_end_date)
+        )
+      })
+      .sort((a, b) => (a.my_rank ?? 9999) - (b.my_rank ?? 9999))
+  }, [lockedRows])
 
   return (
     <>
-      <div className="relative w-full min-h-[100svh] overflow-x-hidden">
-       <div className="fixed top-0 left-0 w-[100dvw] h-[100dvh] -z-10 bg-cover bg-center bg-no-repeat pointer-events-none transform-gpu will-change-transform" style={{ backgroundImage: "url('/webpage/pin-page.png')" }} />
+      <div className="relative w-full min-h-screen overflow-x-hidden">
+        <div className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat pointer-events-none" style={{ backgroundImage: "url('/webpage/pin-page.png')" }} />
           {showModal && (
             <WelcomeModal
               onClose={() => setShowModal(false)}
@@ -465,124 +544,142 @@ const enqueueModal = (code: AchievementId) => {
               </div>
             </aside>
 
-            <div className="flex flex-col flex-1 justify-between">
+            <div className="flex flex-col flex-1 gap-4 lg:gap-6">
               <div className="flex flex-col lg:flex-row flex-1 gap-6 items-stretch">
                 <main className="bg-white shadow-md p-4 lg:p-8 rounded-lg flex-grow text-sm sm:text-base">
                   {loading ? (
-                    <p className="w-full flex justify-center mt-20 text-gray-600">
-                      Loading...
-                    </p>
+                    <p className="w-full flex justify-center mt-20 text-gray-600">Loading...</p>
                   ) : (
-                    <>
-                      <h1 className="text-2xl lg:text-3xl font-bold mb-4">
-                        {greeting}, {profile?.username}!
-                      </h1>
-                      <p className="text-gray-600 mb-6">
-                        Here’s what’s happening around the rings today.
-                      </p>
-                      
-                      <hr className="my-8 border-gray-300 lg:block" />
+                    <div className="space-y-5 lg:space-y-6">
+                      <header className="space-y-2">
+                        <h1 className="text-2xl lg:text-3xl font-bold">
+                          {greeting}, {profile?.username}!
+                        </h1>
 
-                      {privateInvites.length > 0 && (
-                        <div className="mb-6">
-                          <div className="space-y-4">
-                            {privateInvites.map(league => {
-                              const invite = league.fantasy_event_user_invites.find(
-                                (inv: { id: string; user_id: string }) =>
-                                  inv.user_id === user?.id
-                              )
+                        <p className="text-gray-600">
+                          Here’s what’s happening around the rings today.
+                        </p>
 
-                              return (
-                                <div
-                                  key={league.id}
-                                  className="p-5 rounded-lg bg-blue-50 border border-blue-200 flex justify-between items-start"
+                        {lockedLeagues.length > 0 && <hr className="border-gray-300" />}
+                        <div className="space-y-2">
+                          <h2 className="text-md font-semibold mt-4">Current Standings</h2>
+
+                          <div className="space-y-2">
+                            {lockedLeagues.length ? (
+                              lockedLeagues.map(lg => (
+                                <button
+                                  key={lg.id}
+                                  type="button"
+                                  onClick={() => router.push(`/league/${lg.slug}`)}
+                                  className="w-full bg-blue-50 text-left rounded-md px-3 py-2 hover:bg-blue-100 transition flex items-center justify-between gap-3"
                                 >
-                                  <div className="flex flex-col gap-1">
-                                    <h2 className="text-lg font-bold text-blue-900">
-                                      You’ve been invited!
-                                    </h2>
-                                    <p className="text-sm text-gray-700">
-                                      Join{" "}
-                                      <span className="font-semibold">
-                                        {league.name}
-                                      </span>{" "}
-                                      – a private league created by{" "}
-                                      {league.sender?.is_public ? (
-                                        <span
-                                          onClick={() =>
-                                            router.push(
-                                              `/profile/${league.sender.username}`
-                                            )
-                                          }
-                                          className="font-semibold text-blue-700 cursor-pointer hover:underline"
-                                        >
-                                          {league.sender.username}
-                                        </span>
-                                      ) : (
-                                        <span className="font-semibold">
-                                          {league.sender?.username ?? "someone"}
-                                        </span>
-                                      )}
-                                      .
-                                    </p>
-                                  </div>
+                                  
+                                  <span className="text-md cursor-pointer truncate">
+                                    {lg.name}
+                                  </span>
 
-                                  <div className="flex flex-col items-end gap-2">
-                                    <button
-                                      onClick={() => dismissInvite(invite.id)}
-                                      className="text-gray-500 hover:text-gray-700 text-xl leading-none"
-                                      aria-label="Ignore invite"
-                                    >
-                                      ×
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        dismissInvite(invite.id)
-                                        router.push(`/league/${league.slug}`)
-                                      }}
-                                      className="bg-[#1f4785] text-white px-4 py-2 rounded-md hover:bg-[#163766] transition text-sm"
-                                    >
-                                      View Details
-                                    </button>
-                                  </div>
-                                </div>
-                              )
-                            })}
+                                  <span className="shrink-0 text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                                    <span className="font-semibold">Fantasy Pts:</span> {lg.my_points ?? "—"}
+                                    <span className="text-gray-400">•</span>
+                                    <span className="font-semibold">Rank:</span> {lg.my_rank ?? "—"}
+                                  </span>
+                                </button>
+                              ))
+                            ) : (
+                              <p className="text-sm text-gray-600">No locked leagues right now.</p>
+                            )}
                           </div>
                         </div>
+                      </header>
+
+                      {privateInvites.length > 0 && <hr className="border-gray-300" />}
+
+                      {privateInvites.length > 0 && (
+                        <section className="space-y-4">
+                          {privateInvites.map(league => {
+                            const invite = league.fantasy_event_user_invites.find(
+                              (inv: { id: string; user_id: string }) => inv.user_id === user?.id
+                            )
+
+                            return (
+                              <div
+                                key={league.id}
+                                className="p-5 rounded-lg bg-blue-50 border border-blue-200 flex justify-between items-start"
+                              >
+                                <div className="flex flex-col gap-1">
+                                  <h2 className="text-lg font-bold text-blue-900">
+                                    You’ve been invited!
+                                  </h2>
+
+                                  <p className="text-sm text-gray-700">
+                                    Join <span className="font-semibold">{league.name}</span> – a
+                                    private league created by{" "}
+                                    {league.sender?.is_public ? (
+                                      <span
+                                        onClick={() =>
+                                          router.push(`/profile/${league.sender.username}`)
+                                        }
+                                        className="font-semibold text-blue-700 cursor-pointer hover:underline"
+                                      >
+                                        {league.sender.username}
+                                      </span>
+                                    ) : (
+                                      <span className="font-semibold">
+                                        {league.sender?.username ?? "someone"}
+                                      </span>
+                                    )}
+                                    .
+                                  </p>
+                                </div>
+
+                                <div className="flex flex-col items-end gap-2">
+                                  <button
+                                    onClick={() => dismissInvite(invite.id)}
+                                    className="text-gray-500 hover:text-gray-700 text-xl leading-none"
+                                    aria-label="Ignore invite"
+                                  >
+                                    ×
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      dismissInvite(invite.id)
+                                      router.push(`/league/${league.slug}`)
+                                    }}
+                                    className="bg-[#1f4785] text-white px-4 py-2 rounded-md hover:bg-[#163766] transition text-sm"
+                                  >
+                                    View Details
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </section>
                       )}
 
-                      <section>
+                      {(!nextDraft) && <hr className="border-gray-300" />}
+
+                      <section className="space-y-2">
                         {!nextDraft && (
                           <p className="text-gray-600">
                             No upcoming drafts –{" "}
-                            <a
-                              href="/leagueplay"
-                              className="text-[#ac0000] underline"
-                            >
+                            <a href="/leagueplay" className="text-[#ac0000] underline">
                               find a league
                             </a>
                           </p>
                         )}
                       </section>
 
-                      <hr className="my-8 border-gray-300 lg:block" />
+                      {(!triviaLoading && triviaQuestion) && <hr className="border-gray-300" />}
 
-                      <section>
-                        {!triviaLoading && triviaQuestion && (
-                          <div>
-                            <h2 className="text-md font-semibold">
-                              Test Your Book Knowledge!
-                            </h2>
+                      {!triviaLoading && triviaQuestion && (
+                        <section className="space-y-2">
+                          <h2 className="text-md font-semibold">Test Your Book Knowledge</h2>
 
-                            <div className="p-4 rounded-lg relative flex items-center">
-                              <div
-                                className={`${
-                                  triviaFeedback ? "opacity-0" : "opacity-100"
-                                } w-full`}
-                              >
-                                <div className="flex items-center gap-3 flex-wrap">
+                          <div className="relative">
+                            <div className={`${triviaFeedback ? "opacity-0" : "opacity-100"} w-full`}>
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                                <div className="flex items-center gap-3 justify-center sm:justify-start">
                                   <button
                                     onClick={() => handleTriviaAnswer(true)}
                                     className="text-green-600 text-md font-semibold hover:text-green-800"
@@ -598,103 +695,87 @@ const enqueueModal = (code: AchievementId) => {
                                   >
                                     FALSE
                                   </button>
-
-                                  <span className="text-md font-semibold text-gray-700">
-                                    :
-                                  </span>
-
-                                  <p className="text-sm text-gray-600 flex-1">
-                                    {triviaQuestion.question}
-                                  </p>
                                 </div>
+
+                                <span className="hidden sm:inline text-md font-semibold text-gray-700">:</span>
+
+                                <p className="text-sm text-gray-600 text-center sm:text-left sm:flex-1">
+                                  {triviaQuestion.question}
+                                </p>
                               </div>
-
-                              {triviaFeedback && (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <p
-                                    className={`text-md ${
-                                      triviaFeedback === "correct"
-                                        ? "text-green-600"
-                                        : "text-red-600"
-                                    }`}
-                                  >
-                                    {triviaFeedback === "correct"
-                                      ? "Correct!"
-                                      : "Just missed that one!"}
-                                  </p>
-                                </div>
-                              )}
                             </div>
-                            <hr className="my-4 border-gray-300" />
+
+                            {triviaFeedback && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <p
+                                  className={`text-md ${
+                                    triviaFeedback === "correct" ? "text-green-600" : "text-red-600"
+                                  }`}
+                                >
+                                  {triviaFeedback === "correct" ? "Correct!" : "Just missed that one!"}
+                                </p>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </section>
+                        </section>
+                      )}
+
+                      <hr className="border-gray-300" />
 
                       <section>
-                        <div>
-                          <p className="text-gray-600">
-                            Need a refresher on how fantasy points are calculated?
-                            Read up on{" "}
-                            <a
-                              href="/howitworks"
-                              className="text-[#234C6A] underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              how it works
-                            </a>
-                            .
-                          </p>
-                        </div>
+                        <p className="text-gray-600">
+                          Need a refresher on how fantasy points are calculated? Read up on{" "}
+                          <a
+                            href="/howitworks"
+                            className="text-[#234C6A] underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            how it works
+                          </a>
+                          .
+                        </p>
                       </section>
 
-                      <hr className="my-6 border-gray-300 lg:block" />
+                      {updates?.length ? <hr className="border-gray-300" /> : null}
 
-                      <section>
-                        <div className="mb-8">
-                          <h2 className="text-md font-semibold mb-3">
-                            What’s New Around the Site
-                          </h2>
+                      {updates?.length ? (
+                        <section className="space-y-3">
+                          <h2 className="text-md font-semibold">What’s New Around the Site</h2>
 
                           <ul className="space-y-2">
-                            {updates.map(u => (
+                            {updates.map((u: any) => (
                               <li key={u.id} className="text-gray-600">
                                 <span className="font-medium text-gray-600">{u.text}</span>
-                                <span className="text-gray-500 ml-2 text-xs">
-                                  ({u.date})
-                                </span>
+                                <span className="text-gray-500 ml-2 text-xs">({u.date})</span>
                               </li>
                             ))}
                           </ul>
-                        </div>
-                      </section>
-
-                      <hr className="my-6 border-gray-300 lg:block" />
-                    </>
+                        </section>
+                      ) : null}
+                    </div>
                   )}
                 </main>
 
-              {upcomingGames.length > 0 && (
-                <>
-                  {/* Mobile: ticker in the main flow */}
-                  <div className="lg:hidden mt-4">
-                    <GameTicker variant="mobile" />
-                  </div>
+                {upcomingGames.length > 0 && (
+                  <>
+                    <div className="lg:hidden">
+                      <GameTicker variant="mobile" />
+                    </div>
 
-                  {/* Desktop: keep existing placement */}
-                  <div className="hidden lg:block">
-                    <GameTicker />
-                  </div>
-                </>
-              )}
+                    <div className="hidden lg:block">
+                      <GameTicker />
+                    </div>
+                  </>
+                )}
               </div>
 
-              <div className="lg:hidden bg-white shadow-md p-4 rounded-lg mt-4">
+              <div className="lg:hidden bg-white shadow-md p-4 rounded-lg">
                 <NextMajorEvent />
               </div>
 
               {nextDraft && (
-                <div className="bg-white shadow-md p-4 lg:p-6 rounded-lg mt-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div className="bg-white shadow-md p-4 lg:p-6 rounded-lg flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   <div>
                     <h2 className="text-lg font-semibold mb-1">
                       Your Upcoming Draft on{" "}

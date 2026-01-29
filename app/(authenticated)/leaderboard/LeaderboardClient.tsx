@@ -565,9 +565,18 @@ export default function LeagueLeaderboardPage() {
                   positions
                     .filter(pos => filterPosition === "ALL" || pos === filterPosition)
                     .map(position => {
+                      function startOfNextDay(dateStr: string) {
+                        const [y, m, d] = dateStr.split("-").map(Number)
+                        return new Date(y, m - 1, d + 1, 0, 0, 0, 0)
+                      }
+                      function startOfDay(dateStr: string) {
+                        const [y, m, d] = dateStr.split("-").map(Number)
+                        return new Date(y, m - 1, d, 0, 0, 0, 0)
+                      }
+
                       const leaderboard = topCurlers[event.id]?.[position] ?? []
-                      const isCompleted = new Date(event.round_robin_end_date) < new Date()
-                      const isNotStarted = new Date(event.start_date) > new Date()
+                      const isCompleted = !!event.round_robin_end_date && new Date() >= startOfNextDay(event.round_robin_end_date)
+                      const isNotStarted = !!event.start_date && new Date() < startOfDay(event.start_date)
 
                       return (
                         <div
