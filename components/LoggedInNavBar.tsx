@@ -152,70 +152,69 @@ export default function NavBar() {
           )}
         </div>
 
-<div className="flex lg:hidden items-center gap-4 ml-auto" ref={mobileMenuRef}>
-  <Link
-    href="/thepin"
-    onClick={() => {
-      setOpenMobile(false)
-      setOpenUser(false)
-    }}
-    className={`h-9 flex items-center text-white text-md font-medium transition ${
-      pathname === "/thepin"
-        ? "border-b-2 border-[#AA2B1D]"
-        : "hover:border-b-2 hover:border-[#AA2B1D]"
-    }`}
-  >
-    The Pin
-  </Link>
+        <div className="flex lg:hidden items-center gap-4 ml-auto" ref={mobileMenuRef}>
+          <Link
+            href="/thepin"
+            onClick={() => {
+              setOpenMobile(false)
+              setOpenUser(false)
+            }}
+            className={`h-9 flex items-center text-white text-md font-medium transition ${
+              pathname === "/thepin"
+                ? "border-b-2 border-[#AA2B1D]"
+                : "hover:border-b-2 hover:border-[#AA2B1D]"
+            }`}
+          >
+            The Pin
+          </Link>
 
-  <button
-    onClick={() => {
-      setOpenMobile(prev => !prev)
-      setOpenUser(false)
-    }}
-    className="h-9 w-9 flex items-center justify-center text-white hover:text-gray-300"
-    aria-label="Open menu"
-  >
-    <span className="text-xl leading-none">☰</span>
-  </button>
+          <button
+            onClick={() => {
+              setOpenMobile(prev => !prev)
+              setOpenUser(false)
+            }}
+            className="h-9 w-9 flex items-center justify-center text-white hover:text-gray-300"
+            aria-label="Open menu"
+          >
+            <span className="text-2xl leading-none">☰</span>
+          </button>
 
-  {openMobile && (
-    <div className="absolute right-2 top-14 w-56 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
-      {tabs
-        .filter(t => t.href !== "/thepin")
-        .map(tab => {
-          const active = pathname === tab.href
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              onClick={() => setOpenMobile(false)}
-              className={`block px-3 py-2 rounded-md transition ${
-                active ? "bg-gray-100 font-semibold" : "hover:bg-gray-100"
-              }`}
-            >
-              {tab.name}
-            </Link>
-          )
-        })}
+          {openMobile && (
+            <div className="absolute right-2 top-14 w-56 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
+              {tabs
+                .filter(t => t.href !== "/thepin")
+                .map(tab => {
+                  const active = pathname === tab.href
+                  return (
+                    <Link
+                      key={tab.href}
+                      href={tab.href}
+                      onClick={() => setOpenMobile(false)}
+                      className={`block px-3 py-2 rounded-md transition ${
+                        active ? "bg-gray-100 font-semibold" : "hover:bg-gray-100"
+                      }`}
+                    >
+                      {tab.name}
+                    </Link>
+                  )
+                })}
 
-      {user && (
-        <Link
-          href="/profile"
-          onClick={() => setOpenMobile(false)}
-          className={`block px-3 py-2 rounded-md transition ${
-            pathname === "/profile"
-              ? "bg-gray-100 font-semibold"
-              : "hover:bg-gray-100"
-          }`}
-        >
-          {displayName || "Account"}
-        </Link>
-      )}
-    </div>
-  )}
-</div>
-
+              {user && (
+                <Link
+                  href="/profile"
+                  onClick={() => setOpenMobile(false)}
+                  className={`block px-3 py-2 rounded-md transition ${
+                    pathname === "/profile"
+                      ? "bg-gray-100 font-semibold"
+                      : "hover:bg-gray-100"
+                  }`}
+                >
+                  {displayName || "Account"}
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

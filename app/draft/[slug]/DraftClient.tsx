@@ -80,7 +80,6 @@ export default function DraftClient({ slug }: DraftClientProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [achievements, setAchievements] = useState<any[]>([])
   const [achievementModal, setAchievementModal] = useState<AchievementId | null>(null)
-  const [pendingRedirect, setPendingRedirect] = useState(false)
   const achievementFromDB = achievements.find(a => a.code === achievementModal)
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
   const [selectedTeamFilter, setSelectedTeamFilter] = useState<string>("all")
@@ -93,6 +92,9 @@ export default function DraftClient({ slug }: DraftClientProps) {
   const tableWrapRef = useRef<HTMLDivElement | null>(null)
   const filtersApplied = selectedTeamFilter !== "all" || selectedPositionFilter !== "all"
   const [turnEndedPopup, setTurnEndedPopup] = useState<string | null>(null)
+  const prevPickRef = useRef<number | null>(null)
+  const armedAutoCloseRef = useRef(false)
+  const turnEndedTimeoutRef = useRef<number | null>(null)
   const totalDrafters = users?.length || 1
   const overallPick = event?.current_pick ?? 0
   const currentRound = overallPick > 0 ? Math.floor((overallPick - 1) / totalDrafters) + 1 : 1
@@ -660,17 +662,45 @@ export default function DraftClient({ slug }: DraftClientProps) {
   }
 
   useEffect(() => {
-    if (!showModal) return
+    const currentPick = event?.current_pick ?? null
 
-    if (secondsLeft === 0) {
+    if (!showModal) {
+      prevPickRef.current = currentPick
+      armedAutoCloseRef.current = false
+      return
+    }
+
+    if (showModal && myTurn && secondsLeft === 0) {
+      armedAutoCloseRef.current = true
+    }
+
+    const prevPick = prevPickRef.current
+
+    if (
+      armedAutoCloseRef.current &&
+      prevPick !== null &&
+      currentPick !== null &&
+      currentPick !== prevPick
+    ) {
       setShowModal(false)
       setSelectedPlayer(null)
       setIsSubmitting(false)
 
       setTurnEndedPopup("Your turn ended — auto-pick was made.")
-      window.setTimeout(() => setTurnEndedPopup(null), 2000)
+
+      if (turnEndedTimeoutRef.current) {
+        window.clearTimeout(turnEndedTimeoutRef.current)
+      }
+      turnEndedTimeoutRef.current = window.setTimeout(() => {
+        setTurnEndedPopup(null)
+        turnEndedTimeoutRef.current = null
+      }, 4000)
+
+      armedAutoCloseRef.current = false
     }
-  }, [showModal, myTurn, secondsLeft])
+
+    prevPickRef.current = currentPick
+  }, [showModal, myTurn, secondsLeft, event?.current_pick])
 
   // snake
   function snakeDraftIndex(currentPick: number, numUsers: number) {
@@ -733,7 +763,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
                           strokeDasharray={2 * Math.PI * 18}
                           strokeDashoffset={
                             (2 * Math.PI * 18) *
-                            (1 - Math.max(0, Math.min(1, secondsLeft / 30)))
+                            (1 - Math.max(0, Math.min(1, secondsLeft / 45)))
                           }
                           transform="rotate(-90 22 22)"
                         />
@@ -791,8 +821,10 @@ export default function DraftClient({ slug }: DraftClientProps) {
                 <div className="relative self-start sm:self-auto">
                   <button
                     type="button"
-                    onClick={() => setShowRules((v) => !v)}
-                    className="text-sm font-semibold text-[#234C6A] hover:underline"
+                    onClick={() => setShowRules(v => !v)}
+                    className={`text-sm font-semibold text-[#234C6A] transition ${
+                      showRules ? "underline" : "hover:underline"
+                    }`}
                   >
                     Draft Rules {showRules ? "▴" : "▾"}
                   </button>
@@ -804,28 +836,44 @@ export default function DraftClient({ slug }: DraftClientProps) {
                         onClick={() => setShowRules(false)}
                       />
 
-                      <div className="absolute right-0 top-8 z-50 w-[360px] sm:w-[440px] max-h-[60vh] overflow-auto rounded-xl border bg-white shadow-lg p-4">
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-center justify-between border rounded-lg p-2">
-                            <span className="text-gray-600">Draft type</span>
-                            <span className="font-semibold text-gray-900">Snake</span>
-                          </div>
-
-                          <div className="flex items-center justify-between border rounded-lg p-2">
-                            <span className="text-gray-600">Roster</span>
-                            <span className="font-semibold text-gray-900">1 per position</span>
-                          </div>
-
-                          <div className="flex items-center justify-between border rounded-lg p-2">
-                            <span className="text-gray-600">Max picks</span>
-                            <span className="font-semibold text-gray-900">4</span>
-                          </div>
-
-                          {event?.draft_status === "closed" && (
-                            <div className="text-xs text-gray-600 mt-2">
-                              Auto-pick runs when the timer expires if you haven’t made a selection.
+                      <div className="absolute right-0 top-8 z-50 w-[360px] sm:w-[440px] max-h-[60vh] overflow-auto rounded-xl border bg-white shadow-xl p-5">
+                        <div className="space-y-4 text-sm">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between py-1">
+                              <span className="text-gray-700">Draft format</span>
+                              <span className="font-semibold">Snake draft</span>
                             </div>
-                          )}
+
+                            <div className="flex items-center justify-between py-1">
+                              <span className="text-gray-700">Roster rules</span>
+                              <span className="font-semibold">One player per position</span>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1">
+                              <span className="text-gray-700">Total picks</span>
+                              <span className="font-semibold">4 players</span>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1">
+                              <span className="text-gray-700">Draft timer</span>
+                              <span className="font-semibold">45 seconds</span>
+                            </div>
+                          </div>
+                          <div className="border-t border-gray-200"></div>
+                          <div className="rounded-lg p-3 text-sm text-gray-700 space-y-5">
+                            <p>
+                              When it’s <span className="font-semibold">not your turn</span>, you can browse all available players.
+                            </p>
+
+                            <p>
+                              When it <span className="font-semibold">is your turn</span>, positions you’ve already drafted are automatically hidden.
+                            </p>
+
+                            <p>
+                              If your timer expires, a player is automatically selected in roster order
+                              (<span className="font-semibold">Skip → Vice Skip → Second → Lead</span>).
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </>
@@ -1029,7 +1077,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
                                 {index + 1}
                               </td>
 
-                              <td className="px-2 sm:px-4 py-2 sm:py-3 align-top">
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 align-middle">
                                 <button
                                   type="button"
                                   disabled={!canPick}

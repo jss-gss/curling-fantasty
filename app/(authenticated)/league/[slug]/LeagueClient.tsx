@@ -90,6 +90,48 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
     type Position = (typeof positions)[number]
     const positionMap: Record<Position, string> = { skip: "Skip", third: "Vice Skip", second: "Second", lead: "Lead" }    
 
+    const fetchLeague = async () => {
+        const { data } = await supabase
+        .from("fantasy_events")
+        .select(`
+            *,
+            sender:profiles!fantasy_events_created_by_fkey (
+            id, username, avatar_url, is_public
+            ),
+            curling_events (*),
+            fantasy_event_users (
+            user_id, draft_position, points, rank,
+            profiles ( id, username, avatar_url, is_public )
+            ),
+            fantasy_event_user_invites ( user_id ),
+            fantasy_picks (
+            user_id,
+            player_id,
+            players (
+                id,
+                first_name,
+                last_name,
+                team_id,
+                position,
+                total_player_fantasy_pts,
+                teams (
+                id,
+                team_name
+                )
+            )
+            )
+        `)
+        .eq("slug", slug)
+        .single()
+
+        setLeague(data)
+
+        if (data?.created_by === userId) 
+        { 
+            setIsCommissioner(true) 
+        }
+        setLoading(false)
+    }
     const enqueueModal = (code: AchievementId) => {
         setModalQueue(prev => [...prev, code])
     }
@@ -129,51 +171,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
 
     useEffect(() => {
         if (!userId) return
-
-        const fetchLeague = async () => {
-            const { data } = await supabase
-            .from("fantasy_events")
-            .select(`
-                *,
-                sender:profiles!fantasy_events_created_by_fkey (
-                id, username, avatar_url, is_public
-                ),
-                curling_events (*),
-                fantasy_event_users (
-                user_id, draft_position, points, rank,
-                profiles ( id, username, avatar_url, is_public )
-                ),
-                fantasy_event_user_invites ( user_id ),
-                fantasy_picks (
-                user_id,
-                player_id,
-                players (
-                    id,
-                    first_name,
-                    last_name,
-                    team_id,
-                    position,
-                    total_player_fantasy_pts,
-                    teams (
-                    id,
-                    team_name
-                    )
-                )
-                )
-            `)
-            .eq("slug", slug)
-            .single()
-
-            setLeague(data)
-
-            if (data?.created_by === userId) 
-            { 
-                setIsCommissioner(true) 
-            }
-            setLoading(false)
-        }
-
-        fetchLeague()
+        fetchLeague().finally(() => setLoading(false))
     }, [slug, userId])
 
     useEffect(() => {
@@ -412,7 +410,41 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
         if (hasAllTop2) await award("SECOND_EVENT_WINNER")
         if (hasAllBottom) await award("HOGGED_OUT")               
     }
-    
+
+    const handleJoinLeague = async () => {
+        if (!userId || !league) return
+        if (league.created_by === userId) return
+        if (league.draft_status !== "open") return
+        if ((league.fantasy_event_users?.length ?? 0) >= league.max_users) return
+        if (league.fantasy_event_users.some(u => u.user_id === userId)) return
+
+        const { error } = await supabase.from("fantasy_event_users").insert({
+            fantasy_event_id: league.id,
+            user_id: userId,
+            joined_at: new Date().toISOString(),
+        })
+
+        if (error) return
+
+        await fetchLeague()
+    }
+
+    const handleLeaveLeague = async () => {
+        if (!userId || !league) return
+        if (league.created_by === userId) return
+        if (league.draft_status !== "open") return
+
+        const { error } = await supabase
+            .from("fantasy_event_users")
+            .delete()
+            .eq("fantasy_event_id", league.id)
+            .eq("user_id", userId)
+
+        if (error) return
+
+        await fetchLeague()
+    }
+
     useEffect(() => {
         if (!league || !userId) return
         if (!league.curling_events) return
@@ -432,7 +464,8 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
     const invited = league.fantasy_event_user_invites.some(inv => inv.user_id === userId)
     const isDraftOpen = league.draft_status === "open"
     const playerCount = league.fantasy_event_users?.length ?? 0
-
+    const isCreator = league.created_by === userId
+    
     const canAccess =
     league.is_public ||
     enrolled ||
@@ -503,7 +536,6 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
         return (
             <div className="bg-white p-6 rounded-lg space-y-8">
 
-            {/* Accepted Users */}
             <div>
                 <h2 className="text-lg font-semibold mb-3">Players</h2>
                 <div className="overflow-x-auto rounded-lg">
@@ -557,7 +589,6 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                 </div>
             </div>
 
-            {/* Invited Users (Private Leagues Only) */}
             {league.is_public === false && invited.length > 0 && (
                 <div>
                 <h2 className="text-lg font-semibold mb-3">Invited Players</h2>
@@ -989,133 +1020,159 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
     return (
         <>
             <div className="w-full px-3 sm:px-6 py-6 sm:py-10 flex flex-col items-center">
-            <div className="w-full max-w-screen-xl bg-white shadow-md p-4 sm:p-8 border border-gray-200 rounded-lg">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <h1 className="text-xl sm:text-2xl font-bold break-words">{league.name}</h1>
-
-                <div className="flex flex-wrap gap-2">
-                    {league.is_public ? (
-                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-                        public
-                    </span>
-                    ) : (
-                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
-                        private
-                    </span>
-                    )}
-
-                    {league.draft_status === "completed" && (
-                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
-                        completed
-                    </span>
-                    )}
-
-                    {isCommissioner && (
-                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                        draw master
-                    </span>
-                    )}
-                </div>
-                </div>
-
-                {league.description && (
-                <p className="text-gray-700 text-sm mt-2 italic">{league.description}</p>
-                )}
-
-                <p className="text-sm sm:text-md text-gray mt-2">
-                {league.curling_events?.year} {league.curling_events?.name} in{" "}
-                {league.curling_events?.location}
-                </p>
-
-                <div className="mt-2 text-sm text-gray-600">
-                {/* Mobile */}
-                <div className="space-y-1 sm:hidden">
-                    <div>
-                    <strong>Created By:</strong>{" "}
-                    {league.sender?.is_public ? (
-                        <a
-                        href={`/profile/${league.sender.username}`}
-                        className="text-blue-600 hover:underline"
-                        >
-                        {league.sender.username}
-                        </a>
-                    ) : (
-                        <span>{league.sender?.username}</span>
-                    )}
+                <div className="w-full max-w-screen-xl bg-white shadow-md p-4 sm:p-8 border border-gray-200 rounded-lg">
+                    <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                        <h1 className="text-2xl font-bold text-[#234C6A]">{league.name}</h1>
+                        {userId && league.created_by !== userId && league.draft_status === "open" && (
+                        league.fantasy_event_users.some(u => u.user_id === userId) ? (
+                            <button
+                            type="button"
+                            onClick={handleLeaveLeague}
+                            className="bg-[#AA2B1D] text-white px-6 py-2 rounded-md hover:bg-[#8A1F15] transition shrink-0"
+                            >
+                            Leave
+                            </button>
+                        ) : (
+                            <button
+                            type="button"
+                            onClick={handleJoinLeague}
+                            disabled={(league.fantasy_event_users?.length ?? 0) >= league.max_users}
+                            className={`px-6 py-2 rounded-md transition shrink-0 ${
+                                (league.fantasy_event_users?.length ?? 0) >= league.max_users
+                                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                : "bg-[#234C6A] text-white hover:bg-[#1B3C53]"
+                            }`}
+                            >
+                            {(league.fantasy_event_users?.length ?? 0) >= league.max_users ? "Full" : "Join"}
+                            </button>
+                        )
+                        )}
                     </div>
 
-                    <div>
-                    <strong>Draft:</strong>{" "}
-                    {new Date(league.draft_date).toLocaleString("en-US", {
+                    <div className="flex flex-wrap gap-2">
+                        {league.is_public ? (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                            public
+                        </span>
+                        ) : (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                            private
+                        </span>
+                        )}
+
+                        {league.draft_status === "completed" && (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
+                            completed
+                        </span>
+                        )}
+
+                        {isCommissioner && (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                            draw master
+                        </span>
+                        )}
+                    </div>
+                    </div>
+
+                    {league.description && (
+                    <p className="text-gray-700 text-sm mt-2 italic">{league.description}</p>
+                    )}
+
+                    <p className="text-sm sm:text-md text-gray mt-2">
+                    {league.curling_events?.year} {league.curling_events?.name} in{" "}
+                    {league.curling_events?.location}
+                    </p>
+
+                    <div className="mt-2 text-sm text-gray-600">
+                    {/* Mobile */}
+                    <div className="space-y-1 sm:hidden">
+                        <div>
+                        <strong>Created By:</strong>{" "}
+                        {league.sender?.is_public ? (
+                            <a
+                            href={`/profile/${league.sender.username}`}
+                            className="text-blue-600 hover:underline"
+                            >
+                            {league.sender.username}
+                            </a>
+                        ) : (
+                            <span>{league.sender?.username}</span>
+                        )}
+                        </div>
+
+                        <div>
+                        <strong>Draft:</strong>{" "}
+                        {new Date(league.draft_date).toLocaleString("en-US", {
+                            timeZone: "America/New_York",
+                            dateStyle: "short",
+                            timeStyle: "short",
+                        })}{" "}
+                        ET
+                        </div>
+
+                        <div>
+                        <strong>Event Starts:</strong>{" "}
+                        {formatDate(league.curling_events?.start_date ?? "")}
+                        </div>
+
+                        <div>
+                        <strong>Round Robin Ends:</strong>{" "}
+                        {formatDate(league.curling_events?.round_robin_end_date ?? "")}
+                        </div>
+
+                        <div>
+                        {isDraftOpen && (
+                        <>
+                        <strong>Participants:</strong>{" "}
+                        {playerCount} / {league.max_users}
+                        </>
+                        )}
+                        </div>
+                    </div>
+
+                    {/* Desktop */}
+                    <p className="hidden sm:block">
+                        <strong>Created By:</strong>{" "}
+                        {league.sender?.is_public ? (
+                        <a
+                            href={`/profile/${league.sender.username}`}
+                            className="text-blue-600 hover:underline"
+                        >
+                            {league.sender.username}
+                        </a>
+                        ) : (
+                        <span>{league.sender?.username}</span>
+                        )}
+                        <strong> • Draft:</strong>{" "}
+                        {new Date(league.draft_date).toLocaleString("en-US", {
                         timeZone: "America/New_York",
                         dateStyle: "short",
                         timeStyle: "short",
-                    })}{" "}
-                    ET
+                        })}{" "}
+                        ET                    
+                        <strong> • Event Starts:</strong>{" "}
+                        {formatDate(league.curling_events?.start_date ?? "")}
+                        <strong> • Round Robin Ends:</strong>{" "}
+                        {formatDate(league.curling_events?.round_robin_end_date ?? "")}
+                        {isDraftOpen && (
+                        <>
+                            <strong> • Participants:</strong>{" "}
+                            {playerCount} / {league.max_users}
+                        </>
+                        )}
+                    </p>
                     </div>
 
-                    <div>
-                    <strong>Event Starts:</strong>{" "}
-                    {formatDate(league.curling_events?.start_date ?? "")}
-                    </div>
-
-                    <div>
-                    <strong>Round Robin Ends:</strong>{" "}
-                    {formatDate(league.curling_events?.round_robin_end_date ?? "")}
-                    </div>
-
-                    <div>
-                    {isDraftOpen && (
-                    <>
-                    <strong>Participants:</strong>{" "}
-                    {playerCount} / {league.max_users}
-                    </>
+                    <div className="mt-4">
+                    {league.draft_status === "open" && <OpenLeagueView league={league} />}
+                    {league.draft_status === "closed" && <ClosedLeagueView />}
+                    {league.draft_status === "locked" && <LockedLeagueView league={league} />}
+                    {["completed", "archived"].includes(league.draft_status) && (
+                        <FinalLeaderboardView league={league} />
                     )}
                     </div>
                 </div>
-
-                {/* Desktop */}
-                <p className="hidden sm:block">
-                    <strong>Created By:</strong>{" "}
-                    {league.sender?.is_public ? (
-                    <a
-                        href={`/profile/${league.sender.username}`}
-                        className="text-blue-600 hover:underline"
-                    >
-                        {league.sender.username}
-                    </a>
-                    ) : (
-                    <span>{league.sender?.username}</span>
-                    )}
-                    <strong> • Draft:</strong>{" "}
-                    {new Date(league.draft_date).toLocaleString("en-US", {
-                    timeZone: "America/New_York",
-                    dateStyle: "short",
-                    timeStyle: "short",
-                    })}{" "}
-                    ET                    
-                    <strong> • Event Starts:</strong>{" "}
-                    {formatDate(league.curling_events?.start_date ?? "")}
-                    <strong> • Round Robin Ends:</strong>{" "}
-                    {formatDate(league.curling_events?.round_robin_end_date ?? "")}
-                    {isDraftOpen && (
-                    <>
-                        <strong> • Participants:</strong>{" "}
-                        {playerCount} / {league.max_users}
-                    </>
-                    )}
-                </p>
-                </div>
-
-                <div className="mt-4">
-                {league.draft_status === "open" && <OpenLeagueView league={league} />}
-                {league.draft_status === "closed" && <ClosedLeagueView />}
-                {league.draft_status === "locked" && <LockedLeagueView league={league} />}
-                {["completed", "archived"].includes(league.draft_status) && (
-                    <FinalLeaderboardView league={league} />
-                )}
-                </div>
-            </div>
             </div>
 
             {achievementModal && achievementFromDB && (

@@ -346,8 +346,8 @@ export default function ThePinClient() {
   }
 
   const enqueueModal = (code: AchievementId) => {
-        setModalQueue(prev => [...prev, code])
-    }
+      setModalQueue(prev => [...prev, code])
+  }
 
   useEffect(() => {
       if (!achievementModal && modalQueue.length > 0) {
@@ -556,40 +556,43 @@ export default function ThePinClient() {
                           {greeting}, {profile?.username}!
                         </h1>
 
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 mb-5">
                           Here’s what’s happening around the rings today.
                         </p>
 
                         {lockedLeagues.length > 0 && <hr className="border-gray-300" />}
-                        <div className="space-y-2">
-                          <h2 className="text-md font-semibold mt-4">Current Standings</h2>
-
+                        
+                        {lockedLeagues.length > 0 && (
                           <div className="space-y-2">
-                            {lockedLeagues.length ? (
-                              lockedLeagues.map(lg => (
-                                <button
-                                  key={lg.id}
-                                  type="button"
-                                  onClick={() => router.push(`/league/${lg.slug}`)}
-                                  className="w-full bg-blue-50 text-left rounded-md px-3 py-2 hover:bg-blue-100 transition flex items-center justify-between gap-3"
-                                >
-                                  
-                                  <span className="text-md cursor-pointer truncate">
-                                    {lg.name}
-                                  </span>
+                            <h2 className="text-md font-semibold mt-4">Current Standings</h2>
 
-                                  <span className="shrink-0 text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                                    <span className="font-semibold">Fantasy Pts:</span> {lg.my_points ?? "—"}
-                                    <span className="text-gray-400">•</span>
-                                    <span className="font-semibold">Rank:</span> {lg.my_rank ?? "—"}
-                                  </span>
-                                </button>
-                              ))
-                            ) : (
-                              <p className="text-sm text-gray-600">No locked leagues right now.</p>
-                            )}
+                            <div className="space-y-2">
+                              {lockedLeagues.length ? (
+                                lockedLeagues.map(lg => (
+                                  <button
+                                    key={lg.id}
+                                    type="button"
+                                    onClick={() => router.push(`/league/${lg.slug}`)}
+                                    className="w-full bg-blue-50 text-left rounded-md px-3 py-2 hover:bg-blue-100 transition flex items-center justify-between gap-3"
+                                  >
+                                    
+                                    <span className="text-md cursor-pointer truncate">
+                                      {lg.name}
+                                    </span>
+
+                                    <span className="shrink-0 text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                                      <span className="font-semibold">Fantasy Pts:</span> {lg.my_points ?? "—"}
+                                      <span className="text-gray-400">•</span>
+                                      <span className="font-semibold">Rank:</span> {lg.my_rank ?? "—"}
+                                    </span>
+                                  </button>
+                                ))
+                              ) : (
+                                <p className="text-sm text-gray-600">No locked leagues right now.</p>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </header>
 
                       {privateInvites.length > 0 && <hr className="border-gray-300" />}
@@ -604,29 +607,22 @@ export default function ThePinClient() {
                             return (
                               <div
                                 key={league.id}
-                                className="p-5 rounded-lg bg-blue-50 border border-blue-200 flex justify-between items-start"
+                                className="p-5 rounded-lg bg-blue-50 border border-blue-200 grid grid-cols-[1fr_auto] items-stretch gap-x-6"
                               >
                                 <div className="flex flex-col gap-1">
-                                  <h2 className="text-lg font-bold text-blue-900">
-                                    You’ve been invited!
-                                  </h2>
+                                  <h2 className="text-lg font-bold text-blue-900">You’ve been invited!</h2>
 
-                                  <p className="text-sm text-gray-700">
-                                    Join <span className="font-semibold">{league.name}</span> – a
-                                    private league created by{" "}
+                                  <p className="text-sm text-gray-700 mt-1">
+                                    Join <span className="font-semibold">{league.name}</span> – a private league created by{" "}
                                     {league.sender?.is_public ? (
                                       <span
-                                        onClick={() =>
-                                          router.push(`/profile/${league.sender.username}`)
-                                        }
+                                        onClick={() => router.push(`/profile/${league.sender.username}`)}
                                         className="font-semibold text-blue-700 cursor-pointer hover:underline"
                                       >
                                         {league.sender.username}
                                       </span>
                                     ) : (
-                                      <span className="font-semibold">
-                                        {league.sender?.username ?? "someone"}
-                                      </span>
+                                      <span className="font-semibold">{league.sender?.username ?? "someone"}</span>
                                     )}
                                     .
                                   </p>
@@ -646,7 +642,7 @@ export default function ThePinClient() {
                                       dismissInvite(invite.id)
                                       router.push(`/league/${league.slug}`)
                                     }}
-                                    className="bg-[#1f4785] text-white px-4 py-2 rounded-md hover:bg-[#163766] transition text-sm"
+                                    className="bg-[#1f4785] text-white px-4 py-2 rounded-md hover:bg-[#163766] transition text-sm leading-none"
                                   >
                                     View Details
                                   </button>
