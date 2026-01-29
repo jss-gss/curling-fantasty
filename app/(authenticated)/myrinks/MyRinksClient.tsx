@@ -161,11 +161,9 @@ export default function PicksPage() {
         `)
         .in("id", eventIds)
 
-      const current =
-        events?.filter(e => e.draft_status === "closed" || e.draft_status === "locked") ?? []
+      const current = events?.filter(e => e.draft_status === "closed" || e.draft_status === "locked") ?? []
       const completed = events?.filter(e => e.draft_status === "completed") ?? []
-      const eligible =
-        events?.filter(e => e.draft_status === "locked" || e.draft_status === "completed") ?? []
+      const eligible = events?.filter(e => e.draft_status === "locked" || e.draft_status === "completed") ?? []
 
       setClosedEvents(current)
       setCompletedLeagues(completed)
@@ -335,6 +333,7 @@ export default function PicksPage() {
             <div className="space-y-10">
               {completedLeagues.map((league: any) => {
                 const picks = userPicksByEvent[league.id] ?? []
+                const isCommissioner = league.created_by === user?.id
                 return (
                   <div key={league.id} className="space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -358,7 +357,7 @@ export default function PicksPage() {
                               </span>
                             )}
 
-                            {league.isCommissioner && (
+                            {isCommissioner && (
                               <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
                                 draw master
                               </span>

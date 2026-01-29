@@ -63,7 +63,9 @@ export default function AchievementModal({
         )}
 
         <div className="flex justify-center mb-4">
-          {icon}
+          <div className="animate-pinPop will-change-transform">
+            {icon}
+          </div>
         </div>
 
         <p className="text-xl font-semibold text-[#234C6A] mb-6">

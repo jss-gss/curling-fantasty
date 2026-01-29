@@ -1072,16 +1072,16 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                             private
                         </span>
                         )}
+                        
+                        {isCommissioner && (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                            draw master
+                        </span>
+                        )}
 
                         {league.draft_status === "completed" && (
                         <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
                             completed
-                        </span>
-                        )}
-
-                        {isCommissioner && (
-                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                            draw master
                         </span>
                         )}
                     </div>
