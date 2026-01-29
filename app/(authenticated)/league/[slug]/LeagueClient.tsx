@@ -89,7 +89,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
     const positions = ["skip", "third", "second", "lead"] as const
     type Position = (typeof positions)[number]
     const positionMap: Record<Position, string> = { skip: "Skip", third: "Vice Skip", second: "Second", lead: "Lead" }    
-
+    const player_pos_order: Record<string, number> = { Lead: 1, Second: 2, "Vice Skip": 3, Skip: 4, }
     const fetchLeague = async () => {
         const { data } = await supabase
         .from("fantasy_events")
@@ -767,7 +767,13 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                                     </thead>
 
                                     <tbody>
-                                    {picks.map((p, pIdx) => {
+                                    {[...picks]
+                                    .sort((a, b) => {
+                                        const aOrder = player_pos_order[a.players.position] ?? 99
+                                        const bOrder = player_pos_order[b.players.position] ?? 99
+                                        return aOrder - bOrder
+                                    })
+                                    .map((p, pIdx) => {
                                         const player = p.players
                                         const team = player.teams
 
@@ -971,7 +977,13 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                                 </thead>
 
                                 <tbody>
-                                    {picks.map((p, pIdx) => {
+                                {[...picks]
+                                .sort((a, b) => {
+                                    const aOrder = player_pos_order[a.players.position] ?? 99
+                                    const bOrder = player_pos_order[b.players.position] ?? 99
+                                    return aOrder - bOrder
+                                })
+                                .map((p, pIdx) => {
                                     const player = p.players
                                     const team = player.teams
 

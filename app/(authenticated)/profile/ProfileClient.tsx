@@ -575,7 +575,7 @@ export default function ProfileClient() {
                 <button
                   onClick={async () => {
                     await supabase.auth.signOut()
-                    router.push("/login")
+                    router.push("/")
                   }}
                   className="text-left text-gray-600 hover:text-[#AA2B1D] transition-colors"
                 >

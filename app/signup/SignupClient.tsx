@@ -16,19 +16,40 @@ export default function SignupPage() {
   const [username, setUsername] = useState("")
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
+  const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 
   async function handleSignup() {
     setLoading(true)
     setErrorMsg("")
 
+    const trimmedEmail = email.trim()
+
+    if (!trimmedEmail) {
+      setErrorMsg("Please enter an email address.")
+      setLoading(false)
+      return
+    }
+
+    if (!isValidEmail(trimmedEmail)) {
+      setErrorMsg("Please enter a valid email address.")
+      setLoading(false)
+      return
+    }
+
     if (!password || !confirmPassword) {
-      setErrorMsg("Please enter your password twice.")
+      setErrorMsg("Please fill out the password fields.")
       setLoading(false)
       return
     }
 
     if (password !== confirmPassword) {
       setErrorMsg("Passwords do not match.")
+      setLoading(false)
+      return
+    }
+
+    if(!firstName || !lastName || !username) {
+      setErrorMsg("Please fill out all fields.")
       setLoading(false)
       return
     }
@@ -59,7 +80,6 @@ export default function SignupPage() {
     const user = data.user
 
     if (!user) {
-      setErrorMsg("Check your email to confirm your account before logging in.")
       setLoading(false)
       return
     }
@@ -114,15 +134,20 @@ export default function SignupPage() {
           }}
           className="flex flex-col gap-4"
         >
+
           <input
-            type="email"
+            type="text"
+            inputMode="email"
+            autoComplete="email"
             placeholder="Email"
-            className="border border-[#456882] rounded-md px-4 py-2"
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="border border-[#456882] rounded-md px-4 py-2"
           />
 
           <input
             type="password"
+            value={password}
             placeholder="Password"
             className="border border-[#456882] rounded-md px-4 py-2"
             onChange={(e) => setPassword(e.target.value)}

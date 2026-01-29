@@ -42,16 +42,8 @@ export default function LoginPage() {
   }
 
   const handleForgot = async () => {
-    if (!email) {
-      setErrorMsg("Enter your email first, then click Forgot Password.")
-      return
-    }
-
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/resetpassword`,
-    })
-
-    setErrorMsg(`A link to reset your password has been sent to ${email}`)
+    router.push("/resetpassword")
+    setLoading(false)
   }
 
   return (

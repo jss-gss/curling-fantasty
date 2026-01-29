@@ -60,7 +60,7 @@ export default function PicksPage() {
   const [achievementModal, setAchievementModal] = useState<AchievementId | null>(null)
   const [modalQueue, setModalQueue] = useState<AchievementId[]>([])
   const achievementFromDB = achievements.find(a => a.code === achievementModal)
-
+  const player_pos_order: Record<string, number> = { Lead: 1, Second: 2, "Vice Skip": 3, Skip: 4, }
   const hasRunCleanSweep = useRef(false)
 
   const enqueueModal = (code: AchievementId) => {
@@ -420,7 +420,13 @@ export default function PicksPage() {
                         </thead>
 
                         <tbody>
-                          {picks.map((p: any, idx: number) => {
+                          {[...picks]
+                          .sort((a, b) => {
+                              const aOrder = player_pos_order[a.players.position] ?? 99
+                              const bOrder = player_pos_order[b.players.position] ?? 99
+                              return aOrder - bOrder
+                          })
+                          .map((p: any, idx: number) => {
                             const player = p.players
                             if (!player) return null
 
@@ -626,7 +632,13 @@ export default function PicksPage() {
                       </thead>
 
                       <tbody>
-                        {picks.map((p: any, idx: number) => {
+                          {[...picks]
+                          .sort((a, b) => {
+                              const aOrder = player_pos_order[a.players.position] ?? 99
+                              const bOrder = player_pos_order[b.players.position] ?? 99
+                              return aOrder - bOrder
+                          })
+                          .map((p: any, idx: number) => {
                           const player = p.players
                           if (!player) return null
 

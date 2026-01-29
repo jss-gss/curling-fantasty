@@ -56,9 +56,8 @@ export default function ThePinClient() {
   const [triviaFeedback, setTriviaFeedback] = useState<"correct" | "wrong" | null>(null)
   const [upcomingGames, setUpcomingGames] = useState<any[]>([])
   const updates = [{ id: 1, text: "• First version released!", date: "01/21/2026" },
-    {id: 2, text: "• Time to draft increased from 30 to 45 seconds.", date: "01/24/2026" },
-    {id: 3, text: "• Leaderboard ranking fixed.", date: "01/24/2026" },
-    {id: 4, text: "• Lots of UI changes for my mobile device users!", date: "01/27/2026" }
+    {id: 2, text: "• More mobile UI updates.", date: "01/29/2026" },
+    {id: 3, text: "• Users are now allowed to reset their password, so I won't have to delete their accounts!", date: "01/29/2026"}
   ]
   const greetings = ["Hi", "Welcome back", "Good to see you", "Hey there", "Glad you're here", "Nice to see you again", ]
   const [lockedRows, setLockedRows] = useState<any[]>([])
@@ -581,7 +580,7 @@ export default function ThePinClient() {
                                     </span>
 
                                     <span className="shrink-0 text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                                      <span className="font-semibold">Fantasy Pts:</span> {lg.my_points ?? "—"}
+                                      <span className="font-semibold">Points:</span> {lg.my_points ?? "—"}
                                       <span className="text-gray-400">•</span>
                                       <span className="font-semibold">Rank:</span> {lg.my_rank ?? "—"}
                                     </span>
