@@ -35,7 +35,7 @@ export default function ProfileClient() {
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
   const [modalOpen, setModalOpen] = useState(false)
-  const [preloadIconSrc, setPreloadIconSrc] = useState<string | null>(null)
+  
   const [selectedAchievement, setSelectedAchievement] = useState<{
     title: string | null
     description: string | null
@@ -427,17 +427,12 @@ export default function ProfileClient() {
                           <button
                             key={a.achievement_id}
                             onClick={() => {
-                              const src = a.achievements.code ? achievementIcons[a.achievements.code] : null
-
-                              setPreloadIconSrc(src)
-
                               setSelectedAchievement({
                                 title: a.achievements.name,
                                 description: a.achievements.description,
-                                icon: src,
+                                icon: a.achievements.code ? achievementIcons[a.achievements.code] : null,
                                 earnedAt: a.earned_at
                               })
-
                               setModalOpen(true)
                             }}
                             className="hover:scale-105 transition"
@@ -765,16 +760,6 @@ export default function ProfileClient() {
                 </div>
               </div>
             </div>
-          )}
-
-          {preloadIconSrc && (
-            <Image
-              src={preloadIconSrc}
-              alt=""
-              width={160}
-              height={160}
-              className="hidden"
-            />
           )}
 
           {selectedAchievement && (

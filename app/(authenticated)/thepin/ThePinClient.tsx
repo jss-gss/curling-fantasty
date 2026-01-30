@@ -41,6 +41,7 @@ export default function ThePinClient() {
 
   const [user, setUser] = useState<User | null>(null)
   const [dismissedInvites, setDismissedInvites] = useState<string[]>([])
+  const [dismissedCompleted, setDismissedCompleted] = useState<string[]>([])
   const [profile, setProfile] = useState<any>(null)
   const [leagues, setLeagues] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -178,6 +179,14 @@ export default function ThePinClient() {
         .select(`
           *,
           is_public,
+          curling_event_id,
+          curling_events (
+            id,
+            name,
+            year,
+            start_date,
+            round_robin_end_date
+          ),
           sender:profiles!fantasy_events_created_by_fkey (
             id,
             username,
@@ -218,10 +227,21 @@ export default function ThePinClient() {
     }
   }, [])
 
+  useEffect(() => {
+    const stored = localStorage.getItem("dismissedCompletedLeagues")
+    if (stored) setDismissedCompleted(JSON.parse(stored))
+  }, [])
+
   function dismissInvite(inviteId: string) {
     const updated = [...dismissedInvites, inviteId]
     setDismissedInvites(updated)
     localStorage.setItem("dismissedInvites", JSON.stringify(updated))
+  }
+
+  function dismissCompletedLeague(leagueId: string) {
+    const updated = [...dismissedCompleted, leagueId]
+    setDismissedCompleted(updated)
+    localStorage.setItem("dismissedCompletedLeagues", JSON.stringify(updated))
   }
 
   const privateInvites = leagues.filter(l => {
@@ -234,6 +254,20 @@ export default function ThePinClient() {
     if (l.created_by === user?.id) return false
     if (l.is_public) return false
     if (l.draft_status !== "open") return false
+    return true
+  })
+
+  const isRecentlyCompletedLeague = (l: any) => {
+    if (l.draft_status === "completed") return true
+
+    return false
+  }
+
+  const completedLeagueNotifs = leagues.filter(l => {
+    if (!user?.id) return false
+    if (!l.enrolled) return false
+    if (dismissedCompleted.includes(l.id)) return false
+    if (!isRecentlyCompletedLeague(l)) return false
     return true
   })
 
@@ -410,6 +444,7 @@ export default function ThePinClient() {
             draft_status,
             curling_event_id,
             curling_events (
+              year,
               start_date,
               round_robin_end_date
             )
@@ -449,6 +484,7 @@ export default function ThePinClient() {
           id: ev?.id,
           slug: ev?.slug,
           name: ev?.name,
+          year: ev?.year,
           my_rank: r.rank,
           my_points: r.points,
           start_date: ce?.start_date ?? null,
@@ -587,12 +623,59 @@ export default function ThePinClient() {
                                   </button>
                                 ))
                               ) : (
-                                <p className="text-sm text-gray-600">No locked leagues right now.</p>
+                                <p className="text-sm text-gray-600"></p>
                               )}
                             </div>
                           </div>
                         )}
                       </header>
+
+                      {completedLeagueNotifs.length > 0 && <hr className="border-gray-300" />}
+
+                      {completedLeagueNotifs.length > 0 && (
+                        <section className="space-y-4">
+                          {completedLeagueNotifs.map(league => {
+                            const leagueId = String(league.id)
+
+                            return (
+                              <div
+                                key={leagueId}
+                                className="p-5 rounded-lg bg-green-50 border border-green-200 grid grid-cols-[1fr_auto] items-stretch gap-x-6"
+                              >
+                                <div className="flex flex-col gap-1">
+                                  <h2 className="text-lg font-semibold text-green-900">
+                                    The 2026 {league.curling_events.name} — Round Robin Complete
+                                  </h2>
+
+                                  <p className="text-sm text-gray-700 mt-1">
+                                    Standings for <span className="font-semibold">{league.name}</span> are now finalized!
+                                  </p>
+                                </div>
+
+                                <div className="flex flex-col items-end gap-2">
+                                  <button
+                                    onClick={() => dismissCompletedLeague(leagueId)}
+                                    className="text-gray-500 hover:text-gray-700 text-xl leading-none"
+                                    aria-label="Dismiss completed league"
+                                  >
+                                    ×
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      dismissCompletedLeague(leagueId)
+                                      router.push(`/league/${league.slug}`)
+                                    }}
+                                    className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-800 transition text-sm leading-none"
+                                  >
+                                    View Results
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </section>
+                      )}
 
                       {privateInvites.length > 0 && <hr className="border-gray-300" />}
 
