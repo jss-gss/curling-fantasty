@@ -644,11 +644,11 @@ export default function ThePinClient() {
                               >
                                 <div className="flex flex-col gap-1">
                                   <h2 className="text-lg font-semibold text-green-900">
-                                    The 2026 {league.curling_events.name} — Round Robin Complete
+                                    Standings Finalized for <span className="font-semibold">{league.name}</span>
                                   </h2>
 
                                   <p className="text-sm text-gray-700 mt-1">
-                                    Standings for <span className="font-semibold">{league.name}</span> are now finalized!
+                                    Round robin for the {league.curling_events.year} {league.curling_events.name} is complete. 
                                   </p>
                                 </div>
 

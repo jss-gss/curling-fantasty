@@ -710,14 +710,59 @@ export default function DraftClient({ slug }: DraftClientProps) {
     return round % 2 === 1 ? offset : (numUsers - 1 - offset)
   }
 
+  const DraftRulesCard = (
+    <div className="bg-white rounded-xl shadow-sm p-3 sm:p-6">
+      <h2 className="text-lg font-semibold mb-3">Draft Rules</h2>
+
+      <div className="space-y-2 text-xs">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between py-1">
+            <span className="text-gray-700">Draft format</span>
+            <span className="font-semibold">Snake draft</span>
+          </div>
+
+          <div className="flex items-center justify-between py-1">
+            <span className="text-gray-700">Roster rules</span>
+            <span className="font-semibold">One player per position</span>
+          </div>
+
+          <div className="flex items-center justify-between py-1">
+            <span className="text-gray-700">Total picks</span>
+            <span className="font-semibold">4 players</span>
+          </div>
+
+          <div className="flex items-center justify-between py-1">
+            <span className="text-gray-700">Draft timer</span>
+            <span className="font-semibold">45 seconds</span>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-200" />
+
+        <div className="rounded-lg p-3 text-xs text-gray-700 space-y-4">
+          <p>
+            When it’s <span className="font-semibold">not your turn</span>, you can browse all available players.
+          </p>
+
+          <p>
+            When it <span className="font-semibold">is your turn</span>, positions you’ve already drafted are automatically hidden.
+          </p>
+
+          <p>
+            If your timer expires, a player is automatically selected in roster order.          </p>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <>
       <div className="min-h-screen bg-[#234C6A]">
         <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-6">
-          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                <div>
+          <div className="bg-white rounded-xl shadow-sm p-3 sm:p-6">
+            <div className="flex flex-col gap-2 sm:gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
+                <div className="text-center sm:text-left">
                   <h1 className="text-2xl sm:text-3xl font-bold">
                     Draft Room <span className="font-semibold">—</span>{" "}
                     <span>{event?.name ?? "Loading..."}</span>
@@ -739,7 +784,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
                 </div>
 
                 {event?.draft_status === "closed" && typeof secondsLeft === "number" && (
-                  <div className="flex items-center gap-2 self-start">
+                  <div className="flex items-center gap-2 self-center sm:self-start">
                     <span className="text-sm font-semibold whitespace-nowrap">Auto-pick</span>
 
                     <div className="relative w-10 h-10">
@@ -777,11 +822,11 @@ export default function DraftClient({ slug }: DraftClientProps) {
                 )}
               </div>
 
-              <div className="border-t pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-700">
+              <div className="border-t pt-3 flex flex-col items-center text-center sm:flex-row sm:items-center sm:justify-between sm:text-left gap-2 sm:gap-3">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 text-sm text-gray-700">
                   <div className="w-full sm:w-[200px]">
                     <div
-                      className={`w-full rounded-lg border px-3 py-2 text-sm font-semibold text-center ${
+                      className={`w-full rounded-lg border px-2 py-1.5 text-xs sm:px-3 sm:py-2 text-xs sm:text-sm font-semibold text-center ${
                         myTurn
                           ? "border-green-200 bg-green-50 text-green-900"
                           : "border-blue-200 bg-blue-50"
@@ -797,351 +842,290 @@ export default function DraftClient({ slug }: DraftClientProps) {
                     </div>
                   </div>
 
-                  <span>
-                    <span className="font-semibold">Round:</span>{" "}
-                    {currentRound}
-                  </span>
+                  <div className="w-full sm:w-auto flex flex-wrap sm:flex-nowrap items-center justify-center sm:justify-start gap-x-3 text-sm text-gray-700">
+                    <span>
+                      <span className="font-semibold">Round:</span> {currentRound}
+                    </span>
 
-                  <span>
-                    <span className="font-semibold">Pick:</span>{" "}
-                    {pickInRound}
-                  </span>
+                    <span className="hidden sm:inline">•</span>
 
-                  <span className="hidden sm:inline">
-                    <span className="font-semibold">On the clock:</span>{" "}
-                    {currentUser?.profiles?.username ?? "—"}
-                  </span>
+                    <span>
+                      <span className="font-semibold">Pick:</span> {pickInRound}
+                    </span>
 
-                  <span className="sm:hidden w-full">
-                    <span className="font-semibold">On the clock:</span>{" "}
-                    {currentUser?.profiles?.username ?? "—"}
-                  </span>
-                </div>
+                    <span className="hidden sm:inline">•</span>
 
-                <div className="relative self-start sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => setShowRules(v => !v)}
-                    className={`text-sm font-semibold text-[#234C6A] transition ${
-                      showRules ? "underline" : "hover:underline"
-                    }`}
-                  >
-                    Draft Rules {showRules ? "▴" : "▾"}
-                  </button>
-
-                  {showRules && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowRules(false)}
-                      />
-
-                      <div className="absolute right-0 top-8 z-50 w-[360px] sm:w-[440px] max-h-[60vh] overflow-auto rounded-xl border bg-white shadow-xl p-5">
-                        <div className="space-y-4 text-sm">
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between py-1">
-                              <span className="text-gray-700">Draft format</span>
-                              <span className="font-semibold">Snake draft</span>
-                            </div>
-
-                            <div className="flex items-center justify-between py-1">
-                              <span className="text-gray-700">Roster rules</span>
-                              <span className="font-semibold">One player per position</span>
-                            </div>
-
-                            <div className="flex items-center justify-between py-1">
-                              <span className="text-gray-700">Total picks</span>
-                              <span className="font-semibold">4 players</span>
-                            </div>
-
-                            <div className="flex items-center justify-between py-1">
-                              <span className="text-gray-700">Draft timer</span>
-                              <span className="font-semibold">45 seconds</span>
-                            </div>
-                          </div>
-                          <div className="border-t border-gray-200"></div>
-                          <div className="rounded-lg p-3 text-sm text-gray-700 space-y-5">
-                            <p>
-                              When it’s <span className="font-semibold">not your turn</span>, you can browse all available players.
-                            </p>
-
-                            <p>
-                              When it <span className="font-semibold">is your turn</span>, positions you’ve already drafted are automatically hidden.
-                            </p>
-
-                            <p>
-                              If your timer expires, a player is automatically selected in roster order
-                              (<span className="font-semibold">Skip → Vice Skip → Second → Lead</span>).
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                    <span className="whitespace-nowrap">
+                      <span className="font-semibold">On the clock:</span>{" "}
+                      {currentUser?.profiles?.username ?? "—"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            <div className="lg:col-span-3 space-y-6">
-              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-                <h2 className="text-lg font-semibold mb-3">Your Team</h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
-                  <div className="rounded-lg px-3 py-2">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
+            <div className="lg:col-span-3 space-y-4 sm:space-y-6">
+              <div className="bg-white rounded-xl shadow-sm p-3 sm:p-5">
+                <h2 className="text-lg font-semibold mb-2">Your Team</h2>
+                <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 sm:gap-2 lg:gap-1.5">
+                  <div className="rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
                     <div className="text-xs font-semibold text-gray-500">Lead</div>
                     <div className="text-sm font-medium mt-1">{slotLine("Lead")}</div>
                   </div>
 
-                  <div className="rounded-lg px-3 py-2">
+                  <div className="rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
                     <div className="text-xs font-semibold text-gray-500">Second</div>
                     <div className="text-sm font-medium mt-1">{slotLine("Second")}</div>
                   </div>
 
-                  <div className="rounded-lg px-3 py-2">
+                  <div className="rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
                     <div className="text-xs font-semibold text-gray-500">Vice Skip</div>
                     <div className="text-sm font-medium mt-1">{slotLine("Vice Skip")}</div>
                   </div>
 
-                  <div className="rounded-lg px-3 py-2">
+                  <div className="rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
                     <div className="text-xs font-semibold text-gray-500">Skip</div>
                     <div className="text-sm font-medium mt-1">{slotLine("Skip")}</div>
                   </div>
                 </div>
               </div>
+              <div className="hidden lg:block">{DraftRulesCard}</div>
             </div>
 
-            <div className="lg:col-span-9 space-y-6">
-              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-                {!myTurn && (
-                  <div className="mb-4 rounded-lg bg-red-200 border border-red-900 p-3 text-sm text-red-900">
-                    It’s not your turn yet. You can browse the player pool, but you can only select a player when it’s your pick.
-                  </div>
-                )}
+              <div className="lg:col-span-9 h-full min-h-0 flex flex-col">
+                <div className="bg-white rounded-xl shadow-sm p-3 sm:p-6 flex flex-col min-h-0 h-[120vh] sm:h-auto max-h-[100vh] lg:max-h-none lg:h-[calc(100vh)] overflow-hidden">
+                  <div className="flex flex-col min-h-0 flex-1">
+                  {!myTurn && (
+                    <div className="mb-3 sm:mb-4 rounded-lg bg-red-200 border border-red-900 p-3 text-sm text-red-900">
+                      It’s not your turn yet. You can browse the player pool, but you can only select a player when it’s your pick.
+                    </div>
+                  )}
 
-                <div className="relative">
-                  {!showSearch && (
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3" ref={searchWrapRef}>
-                      <div className="hidden sm:flex sm:col-span-5 items-end">
-                        <label className="block text-xs font-semibold text-gray-600">Team</label>
-                      </div>
+                  <div className="relative">
+                    {!showSearch && (
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3" ref={searchWrapRef}>
+                        <div className="hidden sm:flex sm:col-span-5 items-end">
+                          <label className="block text-xs font-semibold text-gray-600">Team</label>
+                        </div>
 
-                      <div className="hidden sm:flex sm:col-span-5 items-end">
-                        <label className="block text-xs font-semibold text-gray-600">Position</label>
-                      </div>
-
-                      <div className="hidden sm:flex sm:col-span-2 items-end justify-end">
-                        {filtersApplied && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedTeamFilter("all")
-                              setSelectedPositionFilter("all")
-                            }}
-                            className="text-xs font-semibold text-red-700 hover:text-red-900"
-                          >
-                            Clear Filters
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="sm:hidden flex items-end justify-between">
-                        <label className="block text-xs font-semibold text-gray-600">Team</label>
-                        {filtersApplied && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedTeamFilter("all")
-                              setSelectedPositionFilter("all")
-                            }}
-                            className="text-xs font-semibold text-red-700 hover:text-red-900"
-                          >
-                            Clear Filters
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="sm:col-span-5">
-                        <select
-                          value={selectedTeamFilter}
-                          onChange={(e) => setSelectedTeamFilter(e.target.value)}
-                          className="w-full border px-3 py-2 rounded-lg"
-                        >
-                          <option value="all">All teams</option>
-                          {teams.map((t) => (
-                            <option key={t.id} value={String(t.id)}>
-                              {t.team_name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="sm:col-span-5">
-                        <div className="sm:hidden mb-1">
+                        <div className="hidden sm:flex sm:col-span-5 items-end">
                           <label className="block text-xs font-semibold text-gray-600">Position</label>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="hidden sm:flex sm:col-span-2 items-end justify-end">
+                          {filtersApplied && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedTeamFilter("all")
+                                setSelectedPositionFilter("all")
+                              }}
+                              className="text-xs font-semibold text-red-700 hover:text-red-900"
+                            >
+                              Clear Filters
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="sm:hidden flex items-end justify-between">
+                          <label className="block text-xs font-semibold text-gray-600">Team</label>
+                          {filtersApplied && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedTeamFilter("all")
+                                setSelectedPositionFilter("all")
+                              }}
+                              className="text-xs font-semibold text-red-700 hover:text-red-900"
+                            >
+                              Clear Filters
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="sm:col-span-5">
                           <select
-                            value={selectedPositionFilter}
-                            onChange={(e) => setSelectedPositionFilter(e.target.value)}
+                            value={selectedTeamFilter}
+                            onChange={(e) => setSelectedTeamFilter(e.target.value)}
                             className="w-full border px-3 py-2 rounded-lg"
                           >
-                            <option value="all">All positions</option>
-                            {(myTurn ? remainingPositions : ALL_POSITIONS).map((pos) => (
-                              <option key={pos} value={pos}>
-                                {pos}
+                            <option value="all">All teams</option>
+                            {teams.map((t) => (
+                              <option key={t.id} value={String(t.id)}>
+                                {t.team_name}
                               </option>
                             ))}
                           </select>
+                        </div>
 
+                        <div className="sm:col-span-5">
+                          <div className="sm:hidden mb-1">
+                            <label className="block text-xs font-semibold text-gray-600">Position</label>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={selectedPositionFilter}
+                              onChange={(e) => setSelectedPositionFilter(e.target.value)}
+                              className="w-full border px-3 py-2 rounded-lg"
+                            >
+                              <option value="all">All positions</option>
+                              {(myTurn ? remainingPositions : ALL_POSITIONS).map((pos) => (
+                                <option key={pos} value={pos}>
+                                  {pos}
+                                </option>
+                              ))}
+                            </select>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedTeamFilter("all")
+                                setSelectedPositionFilter("all")
+                                setAvailableOnly(true)
+                                setShowSearch(true)
+                                setPlayerSearch("")
+                              }}
+                              className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-lg border bg-white hover:bg-gray-50"
+                              aria-label="Search players"
+                            >
+                              <span className="text-gray-700">⌕</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-2 flex items-center sm:justify-end">
+                          <label className="w-full sm:w-auto inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-800 select-none">
+                            <input
+                              type="checkbox"
+                              checked={availableOnly}
+                              onChange={(e) => setAvailableOnly(e.target.checked)}
+                              className="h-4 w-4 accent-green-600"
+                            />
+                            <span className="font-semibold whitespace-nowrap">Available only</span>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    {showSearch && (
+                      <div className="w-full rounded-lg bg-white p-3">
+                        <div className="relative">
+                          <input
+                            autoFocus
+                            value={playerSearch}
+                            onChange={(e) => setPlayerSearch(e.target.value)}
+                            placeholder="Search players…"
+                            className="w-full border px-3 py-2 pr-10 rounded-lg"
+                          />
                           <button
                             type="button"
                             onClick={() => {
-                              setSelectedTeamFilter("all")
-                              setSelectedPositionFilter("all")
-                              setAvailableOnly(true)
-                              setShowSearch(true)
+                              setShowSearch(false)
                               setPlayerSearch("")
+                              setAvailableOnly(true)
                             }}
-                            className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-lg border bg-white hover:bg-gray-50"
-                            aria-label="Search players"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900"
+                            aria-label="Close search"
                           >
-                            <span className="text-gray-700">⌕</span>
+                            ×
                           </button>
                         </div>
                       </div>
+                    )}
+                  </div>
 
-                      <div className="sm:col-span-2 flex items-center sm:justify-end">
-                        <label className="w-full sm:w-auto inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-800 select-none">
-                          <input
-                            type="checkbox"
-                            checked={availableOnly}
-                            onChange={(e) => setAvailableOnly(e.target.checked)}
-                            className="h-4 w-4 accent-green-600"
-                          />
-                          <span className="font-semibold whitespace-nowrap">Available only</span>
-                        </label>
-                      </div>
-                    </div>
-                  )}
+                  <div className="mt-4 border border-gray-400 rounded-xl overflow-hidden flex-1 min-h-0" ref={tableWrapRef}>
+                    <div className="h-full overflow-auto pr-2">
+                      <table className="w-full table-auto sm:table-fixed border-collapse text-left">
+                        <thead className="sticky top-0 bg-blue-200 z-10">
+                          <tr className="text-gray-700">
+                            <th className="w-8 px-1 sm:px-4 py-1 sm:py-3 text-[11px] sm:text-xs font-semibold">#</th>
+                            <th className="max-w-[200px] sm:w-[320px] px-1 sm:px-4 py-1 sm:py-3 text-[11px] sm:text-xs font-semibold">Player</th>
+                            <th className="max-w-[140px] sm:w-[260px] px-1 sm:px-4 py-1 sm:py-3 text-[11px] sm:text-xs font-semibold">Team</th>
+                            <th className="max-w-[90px] sm:w-[160px] px-1 sm:px-4 py-1 sm:py-3 text-[11px] sm:text-xs font-semibold">Pos</th>
+                            <th className="max-w-[90px] sm:w-[120px] px-1 sm:px-4 py-1 sm:py-3 text-[11px] sm:text-xs font-semibold">Stat</th>
+                          </tr>
+                        </thead>
 
-                  {showSearch && (
-                    <div className="w-full rounded-lg bg-white p-3">
-                      <div className="relative">
-                        <input
-                          autoFocus
-                          value={playerSearch}
-                          onChange={(e) => setPlayerSearch(e.target.value)}
-                          placeholder="Search players…"
-                          className="w-full border px-3 py-2 pr-10 rounded-lg"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowSearch(false)
-                            setPlayerSearch("")
-                            setAvailableOnly(true)
-                          }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900"
-                          aria-label="Close search"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                        <tbody>
+                          {filteredRows.map((p, index) => {
+                            const canPick = myTurn && !p.drafted && !p.position_taken
+                            const disabledReason = p.position_taken ? "position filled" : ""
 
-                <div className="mt-4 border border-gray-400 rounded-xl overflow-hidden" ref={tableWrapRef}>
-                  <div className="max-h-[60vh] overflow-auto pr-2">
-                    <table className="min-w-[720px] w-full table-fixed border-collapse text-left">
-                      <thead className="sticky top-0 bg-blue-200 z-10">
-                        <tr className="text-gray-700">
-                          <th className="w-12 px-2 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-xs font-semibold">#</th>
-                          <th className="w-[280px] sm:w-[320px] px-2 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-xs font-semibold">Player</th>
-                          <th className="w-[220px] sm:w-[260px] px-2 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-xs font-semibold">Team</th>
-                          <th className="w-[140px] sm:w-[160px] px-2 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-xs font-semibold">Position</th>
-                          <th className="w-28 px-2 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-xs font-semibold">Status</th>
-                        </tr>
-                      </thead>
+                            return (
+                              <tr key={p.id} className={index % 2 === 0 ? "bg-white" : "bg-blue-50"}>
+                                <td className="px-1 sm:px-4 py-1 sm:py-3 text-[11px] sm:text-sm text-gray-600">
+                                  {index + 1}
+                                </td>
 
-                      <tbody>
-                        {filteredRows.map((p, index) => {
-                          const canPick = myTurn && !p.drafted && !p.position_taken
-                          const disabledReason = p.position_taken ? "position filled" : ""
+                                <td className="px-1 sm:px-4 py-1 sm:py-3 align-middle">
+                                  <button
+                                    type="button"
+                                    disabled={!canPick}
+                                    onClick={() => {
+                                      if (!canPick) return
+                                      setSelectedPlayer(p)
+                                      setShowModal(true)
+                                    }}
+                                    className={`block w-full truncate text-left font-semibold ${
+                                      canPick ? "text-[#234C6A] hover:underline" : "text-gray-400 cursor-not-allowed"
+                                    } text-[13px] sm:text-base leading-tight`}
+                                    title={`${p.first_name} ${p.last_name}`}
+                                  >
+                                    {p.first_name} {p.last_name}
+                                  </button>
 
-                          return (
-                            <tr key={p.id} className={index % 2 === 0 ? "bg-white" : "bg-blue-50"}>
-                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-sm text-gray-600">
-                                {index + 1}
-                              </td>
+                                  {!myTurn && (
+                                    <div className="mt-0.5 text-[10px] sm:text-xs text-gray-400">
+                                      Waiting for your turn
+                                    </div>
+                                  )}
 
-                              <td className="px-2 sm:px-4 py-2 sm:py-3 align-middle">
-                                <button
-                                  type="button"
-                                  disabled={!canPick}
-                                  onClick={() => {
-                                    if (!canPick) return
-                                    setSelectedPlayer(p)
-                                    setShowModal(true)
-                                  }}
-                                  className={`block w-full truncate text-left font-semibold ${
-                                    canPick
-                                      ? "text-[#234C6A] hover:underline"
-                                      : "text-gray-400 cursor-not-allowed"
-                                  } text-xs sm:text-base`}
-                                  title={`${p.first_name} ${p.last_name}`}
+                                  {disabledReason && myTurn && (
+                                    <div className="mt-0.5 text-[10px] sm:text-xs text-gray-400">
+                                      {disabledReason}
+                                    </div>
+                                  )}
+                                </td>
+
+                                <td
+                                  className="px-1 sm:px-4 py-1 sm:py-3 truncate text-xs sm:text-sm text-gray-700"
+                                  title={p.team_name}
                                 >
-                                  {p.first_name} {p.last_name}
-                                </button>
+                                  {p.team_name}
+                                </td>
 
-                                {!myTurn && (
-                                  <div className="mt-0.5 text-[10px] sm:text-xs text-gray-400">
-                                    Waiting for your turn
-                                  </div>
-                                )}
+                                <td
+                                  className="px-1 sm:px-4 py-1 sm:py-3 truncate text-[11px] sm:text-sm text-gray-700"
+                                  title={p.position}
+                                >
+                                  {p.position}
+                                </td>
 
-                                {disabledReason && myTurn && (
-                                  <div className="mt-0.5 text-[10px] sm:text-xs text-gray-400">
-                                    {disabledReason}
-                                  </div>
-                                )}
-                              </td>
-
-                              <td
-                                className="px-2 sm:px-4 py-2 sm:py-3 truncate text-xs sm:text-sm text-gray-700"
-                                title={p.team_name}
-                              >
-                                {p.team_name}
-                              </td>
-
-                              <td
-                                className="px-2 sm:px-4 py-2 sm:py-3 truncate text-[11px] sm:text-sm text-gray-700"
-                                title={p.position}
-                              >
-                                {p.position}
-                              </td>
-
-                              <td className="px-2 sm:px-4 py-2 sm:py-3">
-                                {p.drafted ? (
-                                  <span className="inline-flex justify-center rounded-full bg-gray-200 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-gray-700">
-                                    drafted
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex justify-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-green-700">
-                                    available
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
+                                <td className="px-1 sm:px-4 py-1 sm:py-3">
+                                  {p.drafted ? (
+                                    <span className="inline-flex justify-center rounded-full bg-gray-200 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-gray-700">
+                                      drafted
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex justify-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-green-700">
+                                      available
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
+              <div className="lg:hidden mt-8">{DraftRulesCard}</div>
             </div>
           </div>
 

@@ -739,77 +739,66 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                         </button>
                         </td>
                     </tr>,
-
                     isOpen && (
-                        <tr key={`${u.user_id}-picks`}>
-                            <td colSpan={6} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                            <div className="w-full flex justify-center py-2 sm:py-4">
-                                <div className="w-[98%] sm:w-[75%]">
-                                <table className="w-full border-collapse overflow-hidden rounded-lg text-[12px] sm:text-sm table-fixed sm:table-auto">
-                                    <thead className="bg-blue-200 text-gray-700">
-                                    <tr>
-                                        <th className="px-1 py-1 sm:px-3 sm:py-2 text-left w-[60px] sm:w-auto">
-                                        Position
-                                        </th>
-                                        <th className="px-1 py-1 sm:px-3 sm:py-2 text-left w-[118px] sm:w-auto">
-                                        Name
-                                        </th>
-                                        <th className="px-1 py-1 sm:px-3 sm:py-2 text-left w-[120px] sm:w-auto">
-                                        Team
-                                        </th>
-                                        <th className="px-1 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[58px] sm:w-auto">
-                                        Games
-                                        </th>
-                                        <th className="px-1 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[58px] sm:w-auto">
-                                        Points
-                                        </th>
-                                    </tr>
-                                    </thead>
-
-                                    <tbody>
+                    <tr key={`${u.user_id}-picks`}>
+                        <td colSpan={6} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                        <div className="w-full py-2 sm:py-3 flex justify-center">
+                            <div className="w-full">
+                            <div className="mx-auto w-[95%]">
+                                <div className="pt-0">
+                                <div className="h-px w-full sm:mb-4" />
+                                <div className="overflow-x-auto sm:overflow-visible">
+                                    <div className="flex flex-nowrap sm:flex-wrap sm:justify-center">
                                     {[...picks]
-                                    .sort((a, b) => {
+                                        .sort((a, b) => {
                                         const aOrder = player_pos_order[a.players.position] ?? 99
                                         const bOrder = player_pos_order[b.players.position] ?? 99
                                         return aOrder - bOrder
-                                    })
-                                    .map((p, pIdx) => {
+                                        })
+                                        .map((p, i) => {
                                         const player = p.players
                                         const team = player.teams
+                                        const fp = player.total_player_fantasy_pts ?? 0
 
                                         return (
-                                        <tr
-                                            key={p.player_id}
-                                            className={pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}
-                                        >
-                                            <td className="px-1 py-1 sm:px-3 sm:py-2">
-                                            {player.position}
-                                            </td>
+                                            <div key={p.player_id} className="shrink-0 py-2">
+                                            <div className={`${i !== 0 ? "border-l border-[#234C6A]" : ""} h-full`}>
+                                                <div className="px-3 pt-0 pb-1 min-w-[220px] sm:min-w-0 sm:w-[240px]">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="text-[11px] text-gray-600 whitespace-nowrap leading-none">
+                                                    <span className="font-semibold">{player.position}</span> —{" "}
+                                                    <span className="italic">
+                                                        {team?.team_name ?? player.team_id ?? ""}
+                                                    </span>
+                                                    </div>
 
-                                            <td className="px-1 py-1 sm:px-3 sm:py-2">
-                                            {player.first_name} {player.last_name}
-                                            </td>
+                                                    <div className="text-right whitespace-nowrap leading-none">
+                                                    <div className="text-[10px] text-gray-500 leading-none">Pts</div>
+                                                    </div>
+                                                </div>
 
-                                            <td className="px-1 py-1 sm:px-3 sm:py-2">
-                                            {team?.team_name ?? player.team_id}
-                                            </td>
+                                                <div className="flex items-baseline justify-between gap-3 mt-[2px]">
+                                                    <div className="text-[13px] font-semibold truncate leading-tight min-w-0">
+                                                    {player.first_name} {player.last_name}
+                                                    </div>
 
-                                            <td className="px-1 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
-                                            {gamesPlayedByPlayer[String(player.id)] ?? 0}
-                                            </td>
-
-                                            <td className="px-1 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
-                                            {player.total_player_fantasy_pts}
-                                            </td>
-                                        </tr>
+                                                    <div className="text-[13px] font-bold tabular-nums leading-tight whitespace-nowrap">
+                                                    {fp}
+                                                    </div>
+                                                </div>
+                                                </div>
+                                            </div>
+                                            </div>
                                         )
-                                    })}
-                                    </tbody>
-                                </table>
+                                        })}
+                                    </div>
+                                </div>
                                 </div>
                             </div>
-                            </td>
-                        </tr>
+                            </div>
+                        </div>
+                        </td>
+                    </tr>
                     ),
                     ].filter(Boolean)
                 })}
@@ -836,196 +825,172 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
         )
 
         return (
-        <div className="rounded-lg overflow-x-auto sm:overflow-hidden">
-            <table className="min-w-[520px] sm:min-w-[640px] w-full border-collapse table-fixed sm:table-auto text-[13px] sm:text-sm">
-            <thead className="bg-gray-100 text-gray-700">
-                <tr>
-                <th className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 text-left w-[24px] sm:w-auto">
-                    Rank
-                </th>
-                <th className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 text-left w-[44px] sm:w-auto"></th>
-                <th className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 text-left w-[96px] sm:w-auto">
-                    Username
-                </th>
-                <th className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
-                    <div className="flex justify-center whitespace-nowrap">Total Points</div>
-                </th>
-                <th className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
-                    <div className="flex justify-center whitespace-nowrap">Total Games</div>
-                </th>
-                <th className="px-1 py-1 sm:px-3 sm:py-2 text-right whitespace-nowrap w-[40px] sm:w-10">
-                    Drafted
-                </th>
-                </tr>
-            </thead>
+            <div className="rounded-lg overflow-x-auto sm:overflow-hidden">
+                <table className="min-w-[520px] sm:min-w-[640px] w-full border-collapse table-fixed sm:table-auto text-[13px] sm:text-sm">
+                <thead className="bg-gray-100 text-gray-700">
+                    <tr>
+                    <th className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 text-left w-[24px] sm:w-auto">
+                        Rank
+                    </th>
+                    <th className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 text-left w-[44px] sm:w-auto"></th>
+                    <th className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 text-left w-[96px] sm:w-auto">
+                        Username
+                    </th>
+                    <th className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
+                        <div className="flex justify-center whitespace-nowrap">Total Points</div>
+                    </th>
+                    <th className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
+                        <div className="flex justify-center whitespace-nowrap">Total Games</div>
+                    </th>
+                    <th className="px-1 py-1 sm:px-3 sm:py-2 text-right whitespace-nowrap w-[40px] sm:w-10">
+                        Drafted
+                    </th>
+                    </tr>
+                </thead>
 
-            <tbody>
-                {league.fantasy_event_users
-                .sort((a, b) => a.rank - b.rank)
-                .map((u, idx) => {
-                    const picks = picksByUser[u.user_id] || []
-                    const profile = u.profiles
-                    const isOpen = openRows[u.user_id]
-                    const totalGames = picks.reduce(
-                    (sum, p) => sum + (gamesPlayedByPlayer[String(p.player_id)] ?? 0),
-                    0
-                    )
+                <tbody>
+                    {league.fantasy_event_users
+                    .sort((a, b) => a.rank - b.rank)
+                    .map((u, idx) => {
+                        const picks = picksByUser[u.user_id] || []
+                        const profile = u.profiles
+                        const isOpen = openRows[u.user_id]
+                        const totalGames = picks.reduce(
+                        (sum, p) => sum + (gamesPlayedByPlayer[String(p.player_id)] ?? 0),
+                        0
+                        )
 
-                    const rowStyle =
-                    u.rank === 1
-                        ? "bg-yellow-100"
-                        : u.rank === 2
-                        ? "bg-gray-200"
-                        : u.rank === 3
-                        ? "bg-orange-200"
-                        : idx % 2 === 0
-                        ? "bg-white"
-                        : "bg-gray-50"
+                        const rowStyle =
+                        u.rank === 1
+                            ? "bg-yellow-100"
+                            : u.rank === 2
+                            ? "bg-gray-200"
+                            : u.rank === 3
+                            ? "bg-orange-200"
+                            : idx % 2 === 0
+                            ? "bg-white"
+                            : "bg-gray-50"
 
-                    return [
-                    <tr key={`${u.user_id}-main`} className={rowStyle}>
-                        <td className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 w-[24px] sm:w-auto">
-                        <div className="flex tabular-nums font-medium">{u.rank}</div>
-                        </td>
+                        return [
+                        <tr key={`${u.user_id}-main`} className={rowStyle}>
+                            <td className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 w-[24px] sm:w-auto">
+                            <div className="flex tabular-nums font-medium">{u.rank}</div>
+                            </td>
 
-                        <td className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 w-[44px] sm:w-auto">
-                        {profile.avatar_url ? (
-                            <Image
-                            src={profile.avatar_url}
-                            alt={profile.username}
-                            width={32}
-                            height={32}
-                            className="rounded-full object-cover border border-gray-300 w-7 h-7 sm:w-8 sm:h-8"
-                            />
-                        ) : (
-                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-300 flex items-center justify-center text-[11px] sm:text-xs text-gray-600">
-                            {profile.username.charAt(0).toUpperCase()}
-                            </div>
-                        )}
-                        </td>
-
-                        <td className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 font-medium w-[96px] sm:w-auto">
-                        <div className="truncate">
-                            {profile.is_public ? (
-                            <Link
-                                href={`/profile/${profile.username}`}
-                                className="text-blue-600 hover:underline"
-                            >
-                                {profile.username}
-                            </Link>
+                            <td className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 w-[44px] sm:w-auto">
+                            {profile.avatar_url ? (
+                                <Image
+                                src={profile.avatar_url}
+                                alt={profile.username}
+                                width={32}
+                                height={32}
+                                className="rounded-full object-cover border border-gray-300 w-7 h-7 sm:w-8 sm:h-8"
+                                />
                             ) : (
-                            <span className="text-gray-500">{profile.username}</span>
+                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-300 flex items-center justify-center text-[11px] sm:text-xs text-gray-600">
+                                {profile.username.charAt(0).toUpperCase()}
+                                </div>
                             )}
-                        </div>
-                        </td>
+                            </td>
 
-                        <td className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
-                        <div className="flex justify-center tabular-nums font-semibold">
-                            {u.points}
-                        </div>
-                        </td>
+                            <td className="pl-1 pr-1 py-1 sm:px-3 sm:py-2 font-medium w-[96px] sm:w-auto">
+                            <div className="truncate">
+                                {profile.is_public ? (
+                                <Link
+                                    href={`/profile/${profile.username}`}
+                                    className="text-blue-600 hover:underline"
+                                >
+                                    {profile.username}
+                                </Link>
+                                ) : (
+                                <span className="text-gray-500">{profile.username}</span>
+                                )}
+                            </div>
+                            </td>
 
-                        <td className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
-                        <div className="flex justify-center tabular-nums">{totalGames}</div>
-                        </td>
+                            <td className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
+                            <div className="flex justify-center tabular-nums font-semibold">
+                                {u.points}
+                            </div>
+                            </td>
 
-                        <td className="px-1 py-1 sm:px-3 sm:py-2 text-right w-[40px] sm:w-10">
-                        <button
-                            onClick={() => toggleRow(u.user_id)}
-                            className="text-base sm:text-lg font-bold text-gray-700 hover:text-black"
-                        >
-                            {isOpen ? "−" : "+"}
-                        </button>
-                        </td>
-                    </tr>,
+                            <td className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
+                            <div className="flex justify-center tabular-nums">{totalGames}</div>
+                            </td>
 
-                    isOpen && (
+                            <td className="px-1 py-1 sm:px-3 sm:py-2 text-right w-[40px] sm:w-10">
+                            <button
+                                onClick={() => toggleRow(u.user_id)}
+                                className="text-base sm:text-lg font-bold text-gray-700 hover:text-black"
+                            >
+                                {isOpen ? "−" : "+"}
+                            </button>
+                            </td>
+                        </tr>,
+                        isOpen && (
                         <tr key={`${u.user_id}-picks`}>
-                        <td
-                            colSpan={6}
-                            className={
-                            u.rank === 1
-                                ? "bg-yellow-100"
-                                : u.rank === 2
-                                ? "bg-gray-200"
-                                : u.rank === 3
-                                ? "bg-orange-200"
-                                : "bg-white"
-                            }
-                        >
-                            <div className="w-full flex justify-center py-2 sm:py-4">
-                            <div className="w-[96%] sm:w-[75%]">
-                                <table className="w-full border-collapse overflow-hidden rounded-lg text-[12px] sm:text-sm table-fixed sm:table-auto">
-                                <thead className="bg-blue-200 text-gray-700">
-                                    <tr>
-                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[70px] sm:w-auto">
-                                        Position
-                                    </th>
-                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[130px] sm:w-auto">
-                                        Name
-                                    </th>
-                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-left w-[170px] sm:w-auto">
-                                        Team
-                                    </th>
-                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[92px] sm:w-auto">
-                                        Games Played
-                                    </th>
-                                    <th className="px-2 py-1 sm:px-3 sm:py-2 text-center whitespace-nowrap w-[84px] sm:w-auto">
-                                        Fantasy Pts
-                                    </th>
-                                    </tr>
-                                </thead>
+                            <td colSpan={6} className={`${rowStyle} align-top`}>
+                            <div className="w-full py-2 sm:py-3 flex justify-center">
+                                <div className="w-full">
+                                <div className="mx-auto w-[95%]">
+                                    <div className="pt-0">
+                                    <div className="h-px w-full sm:mb-4" />
+                                    <div className="overflow-x-auto sm:overflow-visible">
+                                        <div className="flex flex-nowrap sm:flex-wrap sm:justify-center">
+                                        {[...picks]
+                                            .sort((a, b) => {
+                                            const aOrder = player_pos_order[a.players.position] ?? 99
+                                            const bOrder = player_pos_order[b.players.position] ?? 99
+                                            return aOrder - bOrder
+                                            })
+                                            .map((p, i) => {
+                                            const player = p.players
+                                            const team = player.teams
+                                            const fp = player.total_player_fantasy_pts ?? 0
 
-                                <tbody>
-                                {[...picks]
-                                .sort((a, b) => {
-                                    const aOrder = player_pos_order[a.players.position] ?? 99
-                                    const bOrder = player_pos_order[b.players.position] ?? 99
-                                    return aOrder - bOrder
-                                })
-                                .map((p, pIdx) => {
-                                    const player = p.players
-                                    const team = player.teams
+                                            return (
+                                                <div key={p.player_id} className="shrink-0 py-2">
+                                                <div className={`${i !== 0 ? "border-l border-[#234C6A]" : ""} h-full`}>
+                                                    <div className="px-3 pt-0 pb-1 min-w-[220px] sm:min-w-0 sm:w-[240px]">
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="text-[11px] text-gray-600 whitespace-nowrap leading-none">
+                                                        <span className="font-semibold">{player.position}</span> —{" "}
+                                                        <span className="italic">{team?.team_name ?? ""}</span>
+                                                        </div>
 
-                                    return (
-                                        <tr
-                                        key={p.player_id}
-                                        className={pIdx % 2 === 0 ? "bg-blue-50" : "bg-blue-100"}
-                                        >
-                                        <td className="px-2 py-1 sm:px-3 sm:py-2">
-                                            {player.position}
-                                        </td>
+                                                        <div className="text-right whitespace-nowrap leading-none">
+                                                        <div className="text-[10px] text-gray-500 leading-none">Pts</div>
+                                                        </div>
+                                                    </div>
 
-                                        <td className="px-2 py-1 sm:px-3 sm:py-2">
-                                            {player.first_name} {player.last_name}
-                                        </td>
+                                                    <div className="flex items-baseline justify-between gap-3 mt-[2px]">
+                                                        <div className="text-[13px] font-semibold truncate leading-tight min-w-0">
+                                                        {player.first_name} {player.last_name}
+                                                        </div>
 
-                                        <td className="px-2 py-1 sm:px-3 sm:py-2">
-                                            {team?.team_name ?? player.team_id}
-                                        </td>
-
-                                        <td className="px-2 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
-                                            {gamesPlayedByPlayer[String(player.id)] ?? 0}
-                                        </td>
-
-                                        <td className="px-2 py-1 sm:px-3 sm:py-2 text-center tabular-nums">
-                                            {player.total_player_fantasy_pts}
-                                        </td>
-                                        </tr>
-                                    )
-                                    })}
-                                </tbody>
-                                </table>
+                                                        <div className="text-[13px] font-bold tabular-nums leading-tight whitespace-nowrap">
+                                                        {fp}
+                                                        </div>
+                                                    </div>
+                                                    </div>
+                                                </div>
+                                                </div>
+                                            )
+                                            })}
+                                        </div>
+                                    </div>
+                                    </div>
+                                </div>
+                                </div>
                             </div>
-                            </div>
-                        </td>
+                            </td>
                         </tr>
-                    ),
-                    ].filter(Boolean)
-                })}
-            </tbody>
-            </table>
-        </div>
+                        ),
+                        ].filter(Boolean)
+                    })}
+                </tbody>
+                </table>
+            </div>
         )
     }
 
