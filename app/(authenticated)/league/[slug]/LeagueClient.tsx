@@ -742,54 +742,67 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                     isOpen && (
                     <tr key={`${u.user_id}-picks`}>
                         <td colSpan={6} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                        <div className="w-full py-2 sm:py-3 flex justify-center">
+                        <div className="w-full py-2 sm:py-1 flex justify-center">
                             <div className="w-full">
                             <div className="mx-auto w-[95%]">
                                 <div className="pt-0">
-                                <div className="h-px w-full sm:mb-4" />
-                                <div className="overflow-x-auto sm:overflow-visible">
-                                    <div className="flex flex-nowrap sm:flex-wrap sm:justify-center">
+                                <div className="overflow-visible">
+                                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-center">
                                     {[...picks]
                                         .sort((a, b) => {
                                         const aOrder = player_pos_order[a.players.position] ?? 99
                                         const bOrder = player_pos_order[b.players.position] ?? 99
                                         return aOrder - bOrder
                                         })
-                                        .map((p, i) => {
+                                        .flatMap((p, i) => {
                                         const player = p.players
                                         const team = player.teams
                                         const fp = player.total_player_fantasy_pts ?? 0
 
-                                        return (
-                                            <div key={p.player_id} className="shrink-0 py-2">
-                                            <div className={`${i !== 0 ? "border-l border-[#234C6A]" : ""} h-full`}>
-                                                <div className="px-3 pt-0 pb-1 min-w-[220px] sm:min-w-0 sm:w-[240px]">
-                                                <div className="flex justify-between items-center">
-                                                    <div className="text-[11px] text-gray-600 whitespace-nowrap leading-none">
-                                                    <span className="font-semibold">{player.position}</span> —{" "}
-                                                    <span className="italic">
-                                                        {team?.team_name ?? player.team_id ?? ""}
-                                                    </span>
-                                                    </div>
+                                        const cell = (
+                                            <div
+                                            key={p.player_id}
+                                            className={`
+                                                px-2 py-1
+                                                border-r border-gray-600
+                                                ${i % 2 === 1 ? "border-r-0" : ""}
+                                                sm:border-r-0 sm:border-gray-300 sm:w-[240px] sm:px-3 sm:py-2
+                                                ${i > 0 ? "sm:border-l sm:border-gray-600" : ""}
+                                            `}
+                                            >
+                                            <div className="flex justify-between items-center text-[10px] sm:text-[11px] text-gray-600 leading-none">
+                                                <span className="font-semibold">
+                                                {player.position} —{" "}
+                                                <span className="italic">
+                                                    {team?.team_name ?? player.team_id ?? ""}
+                                                </span>
+                                                </span>
+                                                <span className="text-gray-500">Pts</span>
+                                            </div>
 
-                                                    <div className="text-right whitespace-nowrap leading-none">
-                                                    <div className="text-[10px] text-gray-500 leading-none">Pts</div>
-                                                    </div>
+                                            <div className="flex justify-between items-baseline mt-[2px]">
+                                                <div className="font-semibold truncate min-w-0">
+                                                {player.first_name} {player.last_name}
                                                 </div>
-
-                                                <div className="flex items-baseline justify-between gap-3 mt-[2px]">
-                                                    <div className="text-[13px] font-semibold truncate leading-tight min-w-0">
-                                                    {player.first_name} {player.last_name}
-                                                    </div>
-
-                                                    <div className="text-[13px] font-bold tabular-nums leading-tight whitespace-nowrap">
-                                                    {fp}
-                                                    </div>
-                                                </div>
+                                                <div className="font-bold tabular-nums whitespace-nowrap">
+                                                {fp}
                                                 </div>
                                             </div>
                                             </div>
                                         )
+
+                                        const out = [cell]
+
+                                        if (i === 1) {
+                                            out.push(
+                                            <div
+                                                key="mobile-mid-divider"
+                                                className="col-span-2 h-px bg-gray-600 sm:hidden"
+                                            />
+                                            )
+                                        }
+
+                                        return out
                                         })}
                                     </div>
                                 </div>
@@ -799,7 +812,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                         </div>
                         </td>
                     </tr>
-                    ),
+                    )
                     ].filter(Boolean)
                 })}
             </tbody>
@@ -839,9 +852,6 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                     <th className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
                         <div className="flex justify-center whitespace-nowrap">Total Points</div>
                     </th>
-                    <th className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
-                        <div className="flex justify-center whitespace-nowrap">Total Games</div>
-                    </th>
                     <th className="px-1 py-1 sm:px-3 sm:py-2 text-right whitespace-nowrap w-[40px] sm:w-10">
                         Drafted
                     </th>
@@ -855,10 +865,6 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                         const picks = picksByUser[u.user_id] || []
                         const profile = u.profiles
                         const isOpen = openRows[u.user_id]
-                        const totalGames = picks.reduce(
-                        (sum, p) => sum + (gamesPlayedByPlayer[String(p.player_id)] ?? 0),
-                        0
-                        )
 
                         const rowStyle =
                         u.rank === 1
@@ -914,10 +920,6 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                             </div>
                             </td>
 
-                            <td className="px-1 py-1 sm:px-3 sm:py-2 w-[56px] sm:w-auto">
-                            <div className="flex justify-center tabular-nums">{totalGames}</div>
-                            </td>
-
                             <td className="px-1 py-1 sm:px-3 sm:py-2 text-right w-[40px] sm:w-10">
                             <button
                                 onClick={() => toggleRow(u.user_id)}
@@ -929,53 +931,65 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                         </tr>,
                         isOpen && (
                         <tr key={`${u.user_id}-picks`}>
-                            <td colSpan={6} className={`${rowStyle} align-top`}>
-                            <div className="w-full py-2 sm:py-3 flex justify-center">
+                            <td colSpan={5} className={`${rowStyle} align-top`}>
+                            <div className="w-full py-2 sm:py-1 flex justify-center">
                                 <div className="w-full">
                                 <div className="mx-auto w-[95%]">
                                     <div className="pt-0">
-                                    <div className="h-px w-full sm:mb-4" />
-                                    <div className="overflow-x-auto sm:overflow-visible">
-                                        <div className="flex flex-nowrap sm:flex-wrap sm:justify-center">
+                                    <div className="overflow-visible">
+                                        <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-center">
                                         {[...picks]
                                             .sort((a, b) => {
                                             const aOrder = player_pos_order[a.players.position] ?? 99
                                             const bOrder = player_pos_order[b.players.position] ?? 99
                                             return aOrder - bOrder
                                             })
-                                            .map((p, i) => {
+                                            .flatMap((p, i, arr) => {
                                             const player = p.players
                                             const team = player.teams
                                             const fp = player.total_player_fantasy_pts ?? 0
 
-                                            return (
-                                                <div key={p.player_id} className="shrink-0 py-2">
-                                                <div className={`${i !== 0 ? "border-l border-[#234C6A]" : ""} h-full`}>
-                                                    <div className="px-3 pt-0 pb-1 min-w-[220px] sm:min-w-0 sm:w-[240px]">
-                                                    <div className="flex justify-between items-center">
-                                                        <div className="text-[11px] text-gray-600 whitespace-nowrap leading-none">
-                                                        <span className="font-semibold">{player.position}</span> —{" "}
-                                                        <span className="italic">{team?.team_name ?? ""}</span>
-                                                        </div>
+                                            const cell = (
+                                                <div
+                                                key={p.player_id}
+                                                className={`
+                                                    px-2 py-1
+                                                    border-r border-gray-600
+                                                    ${(i % 2 === 1) ? "border-r-0" : ""}
+                                                    sm:border-r-0 sm:border-gray-300 sm:w-[240px] sm:px-3 sm:py-2
+                                                    ${i > 0 ? "sm:border-l sm:border-gray-600" : ""}
+                                                `}
+                                                >
+                                                <div className="flex justify-between items-center text-[10px] sm:text-[11px] text-gray-600 leading-none">
+                                                    <span className="font-semibold">
+                                                    {player.position} —{" "}
+                                                    <span className="italic">{team?.team_name ?? ""}</span>
+                                                    </span>
+                                                    <span className="text-gray-500">Pts</span>
+                                                </div>
 
-                                                        <div className="text-right whitespace-nowrap leading-none">
-                                                        <div className="text-[10px] text-gray-500 leading-none">Pts</div>
-                                                        </div>
+                                                <div className="flex justify-between items-baseline mt-[2px]">
+                                                    <div className="font-semibold truncate min-w-0">
+                                                    {player.first_name} {player.last_name}
                                                     </div>
-
-                                                    <div className="flex items-baseline justify-between gap-3 mt-[2px]">
-                                                        <div className="text-[13px] font-semibold truncate leading-tight min-w-0">
-                                                        {player.first_name} {player.last_name}
-                                                        </div>
-
-                                                        <div className="text-[13px] font-bold tabular-nums leading-tight whitespace-nowrap">
-                                                        {fp}
-                                                        </div>
-                                                    </div>
+                                                    <div className="font-bold tabular-nums whitespace-nowrap">
+                                                    {fp}
                                                     </div>
                                                 </div>
                                                 </div>
                                             )
+
+                                            const out = [cell]
+
+                                            if (i === 1) {
+                                                out.push(
+                                                <div
+                                                    key="mobile-mid-divider"
+                                                    className="col-span-2 h-px bg-gray-600 sm:hidden"
+                                                />
+                                                )
+                                            }
+                                            return out
                                             })}
                                         </div>
                                     </div>
@@ -985,7 +999,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                             </div>
                             </td>
                         </tr>
-                        ),
+                        )
                         ].filter(Boolean)
                     })}
                 </tbody>
