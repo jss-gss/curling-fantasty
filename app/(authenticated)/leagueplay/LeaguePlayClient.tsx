@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import CreateLeagueModal from "@/components/CreateLeagueModal"
 
@@ -15,7 +15,11 @@ export default function LeaguesPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingLeague, setEditingLeague] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState<"mine" | "explore">("mine")
+  const searchParams = useSearchParams()
+  const shouldOpenCreate = searchParams.get("create") === "true"
+  const [activeTab, setActiveTab] = useState<"mine" | "explore">(
+    searchParams.get("tab") === "explore" ? "explore" : "mine"
+  )
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -83,6 +87,12 @@ export default function LeaguesPage() {
     }
     loadEvents()
   }, [userId])
+
+  useEffect(() => {
+    if (shouldOpenCreate) {
+      setShowModal(true)
+    }
+  }, [shouldOpenCreate])
 
   const commissionedLeagues = leagues.filter(l => l.created_by === userId)
 

@@ -178,13 +178,17 @@ export default function LeagueLeaderboardPage() {
   }, [activeTab])
 
   async function loadTopCurlers() {
-    if (Object.keys(topCurlers).length > 0) return 
+    if (Object.keys(topCurlers).length > 0) return
 
     setLoadingTop(true)
+
+    const todayStr = new Date().toISOString().slice(0, 10)
 
     const { data: eventRows } = await supabase
       .from("curling_events")
       .select("*")
+      .lte("start_date", todayStr)
+      .gt("end_date", todayStr)
       .order("start_date", { ascending: true })
 
     const results: Record<string, Record<string, any[]>> = {}
@@ -588,7 +592,7 @@ export default function LeagueLeaderboardPage() {
 
                             {isNotStarted && (
                               <span className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
-                                event not started
+                                event upcoming
                               </span>
                             )}
 
@@ -665,7 +669,19 @@ export default function LeagueLeaderboardPage() {
                         </div>
                       )
                     })
-                )}
+                )
+              }
+
+              {!loadingTop && (
+                <div className="w-full flex justify-center mt-10">
+                  <Link
+                    href="/eventarchives"
+                    className="text-sm hover:underline"
+                  >
+                    View events archive
+                  </Link>
+                </div>
+              )}
             </>
           )}
 

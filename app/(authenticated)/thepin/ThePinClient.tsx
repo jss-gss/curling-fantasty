@@ -522,7 +522,7 @@ export default function ThePinClient() {
                     <a
                       href="https://worldcurling.org"
                       target="_blank"
-                      className="hover:text-[#AA2B1D] underline"
+                      className="hover:text-[#ac0000] underline"
                     >
                       World Curling Federation ↗
                     </a>
@@ -531,7 +531,7 @@ export default function ThePinClient() {
                     <a
                       href="https://www.curlingzone.com"
                       target="_blank"
-                      className="hover:text-[#AA2B1D] underline"
+                      className="hover:text-[#ac0000] underline"
                     >
                       CurlingZone ↗
                     </a>
@@ -540,25 +540,16 @@ export default function ThePinClient() {
                     <a
                       href="https://curling.gg/"
                       target="_blank"
-                      className="hover:text-[#AA2B1D] underline"
+                      className="hover:text-[#ac0000] underline"
                     >
                       curling.gg ↗
                     </a>
                   </li>
                   <li>
                     <a
-                      href="https://www.curling.ca/2026scotties/"
-                      target="_blank"
-                      className="hover:text-[#AA2B1D] underline"
-                    >
-                      2026 Scotties ↗
-                    </a>
-                  </li>
-                  <li>
-                    <a
                       href="https://www.olympics.com/en/milano-cortina-2026/schedule/cur"
                       target="_blank"
-                      className="hover:text-[#AA2B1D] underline"
+                      className="hover:text-[#ac0000] underline"
                     >
                       2026 Milan Olympics ↗
                     </a>
@@ -735,15 +726,35 @@ export default function ThePinClient() {
                         </section>
                       )}
 
+                      <hr className="border-gray-300" />
+
+                      <section>
+                        <p className="text-gray-600">
+                          Prepare for upcoming Olympic fantasy leagues by exploring{" "}
+                        <a
+                          href="https://www.thegrandslamofcurling.com/rankings"
+                          target="_blank"
+                          className="text-[#ac0000] font-semibold hover:underline"
+                        >
+                          World Team Rankings
+                        </a>
+                        {" "}by GSOC.
+                        </p>
+                      </section>
+
                       {(!nextDraft) && <hr className="border-gray-300" />}
 
                       <section className="space-y-2">
                         {!nextDraft && (
-                          <p className="text-gray-600">
-                            No upcoming drafts –{" "}
-                            <a href="/leagueplay" className="text-[#ac0000] underline">
+                          <p>
+                            <span className="text-gray-600">No upcoming drafts</span> –{" "}
+                            <a href="/leagueplay?tab=explore" className="font-semibold text-[#ac0000] hover:underline">
                               find a league
                             </a>
+                            {" "}<span className="text-gray-600">or</span>{" "}
+                            <a href="/leagueplay?tab=mine&create=true" className="font-semibold text-[#ac0000] transition-colors hover:underline">
+                              create your own
+                            </a>.
                           </p>
                         )}
                       </section>
@@ -798,14 +809,14 @@ export default function ThePinClient() {
                         </section>
                       )}
 
-                      <hr className="border-gray-300" />
+                      {/*<hr className="border-gray-300" />
 
                       <section>
                         <p className="text-gray-600">
                           Need a refresher on how fantasy points are calculated? Read up on{" "}
                           <a
                             href="/howitworks"
-                            className="text-[#234C6A] underline"
+                            className="font-semibold text-[#ac0000] hover:underline"
                             target="_blank"
                             rel="noopener noreferrer"
                           >
@@ -813,7 +824,7 @@ export default function ThePinClient() {
                           </a>
                           .
                         </p>
-                      </section>
+                      </section>*/}
 
                       {updates?.length ? <hr className="border-gray-300" /> : null}
 
