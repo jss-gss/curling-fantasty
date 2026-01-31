@@ -1045,8 +1045,8 @@ export default function DraftClient({ slug }: DraftClientProps) {
                             <th className="w-8 px-1 sm:px-2 py-1 sm:py-3 text-[11px] sm:text-xs font-semibold">#</th>
                             <th className="max-w-[200px] sm:w-[320px] px-1 sm:px-2 py-1 sm:py-3 text-[11px] sm:text-xs font-semibold">Player</th>
                             <th className="max-w-[140px] sm:w-[260px] px-1 sm:px-2 py-1 sm:py-3 text-[11px] sm:text-xs font-semibold">Team</th>
-                            <th className="max-w-[90px] sm:w-[160px] px-1 sm:px-2 py-1 sm:py-3 text-[11px] sm:text-xs font-semibold">Position</th>
-                            <th className="max-w-[90px] sm:w-[120px] px-1 sm:px-2 py-1 sm:py-3 text-[11px] sm:text-xs font-semibold">Status</th>
+                            <th className="max-w-[90px] sm:w-[160px] px-1 sm:px-6 py-1 sm:py-3 text-[11px] sm:text-xs font-semibold">Position</th>
+                            <th className="max-w-[90px] sm:w-[120px] px-1 sm:px-6 py-1 sm:py-3 text-[11px] sm:text-xs font-semibold">Status</th>
                           </tr>
                         </thead>
 
