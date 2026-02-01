@@ -96,7 +96,7 @@ export default function ThePinClient() {
   useEffect(() => {
     const welcome = params.get("welcome")
     if (welcome === "true") {
-      const timer = setTimeout(() => setShowModal(true), 2000)
+      const timer = setTimeout(() => setShowModal(true), 2500)
       return () => clearTimeout(timer)
     }
   }, [params])

@@ -6,7 +6,6 @@ import confetti from "canvas-confetti"
 
 export default function WelcomeModal({
   onClose,
-  username
 }: {
   onClose: () => void
   username: string
@@ -21,45 +20,45 @@ export default function WelcomeModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
       onClick={onClose}
     >
       <div
-        className="relative bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center"
+        className="relative bg-white rounded-lg shadow-xl w-full max-w-md text-center p-6 sm:p-8"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* X BUTTON */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl"
+          aria-label="Close"
         >
           ×
         </button>
 
-        {/* Heading */}
-        <h1 className="text-2xl font-bold text-[#234C6A] mb-2 flex items-center justify-center gap-2">
-          Welcome to the
-          <Image
-            src="/logos/button-home-logo.png"
-            alt="BUTTON Logo"
-            width={125}
-            height={125}
-            className="inline-block object-contain"
-          />
-          !
-        </h1>
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold text-[#234C6A] leading-tight">
+            <span className="block">Welcome to the</span>
+          </h1>
 
-        <p className="text-sm text-gray-600 mb-6 italic">
+          <div className="mt-2 flex justify-center">
+            <Image
+              src="/logos/button-home-logo.png"
+              alt="BUTTON Logo"
+              width={160}
+              height={80}
+              className="object-contain"
+              priority
+            />
+          </div>
+        </div>
+
+        <p className="text-sm text-gray-600 mb-4 italic">
           Have you ever found it so easily?
         </p>
 
-        <p className="text-md mb-6">
-          See what's happening around the sheets by exploring leagues or polishing up your profile.
+        <p className="text-md text-gray-600">
+          See what's happening around the sheets by exploring leagues or polishing up your profile. Good curling!
         </p>
-
-        <h1 className="text-2xl font-bold text-[#234C6A]">
-          Good curling, {username}!
-        </h1>
       </div>
     </div>
   )

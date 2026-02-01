@@ -135,6 +135,25 @@ return (
           }}
           className="flex flex-col gap-4"
         >
+
+          <input
+            placeholder="First Name"
+            className="border border-[#456882] rounded-md px-4 py-2"
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+
+          <input
+            placeholder="Last Name"
+            className="border border-[#456882] rounded-md px-4 py-2"
+            onChange={(e) => setLastName(e.target.value)}
+          />
+
+          <input
+            placeholder="Username"
+            className="border border-[#456882] rounded-md px-4 py-2"
+            onChange={(e) => setUsername(e.target.value)}
+          />
+
           <input
             type="text"
             inputMode="email"
@@ -158,24 +177,6 @@ return (
             placeholder="Confirm Password"
             className="border border-[#456882] rounded-md px-4 py-2"
             onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-
-          <input
-            placeholder="First Name"
-            className="border border-[#456882] rounded-md px-4 py-2"
-            onChange={(e) => setFirstName(e.target.value)}
-          />
-
-          <input
-            placeholder="Last Name"
-            className="border border-[#456882] rounded-md px-4 py-2"
-            onChange={(e) => setLastName(e.target.value)}
-          />
-
-          <input
-            placeholder="Username"
-            className="border border-[#456882] rounded-md px-4 py-2"
-            onChange={(e) => setUsername(e.target.value)}
           />
 
           <button
