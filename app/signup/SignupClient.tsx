@@ -101,11 +101,12 @@ export default function SignupPage() {
     setLoading(false)
   }
 
-  return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat px-4"
-      style={{ backgroundImage: "url('/webpage/signup-page.png')" }}
-    >
+return (
+  <div
+    className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat px-4"
+    style={{ backgroundImage: "url('/webpage/signup-page.png')" }}
+  >
+    <div className="w-full flex justify-center scale-[0.75] sm:scale-[0.85] md:scale-100 origin-center">
       <main className="w-full max-w-lg bg-white shadow-xl rounded-xl p-10">
         <div className="flex justify-center mb-6">
           <Image
@@ -117,10 +118,10 @@ export default function SignupPage() {
           />
         </div>
 
-        <h1 className="text-3xl font-bold text-[#234C6A] text-center mb-2">
+        <h1 className="text-3xl font-bold text-[#234C6A] text-center mb-4">
           Create Your Account
         </h1>
-        
+
         {errorMsg && (
           <p className="text-[#AA2B1D] mb-4 text-center font-medium">
             {errorMsg}
@@ -134,7 +135,6 @@ export default function SignupPage() {
           }}
           className="flex flex-col gap-4"
         >
-
           <input
             type="text"
             inputMode="email"
@@ -181,7 +181,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-4 px-6 py-3 bg-[#234C6A] text-white text-lg rounded-md hover:bg-[#1B3C53] transition disabled:bg-gray-400"
+            className="mt-2 px-6 py-3 bg-[#234C6A] text-white text-lg rounded-md hover:bg-[#1B3C53] transition disabled:bg-gray-400"
           >
             {loading ? "Creating account..." : "Sign Up"}
           </button>
@@ -198,5 +198,7 @@ export default function SignupPage() {
         </p>
       </main>
     </div>
-  )
+  </div>
+)
+
 }

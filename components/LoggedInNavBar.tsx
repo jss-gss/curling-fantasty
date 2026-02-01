@@ -122,7 +122,7 @@ export default function NavBar() {
       <div className="max-w-screen-xl mx-auto flex items-center px-2 w-full relative">
         <button
           onClick={handleLogoClick}
-          className="flex items-center gap-2 overflow-hidden bg-transparent"
+          className="flex flex-col items-start gap-0.5 overflow-hidden bg-transparent"
         >
           <img
             src="/logos/button-main-logo.png"
@@ -130,7 +130,7 @@ export default function NavBar() {
             className="h-6 w-auto lg:h-8"
           />
 
-          <span className="lg:hidden text-[9px] leading-tight text-white/80 whitespace-nowrap">
+          <span className="lg:hidden text-left text-[9px] leading-tight text-white/80 whitespace-nowrap">
             by a curler. for curlers.
           </span>
         </button>
@@ -177,14 +177,14 @@ export default function NavBar() {
               setOpenMobile(prev => !prev)
               setOpenUser(false)
             }}
-            className="h-9 w-9 flex items-center justify-center text-white hover:text-gray-300"
+            className="h-9 w-9 inline-flex items-center justify-center leading-none text-white hover:text-gray-300"
             aria-label="Open menu"
           >
             <span className="text-2xl leading-none">☰</span>
           </button>
 
           {openMobile && (
-            <div className="absolute right-2 top-14 w-56 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white shadow-md rounded-md p-2 text-[#234C6A] z-50">
               {tabs
                 .filter(t => t.href !== "/thepin")
                 .map(tab => {
@@ -208,9 +208,7 @@ export default function NavBar() {
                   href="/profile"
                   onClick={() => setOpenMobile(false)}
                   className={`block px-3 py-2 rounded-md transition ${
-                    pathname === "/profile"
-                      ? "bg-gray-100 font-semibold"
-                      : "hover:bg-gray-100"
+                    pathname === "/profile" ? "bg-gray-100 font-semibold" : "hover:bg-gray-100"
                   }`}
                 >
                   {displayName || "Account"}
