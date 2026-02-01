@@ -130,7 +130,7 @@ export default function NavBar() {
             className="h-6 w-auto lg:h-8"
           />
 
-          <span className="lg:hidden text-[11px] leading-tight text-white/80 whitespace-nowrap">
+          <span className="lg:hidden text-[9px] leading-tight text-white/80 whitespace-nowrap">
             by a curler. for curlers.
           </span>
         </button>
