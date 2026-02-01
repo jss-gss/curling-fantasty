@@ -107,11 +107,11 @@ export default function HowItWorksPage() {
         ],
       },
       {
-        title: "Outplay Matchup",
+        title: "Outplay Opponent",
         img: "/webpage/outplay-opp.png",
         alt: "Outplay Matchup",
         lines: [
-          <>Outplay opponent by 5%+: <strong>+1 × multiplier</strong></>,
+          <>5%+ better: <strong>+1 × multiplier</strong></>,
         ],
       },
     ],
@@ -277,11 +277,11 @@ export default function HowItWorksPage() {
                     />
                   </div>
 
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
+                  <h3 className="text-base sm:text-lg font-semibold mb-2">
                     {c.title}
                   </h3>
 
-                  <p className="text-[12px] sm:text-sm text-gray-600 leading-relaxed">
+                  <p className="text-[12px] sm:text-sm text-gray-700 leading-relaxed">
                     {c.lines.map((line, idx) => (
                       <span key={idx}>
                         {line}
