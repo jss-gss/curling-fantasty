@@ -106,7 +106,7 @@ return (
     className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat px-4"
     style={{ backgroundImage: "url('/webpage/signup-page.png')" }}
   >
-    <div className="w-full flex justify-center scale-[0.75] sm:scale-[0.85] md:scale-100 origin-center">
+    <div className="w-full flex justify-center scale-[0.85] md:scale-100 origin-center">
       <main className="w-full max-w-lg bg-white shadow-xl rounded-xl p-10">
         <div className="flex justify-center mb-6">
           <Image
