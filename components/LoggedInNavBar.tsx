@@ -122,13 +122,17 @@ export default function NavBar() {
       <div className="max-w-screen-xl mx-auto flex items-center px-2 w-full relative">
         <button
           onClick={handleLogoClick}
-          className="absolute left-2 sm:left-3 lg:left-4 top-1/2 -translate-y-1/2 overflow-hidden bg-transparent"
+          className="flex items-center gap-2 overflow-hidden bg-transparent"
         >
           <img
             src="/logos/button-main-logo.png"
             alt="BUTTON Logo"
             className="h-6 w-auto lg:h-8"
           />
+
+          <span className="lg:hidden text-[11px] leading-tight text-white/80 whitespace-nowrap">
+            by a curler. for curlers.
+          </span>
         </button>
 
         <div className="hidden lg:flex items-center gap-15 text-lg font-medium ml-auto">

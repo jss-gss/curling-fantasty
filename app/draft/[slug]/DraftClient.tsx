@@ -838,7 +838,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
                         ? `Your turn in ${picksUntilMyTurn} pick${
                             picksUntilMyTurn === 1 ? "" : "s"
                           }.`
-                        : "Waiting for your next pick…"}
+                        : "Waiting"}
                     </div>
                   </div>
 
@@ -1176,7 +1176,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
         {turnEndedPopup && (
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white p-5 shadow-xl rounded-xl w-full max-w-sm">
-              <h3 className="text-lg font-bold text-gray-900">Turn ended</h3>
+              <h3 className="text-lg font-bold">Turn ended</h3>
               <p className="text-sm text-gray-600 mt-1">{turnEndedPopup}</p>
             </div>
           </div>
