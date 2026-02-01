@@ -188,7 +188,7 @@ export default function LeagueLeaderboardPage() {
       .from("curling_events")
       .select("*")
       .lte("start_date", todayStr)
-      .gt("end_date", todayStr)
+      .gte("end_date", todayStr)
       .order("start_date", { ascending: true })
 
     const results: Record<string, Record<string, any[]>> = {}
