@@ -500,10 +500,15 @@ export default function ThePinClient() {
       .sort((a, b) => (a.my_rank ?? 9999) - (b.my_rank ?? 9999))
   }, [lockedRows])
 
+
   return (
     <>
-      <div className="relative w-full min-h-[100dvh] overflow-x-hidden overscroll-none">
-        <div className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat pointer-events-none" style={{ backgroundImage: "url('/webpage/pin-page.png')" }} />
+    <div className="relative w-full h-[100dvh] overflow-hidden">
+      <div
+        className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat pointer-events-none"
+        style={{ backgroundImage: "url('/webpage/pin-page.png')" }} />
+      <div className="h-full overflow-y-auto overscroll-contain">
+        <div className="w-full min-h-full overflow-x-hidden">
           {showModal && (
             <WelcomeModal
               onClose={() => setShowModal(false)}
@@ -948,6 +953,8 @@ export default function ThePinClient() {
           icon={getAchievementIcon(achievementModal as AchievementId)}
         />
       )}
+      </div>
+    </div>
     </>
   )
 }

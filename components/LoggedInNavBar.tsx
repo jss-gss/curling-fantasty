@@ -177,7 +177,7 @@ export default function NavBar() {
               setOpenMobile(prev => !prev)
               setOpenUser(false)
             }}
-            className="h-9 w-9 inline-flex items-center justify-center leading-none text-white hover:text-gray-300"
+            className="h-9 w-9 inline-flex items-center justify-center leading-none text-white hover:text-gray-300 -mt-1"
             aria-label="Open menu"
           >
             <span className="text-2xl leading-none">☰</span>
