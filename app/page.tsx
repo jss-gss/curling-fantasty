@@ -27,20 +27,28 @@ export default function LandingPage() {
     }
 
     async function fetchLeagues() {
-      const { data: leaguesData } = await supabase
+      const { data: leaguesData, error } = await supabase
         .from("fantasy_events")
         .select(`
           id,
           name,
+          slug,
           draft_status,
           draft_date,
+          max_users,
           curling_event_id,
-          curling_events ( name, year, location )
+          curling_events ( name, year, location ),
+          fantasy_event_users ( id )
         `)
         .eq("is_public", true)
         .order("draft_date", { ascending: true })
 
-      if (leaguesData) setLeagues(leaguesData)
+      if (error) {
+        console.error("fetchLeagues error:", error)
+        return
+      }
+
+      setLeagues(leaguesData ?? [])
     }
 
     checkUser()
@@ -129,7 +137,7 @@ export default function LandingPage() {
                   />
                 </div>
                 <div className="p-4 sm:p-5 text-center">
-                  <h3 className="text-base sm:text-xl font-bold">Join or Create a League</h3>
+                  <h3 className="text-base sm:text-xl font-bold">Join or Create</h3>
                   <p className="mt-2 text-gray-700 text-xs sm:text-base">
                     Jump into public leagues or set up a private competition.
                   </p>
@@ -146,7 +154,7 @@ export default function LandingPage() {
                   />
                 </div>
                 <div className="p-4 sm:p-5 text-center">
-                  <h3 className="text-lg sm:text-xl font-bold">Draft Your Rink</h3>
+                  <h3 className="text-base sm:text-xl font-bold">Draft Your Rink</h3>
                   <p className="mt-2 text-gray-700 text-xs sm:text-base">
                     Pick curlers from national and international competitions. 
                   </p>
@@ -163,7 +171,7 @@ export default function LandingPage() {
                   />
                 </div>
                 <div className="p-4 sm:p-5 text-center">
-                  <h3 className="text-lg sm:text-xl font-bold">Score Points</h3>
+                  <h3 className="text-base sm:text-xl font-bold">Score Points</h3>
                   <p className="mt-2 text-gray-700 text-xs sm:text-base">
                     Earn points based on real-world performance. 
                   </p>
@@ -180,7 +188,7 @@ export default function LandingPage() {
                   />
                 </div>
                 <div className="p-4 sm:p-5 text-center">
-                  <h3 className="text-lg sm:text-xl font-bold">Collect Pins</h3>
+                  <h3 className="text-base sm:text-xl font-bold">Collect Pins</h3>
                   <p className="mt-2 text-gray-700 text-xs sm:text-base">
                     Unlock achievements and show off your status.
                   </p>
@@ -193,27 +201,27 @@ export default function LandingPage() {
         <section className="px-4">
           <div className="mx-auto w-full max-w-6xl pb-12">
             <div className="bg-[#0a2342] text-white rounded-2xl shadow-inner px-6 sm:px-10 py-10 sm:py-12">
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-center">How Scoring Works</h2>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-center">How Scoring Works</h2>
 
               <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white/10 border border-white/10 rounded-xl p-6 text-center">
-                  <h3 className="text-xl font-bold">Individual Performance</h3>
-                  <p className="mt-2 text-white/80">
+                  <h3 className="text-base sm:text-xl font-bold">Individual Performance</h3>
+                  <p className="mt-2 text-white/80 text-sm sm:text-base">
                     Players earn points based on their shooting percentage and how their performance 
                     compares to both their team and their opponent.
                   </p>
                 </div>
 
                 <div className="bg-white/10 border border-white/10 rounded-xl p-6 text-center">
-                  <h3 className="text-xl font-bold">Position Matters</h3>
-                  <p className="mt-2 text-white/80">
+                  <h3 className="text-base sm:text-xl font-bold">Position Matters</h3>
+                  <p className="mt-2 text-white/80 text-sm sm:text-base">
                     Because skips face more difficult shots, their scoring carries extra weight compared to other positions.
                   </p>
                 </div>
 
                 <div className="bg-white/10 border border-white/10 rounded-xl p-6 text-center">
-                  <h3 className="text-xl font-bold">Game Impact</h3>
-                  <p className="mt-2 text-white/80">
+                  <h3 className="text-base sm:text-xl font-bold">Game Impact</h3>
+                  <p className="mt-2 text-white/80 text-sm sm:text-base">
                     Wins and score differentials add small bonuses to reflect real match outcomes.
                   </p>
                 </div>
@@ -222,7 +230,7 @@ export default function LandingPage() {
               <p className="mt-8 text-center text-sm text-white/80">
                 A full scoring breakdown is available on the{" "}
                 <a
-                  href="/howitworks"
+                  href="/howitworks?section=scoring"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline hover:text-blue-200 transition"
@@ -238,7 +246,7 @@ export default function LandingPage() {
         <section className="px-4">
           <div className="mx-auto w-full max-w-6xl py-12">
             <div className="text-center">
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1f4785]">
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1f4785]">
                 Collect Pins to Show Your Status
               </h2>
               <p className="mt-3 text-gray-700 max-w-3xl mx-auto">
@@ -314,13 +322,13 @@ export default function LandingPage() {
           <div className="mx-auto w-full max-w-6xl">
             <div className="bg-[#0a2342] text-white rounded-2xl shadow-inner px-6 sm:px-10 py-10">
               <div className="flex flex-col gap-2">
-                <h2 className="text-3xl sm:text-4xl font-extrabold">Public Leagues Happening Right Now</h2>
+                <h2 className="text-2xl sm:text-4xl font-extrabold">Public Leagues Happening Right Now</h2>
                 <p className="text-white/80">Jump in, draft, and start scoring points.</p>
               </div>
 
               <div className="mt-10 flex flex-col gap-10">
                 <div>
-                  <p className="text-lg font-extrabold mb-4">Open Drafts</p>
+                  <p className="text-lg font-extrabold mb-4">Open Leagues</p>
 
                   <div className="flex flex-col gap-4">
                     {openLeagues.slice(0, 3).map((league) => (
@@ -330,13 +338,32 @@ export default function LandingPage() {
                       >
                         <div className="flex flex-col gap-4 sm:gap-0 sm:flex-row sm:items-end sm:justify-between">
                           <div className="min-w-0">
-                            <p className="text-2xl font-extrabold leading-tight break-words">
+                            <p className="text-xl font-extrabold leading-tight break-words">
                               {league.name}
                             </p>
                             <p className="mt-2 text-sm sm:text-base text-white/80">
                               {league.curling_events?.year} {league.curling_events?.name}
                               {league.curling_events?.location ? ` • ${league.curling_events.location}` : ""}
                             </p>
+                          </div>
+                          <div className="mt-3 space-y-1 text-sm sm:text-base text-white/80">
+                            <div>
+                              <span className="font-semibold">Participants:</span>{" "}
+                              {league.fantasy_event_users?.length ?? 0}
+                              {league.max_users ? ` / ${league.max_users}` : null}
+                            </div>
+
+                            <div>
+                              <span className="font-semibold">Draft:</span>{" "}
+                              {league.draft_date
+                                ? new Date(league.draft_date).toLocaleString("en-US", {
+                                    timeZone: "America/New_York",
+                                    dateStyle: "short",
+                                    timeStyle: "short",
+                                  })
+                                : "TBD"}{" "}
+                              ET
+                            </div>
                           </div>
 
                           <button
@@ -355,77 +382,81 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-lg font-extrabold mb-4">In Progress</p>
+                {inProgressLeagues.length > 0 && (
+                  <div>
+                    <p className="text-lg font-extrabold mb-4">In Progress</p>
 
-                  <div className="flex flex-col gap-4">
-                    {inProgressLeagues.slice(0, 3).map((league) => (
-                      <div
-                        key={league.id}
-                        className="bg-white/10 border border-white/10 rounded-xl p-5"
-                      >
-                        <div className="flex flex-col gap-4 sm:gap-0 sm:flex-row sm:items-end sm:justify-between">
-                          <div className="min-w-0">
-                            <p className="text-2xl font-extrabold leading-tight break-words">
-                              {league.name}
-                            </p>
-                            <p className="mt-2 text-sm sm:text-base text-white/80">
-                              {league.curling_events?.year} {league.curling_events?.name}
-                              {league.curling_events?.location ? ` • ${league.curling_events.location}` : ""}
-                            </p>
+                    <div className="flex flex-col gap-4">
+                      {inProgressLeagues.slice(0, 3).map((league) => (
+                        <div
+                          key={league.id}
+                          className="bg-white/10 border border-white/10 rounded-xl p-5"
+                        >
+                          <div className="flex flex-col gap-4 sm:gap-0 sm:flex-row sm:items-end sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="text-xl font-extrabold leading-tight break-words">
+                                {league.name}
+                              </p>
+                              <p className="mt-2 text-sm sm:text-base text-white/80">
+                                {league.curling_events?.year} {league.curling_events?.name}
+                                {league.curling_events?.location ? ` • ${league.curling_events.location}` : ""}
+                              </p>
+                            </div>
+
+                            <button
+                              onClick={() => router.push(`/login`)}
+                              className="shrink-0 sm:ml-6 border border-white/60 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-white hover:text-[#0a2342] transition"
+                            >
+                              View Standings
+                            </button>
                           </div>
-
-                          <button
-                            onClick={() => router.push(`/login`)}
-                            className="shrink-0 sm:ml-6 border border-white/60 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-white hover:text-[#0a2342] transition"
-                          >
-                            View Standings
-                          </button>
                         </div>
-                      </div>
-                    ))}
+                      ))}
 
-                    {inProgressLeagues.length === 0 && (
-                      <p className="text-white/70">No leagues in progress right now.</p>
-                    )}
+                      {inProgressLeagues.length === 0 && (
+                        <p className="text-white/70">No leagues in progress right now.</p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
+                
+                {completedLeagues.length > 0 && (
+                  <div>
+                    <p className="text-lg font-extrabold mb-4">Completed</p>
 
-                <div>
-                  <p className="text-lg font-extrabold mb-4">Completed</p>
+                    <div className="flex flex-col gap-4">
+                      {completedLeagues.slice(0, 3).map((league) => (
+                        <div
+                          key={league.id}
+                          className="bg-white/10 border border-white/10 rounded-xl p-5"
+                        >
+                          <div className="flex flex-col gap-4 sm:gap-0 sm:flex-row sm:items-end sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="text-xl font-extrabold leading-tight break-words">
+                                {league.name}
+                              </p>
+                              <p className="mt-2 text-sm sm:text-base text-white/80">
+                                {league.curling_events?.year} {league.curling_events?.name}
+                                {league.curling_events?.location ? ` • ${league.curling_events.location}` : ""}
+                              </p>
+                            </div>
 
-                  <div className="flex flex-col gap-4">
-                    {completedLeagues.slice(0, 3).map((league) => (
-                      <div
-                        key={league.id}
-                        className="bg-white/10 border border-white/10 rounded-xl p-5"
-                      >
-                        <div className="flex flex-col gap-4 sm:gap-0 sm:flex-row sm:items-end sm:justify-between">
-                          <div className="min-w-0">
-                            <p className="text-2xl font-extrabold leading-tight break-words">
-                              {league.name}
-                            </p>
-                            <p className="mt-2 text-sm sm:text-base text-white/80">
-                              {league.curling_events?.year} {league.curling_events?.name}
-                              {league.curling_events?.location ? ` • ${league.curling_events.location}` : ""}
-                            </p>
+                            <button
+                              onClick={() => router.push(`/login`)}
+                              className="shrink-0 sm:ml-6 border border-white/60 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-white hover:text-[#0a2342] transition"
+                            >
+                              View Results
+                            </button>
                           </div>
-
-                          <button
-                            onClick={() => router.push(`/login`)}
-                            className="shrink-0 sm:ml-6 border border-white/60 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-white hover:text-[#0a2342] transition"
-                          >
-                            View Results
-                          </button>
                         </div>
-                      </div>
-                    ))}
+                      ))}
 
-                    {completedLeagues.length === 0 && (
-                      <p className="text-white/70">No completed leagues yet.</p>
-                    )}
+                      {completedLeagues.length === 0 && (
+                        <p className="text-white/70">No completed leagues yet.</p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -434,7 +465,7 @@ export default function LandingPage() {
         <section className="px-4 pb-24">
           <div className="mx-auto w-full max-w-6xl">
             <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-8 sm:p-12 text-center">
-              <h2 className="text-3xl sm:text-5xl font-extrabold text-[#1f4785]">Ready to Build Your Rink?</h2>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1f4785]">Ready to Build Your Rink?</h2>
 
               <p className="mt-4 text-gray-700 text-base sm:text-lg max-w-3xl mx-auto">
                 Draft teams, compete in leagues, and track real-world performance all season long.
@@ -443,13 +474,13 @@ export default function LandingPage() {
               <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                 <a
                   href="/signup"
-                  className="inline-flex justify-center bg-[#ac0000] text-white text-lg font-semibold py-3 px-8 rounded-xl hover:bg-[#8a0000] transition"
+                  className="shrink-0 sm:ml-6 px-6 py-2.5 inline-flex justify-center bg-[#ac0000] text-white text-lg font-semibold rounded-xl hover:bg-[#8a0000] transition"
                 >
                   Get Started
                 </a>
                 <a
                   href="/howitworks"
-                  className="inline-flex justify-center border border-[#1f4785] text-[#1f4785] text-lg font-semibold py-3 px-8 rounded-xl hover:bg-[#1f4785] hover:text-white transition"
+                  className="shrink-0 sm:ml-6 px-6 py-2.5 inline-flex justify-center border border-[#1f4785] text-[#1f4785] text-lg font-semibold rounded-xl hover:bg-[#1f4785] hover:text-white transition"
                 >
                   See How It Works
                 </a>

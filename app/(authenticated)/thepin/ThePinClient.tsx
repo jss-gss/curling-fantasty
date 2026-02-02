@@ -56,9 +56,7 @@ export default function ThePinClient() {
   const [triviaLoading, setTriviaLoading] = useState(true)
   const [triviaFeedback, setTriviaFeedback] = useState<"correct" | "wrong" | null>(null)
   const [upcomingGames, setUpcomingGames] = useState<any[]>([])
-  const updates = [{ id: 1, text: "• First version released!", date: "01/21/2026" },
-    {id: 2, text: "• More mobile UI updates.", date: "01/29/2026" },
-    {id: 3, text: "• Users are now allowed to reset their password, so I won't have to delete their accounts!", date: "01/29/2026"}
+  const updates = [{ id: 1, text: "• Second version complete! Includes a new draft style, new scoring, improved mobile ui features, and more.", date: "02/02/2026" }
   ]
   const greetings = ["Hi", "Welcome back", "Good to see you", "Hey there", "Glad you're here", "Nice to see you again", ]
   const [lockedRows, setLockedRows] = useState<any[]>([])
@@ -759,6 +757,18 @@ export default function ThePinClient() {
                         )}
                       </section>
 
+                      <hr className="border-gray-300" />
+                      <section className="space-y-2">
+                        {nextDraft && (
+                          <p>
+                            <span className="text-gray-600">Ready for your upcoming draft? Review </span>
+                            <a href="/howitworks?section=beforedrafting" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#ac0000] hover:underline">
+                               draft rules and guidelines
+                            </a>.
+                          </p>
+                        )}
+                      </section>     
+
                       {(!triviaLoading && triviaQuestion) && <hr className="border-gray-300" />}
 
                       {!triviaLoading && triviaQuestion && (
@@ -809,23 +819,6 @@ export default function ThePinClient() {
                         </section>
                       )}
 
-                      {/*<hr className="border-gray-300" />
-
-                      <section>
-                        <p className="text-gray-600">
-                          Need a refresher on how fantasy points are calculated? Read up on{" "}
-                          <a
-                            href="/howitworks"
-                            className="font-semibold text-[#ac0000] hover:underline"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            how it works
-                          </a>
-                          .
-                        </p>
-                      </section>*/}
-
                       {updates?.length ? <hr className="border-gray-300" /> : null}
 
                       {updates?.length ? (
@@ -842,6 +835,23 @@ export default function ThePinClient() {
                           </ul>
                         </section>
                       ) : null}
+
+                      <hr className="border-gray-300" />
+
+                      <section>
+                        <p className="text-gray-600">
+                          Metrics for calculating fantasy points has changed. Read the improvements on{" "}
+                          <a
+                            href="/howitworks?section=scoring"
+                            className="font-semibold text-[#ac0000] hover:underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            How It Works
+                          </a>
+                          .
+                        </p>
+                      </section>
                     </div>
                   )}
                 </main>

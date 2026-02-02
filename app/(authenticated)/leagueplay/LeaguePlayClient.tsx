@@ -7,7 +7,6 @@ import CreateLeagueModal from "@/components/CreateLeagueModal"
 
 export default function LeaguesPage() {
   const router = useRouter()
-
   const [userId, setUserId] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
   const [leagues, setLeagues] = useState<any[]>([])
@@ -20,6 +19,8 @@ export default function LeaguesPage() {
   const [activeTab, setActiveTab] = useState<"mine" | "explore">(
     searchParams.get("tab") === "explore" ? "explore" : "mine"
   )
+
+  const isOwner = user?.id === '623b0134-e50c-4824-ab3c-ecd90b1b3447'
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -750,13 +751,13 @@ export default function LeaguesPage() {
 
               <div className="relative group hidden sm:block">
                 <button
-                  disabled={activeLeagueCount >= 2}
+                  disabled={!isOwner && activeLeagueCount >= 2}
                   onClick={() => {
                     setEditingLeague(null)
                     setShowModal(true)
                   }}
                   className={`w-12 h-12 flex items-center justify-center rounded-full text-white text-2xl shadow-md transition ${
-                    activeLeagueCount >= 2
+                    !isOwner && activeLeagueCount >= 2
                       ? "bg-gray-300 cursor-not-allowed"
                       : "bg-[#1f4785] hover:bg-[#163766]"
                   }`}
@@ -766,10 +767,10 @@ export default function LeaguesPage() {
 
                 <span
                   className={`absolute left-1/2 -translate-x-1/2 -bottom-12 whitespace-nowrap px-3 py-1 rounded-md text-sm backdrop-blur-sm transition pointer-events-none ${
-                    activeLeagueCount >= 2 ? "bg-red-200 text-red-800" : "bg-white/60 text-black"
+                    !isOwner && activeLeagueCount >= 2 ? "bg-red-200 text-red-800" : "bg-white/60 text-black"
                   } opacity-0 group-hover:opacity-100`}
                 >
-                  {activeLeagueCount >= 2
+                  {!isOwner && activeLeagueCount >= 2
                     ? "Limit reached - max two active drafts"
                     : "Create League"}
                 </span>

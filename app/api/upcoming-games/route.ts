@@ -29,7 +29,7 @@ export async function GET() {
     `)
     .gte("game_datetime", now)
     .order("game_datetime", { ascending: true })
-    .limit(6)
+    .limit(5)
 
   if (error) return NextResponse.json([])
 

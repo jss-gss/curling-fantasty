@@ -1,10 +1,29 @@
 "use client"
 
 import Image from "next/image"
-import { useId, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useId, useMemo, useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 
-type SectionKey = "getting-started" | "platform" | "drafting" | "scoring" | "beforedrafting" | "designedscoring"
+type SectionKey =
+  | "getting-started"
+  | "platform"
+  | "drafting"
+  | "scoring"
+  | "beforedrafting"
+  | "designedscoring"
+
+const SECTION_KEYS: SectionKey[] = [
+  "getting-started",
+  "platform",
+  "beforedrafting",
+  "drafting",
+  "scoring",
+  "designedscoring",
+]
+
+function isSectionKey(v: string | null): v is SectionKey {
+  return !!v && SECTION_KEYS.includes(v as SectionKey)
+}
 
 function SectionAccordion({
   sectionKey,
@@ -25,7 +44,10 @@ function SectionAccordion({
   const isOpen = openKey === sectionKey
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+    <div
+      id={sectionKey}
+      className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden"
+    >
       <button
         type="button"
         className="w-full flex items-start justify-between gap-4 p-4 sm:p-6 text-left"
@@ -58,7 +80,21 @@ function SectionAccordion({
 }
 
 export default function HowItWorksPage() {
+  const searchParams = useSearchParams()
   const [openKey, setOpenKey] = useState<SectionKey | null>(null)
+
+  useEffect(() => {
+    const section = searchParams.get("section")
+    if (!isSectionKey(section)) return
+
+    setOpenKey(section)
+
+    requestAnimationFrame(() => {
+      const el = document.getElementById(section)
+      if (!el) return
+      el.scrollIntoView({ behavior: "smooth", block: "start" })
+    })
+  }, [searchParams])
 
   const scoringCards = useMemo(
     () => [
@@ -75,9 +111,7 @@ export default function HowItWorksPage() {
         title: "Win Bonus",
         img: "/webpage/win-bonus.png",
         alt: "Win Bonus",
-        lines: [
-          <>Player’s team wins: <strong>+1 point</strong></>,
-        ],
+        lines: [<>Player’s team wins: <strong>+1 point</strong></>],
       },
       {
         title: "Score Differential",
@@ -110,9 +144,7 @@ export default function HowItWorksPage() {
         title: "Outplay Opponent",
         img: "/webpage/outplay-opp.png",
         alt: "Outplay Matchup",
-        lines: [
-          <>5%+ better: <strong>+1 × multiplier</strong></>,
-        ],
+        lines: [<>5%+ better: <strong>+1 × multiplier</strong></>],
       },
     ],
     []
@@ -152,9 +184,11 @@ export default function HowItWorksPage() {
           >
             <p className="text-gray-700 text-[13px] sm:text-lg leading-relaxed">
               Each fantasy league is tied to one competition. Drafting and scoring only uses athletes
-              in that event. Players listed as alternates are not available to be drafted. <span className="font-semibold">
-              Fantasy leagues track the round-robin portions of events</span> so matchups stay consistent and leagues 
-              never mix results across competitions. 
+              in that event. Players listed as alternates are not available to be drafted.{" "}
+              <span className="font-semibold">
+                Fantasy leagues track the round-robin portions of events
+              </span>{" "}
+              so matchups stay consistent and leagues never mix results across competitions.
             </p>
           </SectionAccordion>
 
@@ -171,7 +205,7 @@ export default function HowItWorksPage() {
                   Set Up Your Account
                 </h3>
                 <p className="text-gray-700 text-center text-[13px] sm:text-base">
-                  Sign up with a unique username and unlock leagues, drafts, and scoring. 
+                  Sign up with a unique username and unlock leagues, drafts, and scoring.
                 </p>
               </div>
 
@@ -180,7 +214,8 @@ export default function HowItWorksPage() {
                   Personalize Your Profile
                 </h3>
                 <p className="text-gray-700 text-center text-[13px] sm:text-base">
-                  Add a profile photo, answer fun questions, and choose whether to make your profile public. 
+                  Add a profile photo, answer fun questions, and choose whether to make your profile
+                  public.
                 </p>
               </div>
 
@@ -203,13 +238,15 @@ export default function HowItWorksPage() {
             setOpenKey={setOpenKey}
           >
             <p className="text-gray-700 text-[13px] sm:text-lg leading-relaxed">
-              The draft starts automatically on the scheduled time. 
-              All draft dates and times are shown in ET. You’ll enter from 
-              <span className="font-semibold"> The Pin by clicking the “Enter Draft Room” button on the “Your Upcoming 
-              Draft” </span> card. The draft runs in a snake format, and if your timer expires or you are not online, 
-              autopick will select an available player for you. You can draft any 
-              player from any position you haven’t already filled, and the draft requires 
-              at least one person online to keep progressing.
+              The draft starts automatically on the scheduled time. All draft dates and times are
+              shown in ET. You’ll enter from{" "}
+              <span className="font-semibold">
+                The Pin by clicking the “Enter Draft Room” button on the “Your Upcoming Draft”
+              </span>{" "}
+              card. The draft runs in a snake format, and if your timer expires or you are not
+              online, autopick will select an available player for you. You can draft any player
+              from any position you haven’t already filled, and the draft requires at least one
+              person online to keep progressing.
             </p>
           </SectionAccordion>
 
@@ -220,7 +257,6 @@ export default function HowItWorksPage() {
             openKey={openKey}
             setOpenKey={setOpenKey}
           >
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
               <div className="p-4 sm:p-5 rounded-lg text-center">
                 <h3 className="text-base sm:text-lg font-semibold mb-2">Enter the Draft</h3>
@@ -246,10 +282,11 @@ export default function HowItWorksPage() {
 
             <div className="text-gray-700 text-[13px] sm:text-lg sm:text-base leading-relaxed">
               <p>
-                The draft uses a snake format, and you have <strong>45 seconds</strong> to make each pick. 
-                Players already drafted by other teams are unavailable to you.
-                When it’s <span className="font-semibold">not your turn</span>, you can browse all available players.
-                When it <span className="font-semibold">is your turn</span>, positions you’ve already drafted are automatically hidden.
+                The draft uses a snake format, and you have <strong>45 seconds</strong> to make each
+                pick. Players already drafted by other teams are unavailable to you. When it’s{" "}
+                <span className="font-semibold">not your turn</span>, you can browse all available
+                players. When it <span className="font-semibold">is your turn</span>, positions
+                you’ve already drafted are automatically hidden.
               </p>
             </div>
           </SectionAccordion>
@@ -263,10 +300,7 @@ export default function HowItWorksPage() {
           >
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mt-2">
               {scoringCards.map((c) => (
-                <div
-                  key={c.title}
-                  className="bg-white p-4 sm:p-6 rounded-xl text-center"
-                >
+                <div key={c.title} className="bg-white p-4 sm:p-6 rounded-xl text-center">
                   <div className="w-full mb-3">
                     <Image
                       src={c.img}
@@ -277,9 +311,7 @@ export default function HowItWorksPage() {
                     />
                   </div>
 
-                  <h3 className="text-base sm:text-lg font-semibold mb-2">
-                    {c.title}
-                  </h3>
+                  <h3 className="text-base sm:text-lg font-semibold mb-2">{c.title}</h3>
 
                   <p className="text-[12px] sm:text-sm text-gray-700 leading-relaxed">
                     {c.lines.map((line, idx) => (
@@ -302,11 +334,12 @@ export default function HowItWorksPage() {
             setOpenKey={setOpenKey}
           >
             <p className="text-gray-700 text-[13px] sm:text-lg leading-relaxed">
-              Fantasy scoring is built around the stats that exist in curling, with shooting percentage carrying the
-              most weight. Only round robin games are counted, since not all players advance to playoffs. 
-              Position multipliers also matter, with skips earning extra weight on their performance to 
-              reflect the difficulty and impact of their role. Comparing a player to their team highlights 
-              value above the rink, and the outplay bonus reflects a real-world curling metric. 
+              Fantasy scoring is built around the stats that exist in curling, with shooting
+              percentage carrying the most weight. Only round robin games are counted, since not
+              all players advance to playoffs. Position multipliers also matter, with skips earning
+              extra weight on their performance to reflect the difficulty and impact of their role.
+              Comparing a player to their team highlights value above the rink, and the outplay
+              bonus reflects a real-world curling metric.
             </p>
           </SectionAccordion>
         </div>

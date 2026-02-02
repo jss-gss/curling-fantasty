@@ -38,7 +38,6 @@ export default function LeagueLeaderboardPage() {
   const [userId, setUserId] = useState<string>("")
   const [loadingCurrent, setLoadingCurrent] = useState(true)
   const [loadingTop, setLoadingTop] = useState(false)
-  const [loadingPast, setLoadingPast] = useState(false)
 
   const [leagues, setLeagues] = useState<League[]>([])
   const [leaderboards, setLeaderboards] = useState<Record<string, LeaderboardRow[]>>({})
@@ -46,7 +45,7 @@ export default function LeagueLeaderboardPage() {
   const [topCurlers, setTopCurlers] = useState<Record<string, Record<string, any[]>>>({})
 
   const positions = ["Lead", "Second", "Vice Skip", "Skip"]
-  const [activeTab, setActiveTab] = useState<"current" | "top" | "past">("current")
+  const [activeTab, setActiveTab] = useState<"current" | "top">("current")
 
   const [filterEvent, setFilterEvent] = useState("ALL")
   const [filterPosition, setFilterPosition] = useState("ALL")
@@ -187,7 +186,6 @@ export default function LeagueLeaderboardPage() {
     const { data: eventRows } = await supabase
       .from("curling_events")
       .select("*")
-      .lte("start_date", todayStr)
       .gte("end_date", todayStr)
       .order("start_date", { ascending: true })
 
@@ -228,8 +226,7 @@ export default function LeagueLeaderboardPage() {
                 <div className="inline-flex gap-2 sm:gap-3 whitespace-nowrap">
                   {[
                     { key: "current", label: "Current Leagues" },
-                    { key: "top", label: "Top Curlers" },
-                    { key: "past", label: "Past Events" }
+                    { key: "top", label: "Top Curlers" }
                   ].map(tab => (
                     <button
                       key={tab.key}
@@ -592,7 +589,7 @@ export default function LeagueLeaderboardPage() {
 
                             {isNotStarted && (
                               <span className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
-                                event upcoming
+                                upcoming event
                               </span>
                             )}
 
@@ -681,20 +678,6 @@ export default function LeagueLeaderboardPage() {
                     View events archive
                   </Link>
                 </div>
-              )}
-            </>
-          )}
-
-          {activeTab === "past" && (
-            <>
-              {loadingPast && (
-                <p className="w-full flex justify-center mt-20 text-gray-600">
-                  Loading...
-                </p>
-              )}
-
-              {!loadingPast && leagues.length === 0 && (
-                <p className="text-gray-600">No past events.</p>
               )}
             </>
           )}
