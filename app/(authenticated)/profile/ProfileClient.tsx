@@ -314,17 +314,19 @@ export default function ProfileClient() {
 
   return (
     <>
-      <div className="pb-14 px-4 sm:px-0">
+      <div className="relative min-h-screen pt-10 pb-14 px-4 sm:px-0 overflow-x-hidden">
+        <div
+          className="hidden lg:block fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat pointer-events-none"
+          style={{ backgroundImage: "url('/webpage/profile-page.png')" }}
+        />
         <div className="max-w-3xl mx-auto px-4 py-5 sm:p-6 bg-white shadow-md rounded-lg">
           <div className="text-sm sm:text-base">
             <div className="mb-6">
               <div className="flex items-center justify-between">
-                {/* LEFT */}
                 <h1 className="text-2xl font-bold text-[#234C6A]">
                   {isEditing ? "Edit Profile" : "My Profile"}
                 </h1>
 
-                {/* RIGHT — PRIVACY TOGGLE ONLY */}
                 {!isEditing && (
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-gray-500">Private</span>
@@ -355,11 +357,9 @@ export default function ProfileClient() {
                 )}
               </div>
             </div>
-          {/* STATIC PROFILE VIEW */}
           {!isEditing && (
             <>
               <div className="flex items-center gap-6">
-                {/* Avatar */}
                 {profile?.avatar_url ? (
                   <div className="w-24 h-24 rounded-full overflow-hidden border border-[#456882]">
                     <Image
@@ -452,7 +452,6 @@ export default function ProfileClient() {
                 </div>
               )}
 
-              {/* CURLING PROFILE */}
               {(profile?.years_played ||
                 profile?.favorite_club ||
                 profile?.go_to_shot?.length > 0 ||
@@ -539,7 +538,6 @@ export default function ProfileClient() {
             </>
           )}
 
-          {/* ACTIONS*/}
           {!isEditing && (
             <div className="mt-8 border-t pt-6">
               <h2 className="text-xl font-semibold text-[#234C6A] mb-3">
@@ -586,7 +584,6 @@ export default function ProfileClient() {
             </div>
           )}
 
-          {/* EDIT MODE */}
           {isEditing && (
             <div className="mt-8 border-t pt-6">
               {errorMsg && (
@@ -594,7 +591,6 @@ export default function ProfileClient() {
               )}
 
               <div className="flex flex-col gap-4">
-                {/* Username */}
                 <input
                   type="text"
                   value={newUsername}
@@ -603,7 +599,6 @@ export default function ProfileClient() {
                   placeholder="New username"
                 />
 
-                {/* Avatar Upload */}
                 <div className="relative">
                   <input
                     type="file"
@@ -617,7 +612,6 @@ export default function ProfileClient() {
                   </div>
                 </div>
 
-                {/* YEARS PLAYED */}
                 <input
                   type="text"
                   value={yearsPlayed}
@@ -626,7 +620,6 @@ export default function ProfileClient() {
                   placeholder="I’ve played for ___ years"
                 />
 
-                {/* FAVORITE CLUB */}
                 <input
                   type="text"
                   value={favoriteClub}
@@ -635,7 +628,6 @@ export default function ProfileClient() {
                   placeholder="My favorite club to play in is..."
                 />
 
-                {/* GO TO SHOT */}
                 <div>
                   <div className="flex items-center gap-3 flex-wrap">
                     <p className="font-semibold text-gray-700">
@@ -667,7 +659,6 @@ export default function ProfileClient() {
                     )}
                   </div>
 
-                {/* TRADITION */}
                 <input
                   type="text"
                   value={tradition}
@@ -676,7 +667,6 @@ export default function ProfileClient() {
                   placeholder="My curling tradition/superstition..."
                 />
 
-                {/* FAVORITE PRO TEAM */}
                 <input
                   type="text"
                   value={favoriteProTeam}
@@ -685,7 +675,6 @@ export default function ProfileClient() {
                   placeholder="My favorite professional team..."
                 />
 
-                {/* WOULD RATHER */}
                 <div>
                   <p className="font-semibold text-gray-700 mb-2">
                     I would rather:
@@ -715,7 +704,6 @@ export default function ProfileClient() {
                   )}
                 </div>
 
-                {/* MOST CURLING THING */}
                 <input
                   type="text"
                   value={mostCurlingThing}
@@ -724,7 +712,6 @@ export default function ProfileClient() {
                   placeholder="The most 'curling person' thing I've ever done..."
                 />
 
-                {/* WALKUP MUSIC */}
                 <input
                   type="text"
                   value={walkupMusic}
@@ -733,7 +720,6 @@ export default function ProfileClient() {
                   placeholder="If curling had walk-up music, mine would be..."
                 />
 
-                {/* HOT TAKE */}
                 <input
                   type="text"
                   value={hotTake}
@@ -742,7 +728,6 @@ export default function ProfileClient() {
                   placeholder="My curling hot take..."
                 />
 
-                {/* BUTTONS */}
                 <div className="flex gap-3 justify-end">
                   <button
                     onClick={() => setIsEditing(false)}

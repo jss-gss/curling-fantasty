@@ -158,7 +158,12 @@ export default function ProfilePublicClient({ username }: { username: string }) 
 
   return (
     <>
-      <div className="pb-14 px-4 sm:px-0">
+      <div className="relative min-h-screen pt-10 pb-14 px-4 sm:px-0 overflow-x-hidden">
+        <div
+          className="hidden lg:block fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat pointer-events-none"
+          style={{ backgroundImage: "url('/webpage/profile-page.png')" }}
+        />        
+        
         {selectedAchievement && (
           <AchievementModal
             open={modalOpen}

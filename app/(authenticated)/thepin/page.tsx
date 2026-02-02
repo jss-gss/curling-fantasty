@@ -1,5 +1,5 @@
-import { Suspense } from "react";
-import ThePinClient from "./ThePinClient";
+import { Suspense } from "react"
+import ThePinClient from "./ThePinClient"
 
 export const metadata = {
   title: "The Pin | BUTTON",
@@ -10,5 +10,5 @@ export default function Page() {
     <Suspense fallback={null}>
       <ThePinClient />
     </Suspense>
-  );
+  )
 }

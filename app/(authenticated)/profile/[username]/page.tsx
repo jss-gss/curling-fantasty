@@ -8,12 +8,7 @@ export default async function Page({ params }: { params: Promise<{ username: str
   const { username } = await params;
 
   return (
-    <div
-      className="min-h-screen w-full bg-cover bg-center bg-no-repeat bg-fixed pt-10"
-      style={{ backgroundImage: "url('/webpage/profile-page.png')" }}
-    >
-      <ProfilePublicClient username={username}/>
-    </div>
+    <ProfilePublicClient username={username}/>
   )
 }
 
