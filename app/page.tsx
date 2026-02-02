@@ -12,6 +12,10 @@ export default function LandingPage() {
   const router = useRouter()
   const [leagues, setLeagues] = useState<any[]>([])
 
+  const openLeagues = leagues.filter((l) => l.draft_status === "open")
+  const inProgressLeagues = leagues.filter((l) => l.draft_status === "closed")
+  const completedLeagues = leagues.filter((l) => l.draft_status === "completed")
+
   useEffect(() => {
     async function checkUser() {
       const { data } = await supabase.auth.getUser()
@@ -29,6 +33,7 @@ export default function LandingPage() {
           id,
           name,
           draft_status,
+          draft_date,
           curling_event_id,
           curling_events ( name, year, location )
         `)
@@ -42,351 +47,420 @@ export default function LandingPage() {
     fetchLeagues()
   }, [router])
 
-  return (
-    <>
-      {/* FULL-WIDTH HERO */}
-      <section className="relative w-full mb-20">
+return (
+  <>
+    <header className="relative w-full overflow-hidden">
+      <div className="relative h-[520px] md:h-[600px] w-full">
+        <Image
+          src="/webpage/button-home-graphic.png"
+          alt="Curling Hero"
+          fill
+          className="object-cover brightness-75"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-black/70" />
+      </div>
 
-        {/* Background graphic */}
-        <div className="relative h-[300px] md:h-[380px] w-full overflow-hidden">
-          <Image
-            src="/webpage/button-home-graphic.png"
-            alt="Curling Hero"
-            fill
-            className="object-cover brightness-75"
-          />
-        </div>
-
-      {/* Overlay content */}
-      <div className="absolute inset-0 flex justify-center items-center text-white px-4">
-
-        <div className="w-full flex flex-col items-center">
-          {/* Inline row that spans the full hero width */}
-          <div className="flex items-center gap-6 w-full justify-center whitespace-nowrap">
-            <div className="relative flex-shrink-0">
-              <div className="w-56 h-20 relative">
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full px-4">
+          <div className="mx-auto w-full max-w-6xl">
+            <div className="flex flex-col items-center text-center text-white">
+              <div className="relative w-[240px] h-[72px] sm:w-[280px] sm:h-[84px] md:w-[360px] md:h-[104px]">
                 <Image
                   src="/logos/button-main-logo.png"
                   alt="BUTTON logo"
                   fill
                   className="object-contain"
+                  priority
                 />
               </div>
 
-              <span className="absolute -right-5 top-1/2 -translate-y-1/2 text-5xl font-extrabold">
-                .
-              </span>
+              <h1 className="mt-6 text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow">
+                Fantasy Curling.
+                <span className="block">Built for Competitors.</span>
+              </h1>
+
+              <p className="mt-4 max-w-md text-base sm:text-md md:text-lg text-white/90">
+                The first fantasy curling platform to draft players for national and international competitions.
+              </p>
+
+              <div className="mt-7 flex w-full max-w-xl flex-col sm:flex-row gap-3 sm:gap-4">
+                <button
+                  onClick={() => router.push("/signup")}
+                  className="w-full bg-[#ac0000] text-white py-4 rounded-2xl text-lg font-semibold hover:bg-[#8a0000] transition shadow-lg"
+                >
+                  Take Your Shot
+                </button>
+
+                <button
+                  onClick={() => router.push("/login")}
+                  className="w-full py-4 rounded-2xl text-lg font-semibold border border-white/70 text-white hover:bg-white hover:text-[#0a2342] transition shadow-lg"
+                >
+                  Return to Your Rink
+                </button>
+              </div>
+
+              <p className="mt-5 text-xs sm:text-sm text-white/80">
+                Pick your curlers • Sweep the leaderboard • Hit the button
+              </p>
             </div>
-
-            {/* Headline */}
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight drop-shadow-lg whitespace-nowrap">
-              Fantasy Curling. Built for Competitors.
-            </h1>
           </div>
-
-          {/* Sub-headline */}
-          <p className="text-lg md:text-xl opacity-90 mt-4 text-center">
-            Pick your curlers. Sweep the leaderboard. Hit the button.
-          </p>
-
         </div>
       </div>
-      </section>
+    </header>
 
-      <main className="w-full flex flex-col items-center text-center px-3">
-        {/* FULL-WIDTH PROMO CARD */}
-        <section className="w-full max-w-5xl mb-25">
-          <div className="0 text-left">
-            <h2 className="text-3xl font-bold text-center text-[#1f4785] mb-3">
+    <main className="w-full">
+      <section className="px-4">
+        <div className="mx-auto w-full max-w-6xl py-12 sm:py-16">
+          <div className="text-center">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1f4785]">
               Step into the Hack and Play Fantasy Curling
             </h2>
-            <p className="text-gray-700 text-lg text-center mb-6">
-              The first fantasy curling league to draft players for national and international competitions.
-            </p>
-
-            <div className="flex flex-wrap justify-center gap-4">
-              <button
-                onClick={() => router.push("/signup")}
-                className="bg-[#ac0000] text-white px-10 py-3 rounded-lg text-lg font-semibold hover:bg-[#8a0000] transition"
-              >
-                Take Your Shot
-              </button>
-
-              <button
-                onClick={() => router.push("/login")}
-                className="px-10 py-3 rounded-lg text-lg font-semibold border border-[#1f4785] text-[#1f4785] hover:bg-[#1f4785] hover:text-white transition"
-              >
-                Return to Your Rink
-              </button>
-            </div>
           </div>
-        </section>
 
-        {/* FEATURE CARDS */}
-        <section className="w-full max-w-6xl mb-20">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-            {/* Card 1 */}
-            <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 text-left transition transform hover:-translate-y-1 hover:shadow-2xl">
-              <div className="w-full mb-4">
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-6">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden transition transform md:hover:-translate-y-1 md:hover:shadow-2xl">
+              <div className="relative w-full h-[96px] sm:h-[104px] md:h-[112px] flex items-center justify-center">
                 <Image
                   src="/webpage/join-a-league.png"
-                  alt="Draft Your Rinks"
-                  width={1600}
-                  height={900}
-                  className="rounded-t-xl w-full h-auto"
+                  alt="Join or Create a League"
+                  fill
+                  className="object-contain"
                 />
               </div>
-              <h3 className="text-xl font-semibold text-center mb-2">Join or Create a League</h3>
-              <p className="text-gray-700 text-center">
-                Join public leagues or create your own private competition.
-              </p>
+              <div className="p-4 sm:p-5 text-center">
+                <h3 className="text-lg sm:text-xl font-bold">Join or Create a League</h3>
+                <p className="mt-2 text-gray-700 text-sm sm:text-base">
+                  Jump into public leagues or set up a private competition.
+                </p>
+              </div>
             </div>
 
-            {/* Card 2 */}
-           <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 text-left transition transform hover:-translate-y-1 hover:shadow-2xl">
-              <div className="w-full mb-4">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden transition transform md:hover:-translate-y-1 md:hover:shadow-2xl">
+              <div className="relative w-full h-[96px] sm:h-[104px] md:h-[112px] flex items-center justify-center">
                 <Image
                   src="/webpage/draft-your-rink.png"
-                  alt="Draft Your Rinks"
-                  width={1600}
-                  height={900}
-                  className="rounded-t-xl w-full h-auto"
+                  alt="Draft Your Rink"
+                  fill
+                  className="object-contain"
                 />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-center">Draft Your Rink</h3>
-              <p className="text-gray-700 text-center">
-                Pick curlers from national and international events.
-              </p>
+              <div className="p-4 sm:p-5 text-center">
+                <h3 className="text-lg sm:text-xl font-bold">Draft Your Rink</h3>
+                <p className="mt-2 text-gray-700 text-sm sm:text-base">
+                  Pick curlers from national and international competitions. 
+                </p>
+              </div>
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 text-left transition transform hover:-translate-y-1 hover:shadow-2xl">
-              <div className="w-full mb-4 ">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden transition transform md:hover:-translate-y-1 md:hover:shadow-2xl">
+              <div className="relative w-full h-[96px] sm:h-[104px] md:h-[112px] flex items-center justify-center">
                 <Image
                   src="/webpage/score-points.png"
                   alt="Score Points"
-                  width={1600}
-                  height={900}
-                  className="rounded-t-xl w-full h-auto"
+                  fill
+                  className="object-contain"
                 />
               </div>
+              <div className="p-4 sm:p-5 text-center">
+                <h3 className="text-lg sm:text-xl font-bold">Score Points</h3>
+                <p className="mt-2 text-gray-700 text-sm sm:text-base">
+                  Earn points based on real-world performance. 
+                </p>
+              </div>
+            </div>
 
-              <h3 className="text-xl font-semibold mb-2 text-center">Score Points</h3>
-              <p className="text-gray-700 text-center">
-                Earn points based on real‑world performance.
-              </p>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden transition transform md:hover:-translate-y-1 md:hover:shadow-2xl">
+              <div className="relative w-full h-[96px] sm:h-[104px] md:h-[112px] flex items-center justify-center">
+                <Image
+                  src="/webpage/collect-pins.png"
+                  alt="Collect Pins"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="p-4 sm:p-5 text-center">
+                <h3 className="text-lg sm:text-xl font-bold">Collect Pins</h3>
+                <p className="mt-2 text-gray-700 text-sm sm:text-base">
+                  Unlock achievements and show off your status.
+                </p>
+              </div>
             </div>
           </div>
-        </section>
-        
-        {/* HOW SCORING WORKS */}
-        <section className="w-full flex justify-center mb-20">
-          <div className="w-full max-w-6xl bg-[#0a2342] text-white py-12 px-8 rounded-xl shadow-inner">
+        </div>
+      </section>
 
-            <h2 className="text-3xl font-bold mb-10 text-center">
-              How Scoring Works
-            </h2>
+      <section className="px-4">
+        <div className="mx-auto w-full max-w-6xl pb-12">
+          <div className="bg-[#0a2342] text-white rounded-2xl shadow-inner px-6 sm:px-10 py-10 sm:py-12">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-center">How Scoring Works</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-              {/* Individual Performance */}
-              <div className="bg-[#12345a] p-6 rounded-lg shadow-lg text-center">
-                <h3 className="text-xl font-semibold mb-3">Individual Performance</h3>
-                <p className="opacity-80">
-                  Players earn points based on their shooting percentage and how they
-                  perform compared to their team.
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white/10 border border-white/10 rounded-xl p-6 text-center">
+                <h3 className="text-xl font-bold">Individual Performance</h3>
+                <p className="mt-2 text-white/80">
+                  Players earn points based on their shooting percentage and how their performance 
+                  compares to both their team and their opponent.
                 </p>
               </div>
 
-              {/* Position Matters */}
-              <div className="bg-[#12345a] p-6 rounded-lg shadow-lg text-center">
-                <h3 className="text-xl font-semibold mb-3">Position Matters</h3>
-                <p className="opacity-80">
-                  Skips face tougher shots, so their scoring is weighted more heavily
-                  than other positions.
+              <div className="bg-white/10 border border-white/10 rounded-xl p-6 text-center">
+                <h3 className="text-xl font-bold">Position Matters</h3>
+                <p className="mt-2 text-white/80">
+                  Because skips face more difficult shots, their scoring carries extra weight compared to other positions.
                 </p>
               </div>
 
-              {/* Game Impact */}
-              <div className="bg-[#12345a] p-6 rounded-lg shadow-lg text-center">
-                <h3 className="text-xl font-semibold mb-3">Game Impact</h3>
-                <p className="opacity-80">
-                  Wins and score differentials add small bonuses to reflect real match
-                  outcomes.
+              <div className="bg-white/10 border border-white/10 rounded-xl p-6 text-center">
+                <h3 className="text-xl font-bold">Game Impact</h3>
+                <p className="mt-2 text-white/80">
+                  Wins and score differentials add small bonuses to reflect real match outcomes.
                 </p>
               </div>
-
             </div>
 
-            {/* Footer Note */}
-            <p className="text-center mt-10 text-sm opacity-80">
+            <p className="mt-8 text-center text-sm text-white/80">
               A full scoring breakdown is available on the{" "}
               <a
                 href="/howitworks"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline hover:text-blue-300 hover:opacity-100 transition"
+                className="underline hover:text-blue-200 transition"
               >
                 How It Works
               </a>{" "}
               page.
             </p>
-
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* PINS SECTION */}
-        <section className="w-full py-16">
-          <div className="max-w-6xl mx-auto px-4">
-
-            {/* Centered Title */}
-            <h2 className="text-3xl font-bold text-center text-[#1f4785] mb-12">
+      <section className="px-4">
+        <div className="mx-auto w-full max-w-6xl py-12">
+          <div className="text-center">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1f4785]">
               Collect Pins to Show Your Status
             </h2>
+            <p className="mt-3 text-gray-700 max-w-3xl mx-auto">
+              Earn achievements for finishes, event dominance, and perfect performances.
+            </p>
+          </div>
 
-            {/* 4 x 3 Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-10">
-
-              {/* PIN CARD */}
-              <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-2xl">
-                <div className="w-20 h-20 relative mb-4">
-                  <Image
-                    src="/icons/four-foot-finisher.png"
-                    alt="First Place"
-                    fill
-                    className="object-contain"
-                  />
+          <div className="mt-8 px-6 flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory sm:px-0 sm:grid sm:grid-cols-3 lg:grid-cols-6 sm:gap-6 sm:overflow-visible">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 w-[180px] flex-none snap-start sm:w-auto transition transform md:hover:-translate-y-1 md:hover:shadow-2xl overflow-hidden">
+              <div className="p-5 flex flex-col items-center text-center min-h-[210px]">
+                <div className="w-16 h-16 relative mb-4">
+                  <Image src="/icons/four-foot-finisher.png" alt="Four Foot Finisher" fill className="object-contain" />
                 </div>
-                <p className="text-base font-semibold text-gray-800 mb-1">Four Foot Finisher</p>
-                <p className="text-sm text-gray-600">You're gold! Finish first in a league of at least eight.</p>
+                <p className="text-sm font-bold text-gray-800">Four Foot Finisher</p>
+                <p className="mt-2 text-xs text-gray-600">You're golden! Finish first in a league of at least eight.</p>
               </div>
+            </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-2xl">
-                <div className="w-20 h-20 relative mb-4">
-                  <Image
-                    src="/icons/eight-foot-finisher.png"
-                    alt="Second Place"
-                    fill
-                    className="object-contain"
-                  />
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 w-[180px] flex-none snap-start sm:w-auto transition transform md:hover:-translate-y-1 md:hover:shadow-2xl overflow-hidden">
+              <div className="p-5 flex flex-col items-center text-center min-h-[210px]">
+                <div className="w-16 h-16 relative mb-4">
+                  <Image src="/icons/eight-foot-finisher.png" alt="Eight Foot Finisher" fill className="object-contain" />
                 </div>
-                <p className="text-base font-semibold text-gray-800 mb-1">Eight Foot Finisher</p>
-                <p className="text-sm text-gray-600">Silver looks good on you! Finish second in a league of at least eight.</p>
+                <p className="text-sm font-bold text-gray-800">Eight Foot Finisher</p>
+                <p className="mt-2 text-xs text-gray-600">Silver looks good on you! Finish second in a league of at least eight.</p>
               </div>
-              <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-2xl">
-                <div className="w-20 h-20 relative mb-4">
-                  <Image
-                    src="/icons/twelve-foot-finisher.png"
-                    alt="Third Place"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <p className="text-base font-semibold text-gray-800 mb-1">Twelve Foot Finisher</p>
-                <p className="text-sm text-gray-600">Hitting the rings and the podium! Finish third in a league of at least eight.</p>
-              </div>
+            </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-2xl">
-                <div className="w-20 h-20 relative mb-4">
-                  <Image
-                    src="/icons/first-event-winner.png"
-                    alt="First Event Winner"
-                    fill
-                    className="object-contain"
-                  />
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 w-[180px] flex-none snap-start sm:w-auto transition transform md:hover:-translate-y-1 md:hover:shadow-2xl overflow-hidden">
+              <div className="p-5 flex flex-col items-center text-center min-h-[210px]">
+                <div className="w-16 h-16 relative mb-4">
+                  <Image src="/icons/twelve-foot-finisher.png" alt="Twelve Foot Finisher" fill className="object-contain" />
                 </div>
-                <p className="text-base font-semibold text-gray-800 mb-1">First Event Winner</p>
-                <p className="text-sm text-gray-600">Your picks were world-class! Each one led their position in fantasy points.</p>
+                <p className="text-sm font-bold text-gray-800">Twelve Foot Finisher</p>
+                <p className="mt-2 text-xs text-gray-600">Hitting the rings and the podium! Finish third in a league of at least eight.</p>
               </div>
+            </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-2xl">
-                <div className="w-20 h-20 relative mb-4">
-                  <Image
-                    src="/icons/second-event-winner.png"
-                    alt="Second Event Winner"
-                    fill
-                    className="object-contain"
-                  />
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 w-[180px] flex-none snap-start sm:w-auto transition transform md:hover:-translate-y-1 md:hover:shadow-2xl overflow-hidden">
+              <div className="p-5 flex flex-col items-center text-center min-h-[210px]">
+                <div className="w-16 h-16 relative mb-4">
+                  <Image src="/icons/first-event-winner.png" alt="First Event Winner" fill className="object-contain" />
                 </div>
-                <p className="text-base font-semibold text-gray-800 mb-1">Second Event Winner</p>
-                <p className="text-sm text-gray-600">Your picks held their own! Each landed second in fantasy points at their positions.</p>
+                <p className="text-sm font-bold text-gray-800">First Event Winner</p>
+                <p className="mt-2 text-xs text-gray-600">Your picks were world-class! Each one led their position in fantasy points.</p>
               </div>
+            </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-2xl">
-                <div className="w-20 h-20 relative mb-4">
-                  <Image
-                    src="/icons/clean-sweep.png"
-                    alt="Clean Sweep"
-                    fill
-                    className="object-contain"
-                  />
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 w-[180px] flex-none snap-start sm:w-auto transition transform md:hover:-translate-y-1 md:hover:shadow-2xl overflow-hidden">
+              <div className="p-5 flex flex-col items-center text-center min-h-[210px]">
+                <div className="w-16 h-16 relative mb-4">
+                  <Image src="/icons/second-event-winner.png" alt="Second Event Winner" fill className="object-contain" />
                 </div>
-                <p className="text-base font-semibold text-gray-800 mb-1">Clean Sweep</p>
-                <p className="text-sm text-gray-600">Your pick delivered a perfect game! A true clean sweep. </p>
+                <p className="text-sm font-bold text-gray-800">Second Event Winner</p>
+                <p className="mt-2 text-xs text-gray-600">Your picks held their own! Each landed second in fantasy points at their positions.</p>
               </div>
+            </div>
 
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 w-[180px] flex-none snap-start sm:w-auto transition transform md:hover:-translate-y-1 md:hover:shadow-2xl overflow-hidden">
+              <div className="p-5 flex flex-col items-center text-center min-h-[210px]">
+                <div className="w-16 h-16 relative mb-4">
+                  <Image src="/icons/clean-sweep.png" alt="Clean Sweep" fill className="object-contain" />
+                </div>
+                <p className="text-sm font-bold text-gray-800">Clean Sweep</p>
+                <p className="mt-2 text-xs text-gray-600">Your pick delivered a perfect game! A true clean sweep.</p>
+              </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* PUBLIC LEAGUES */}
-        <section className="w-full flex justify-center mb-12 py-12">
-          {/* OUTER DARK BLUE CARD */}
-          <div className="w-full max-w-6xl bg-[#0a2342] text-white py-12 px-8 rounded-xl shadow-inner">
+      <section className="px-4 pb-10">
+        <div className="mx-auto w-full max-w-6xl">
+          <div className="bg-[#0a2342] text-white rounded-2xl shadow-inner px-6 sm:px-10 py-10">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-3xl sm:text-4xl font-extrabold">Public Leagues Happening Right Now</h2>
+              <p className="text-white/80">Jump in, draft, and start scoring points.</p>
+            </div>
 
-            <h2 className="text-3xl font-bold mb-8 text-center">
-              Public Leagues Happening Right Now
-            </h2>
+            <div className="mt-10 flex flex-col gap-10">
+              <div>
+                <p className="text-lg font-extrabold mb-4">Open Drafts</p>
 
-            {/* League Rows */}
-            <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4">
+                  {openLeagues.slice(0, 3).map((league) => (
+                    <div
+                      key={league.id}
+                      className="bg-white/10 border border-white/10 rounded-xl p-5"
+                    >
+                      <div className="flex flex-col gap-4 sm:gap-0 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-2xl font-extrabold leading-tight break-words">
+                            {league.name}
+                          </p>
+                          <p className="mt-2 text-sm sm:text-base text-white/80">
+                            {league.curling_events?.year} {league.curling_events?.name}
+                            {league.curling_events?.location ? ` • ${league.curling_events.location}` : ""}
+                          </p>
+                        </div>
 
-              {leagues.slice(0, 3).map((league) => (
-                <div
-                  key={league.id}
-                  className="bg-[#12345a] p-5 rounded-lg"
-                >
-                  <p className="text-2xl font-bold">
-                    {league.name}
-                    <span className="italic font-normal text-xl opacity-80">
-                      {" "}– {league.curling_events.year} {league.curling_events.name}
-                    </span>
-                  </p>
+                        <button
+                          onClick={() => router.push(`/login`)}
+                          className="shrink-0 sm:ml-6 bg-[#ac0000] text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-[#8a0000] transition"
+                        >
+                          Join
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {openLeagues.length === 0 && (
+                    <p className="text-white/70">No open drafts right now.</p>
+                  )}
                 </div>
-              ))}
+              </div>
 
-              {leagues.length === 0 && (
-                <p className="text-center opacity-70">
-                  No public leagues available right now.
-                </p>
-              )}
+              <div>
+                <p className="text-lg font-extrabold mb-4">In Progress</p>
 
+                <div className="flex flex-col gap-4">
+                  {inProgressLeagues.slice(0, 3).map((league) => (
+                    <div
+                      key={league.id}
+                      className="bg-white/10 border border-white/10 rounded-xl p-5"
+                    >
+                      <div className="flex flex-col gap-4 sm:gap-0 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-2xl font-extrabold leading-tight break-words">
+                            {league.name}
+                          </p>
+                          <p className="mt-2 text-sm sm:text-base text-white/80">
+                            {league.curling_events?.year} {league.curling_events?.name}
+                            {league.curling_events?.location ? ` • ${league.curling_events.location}` : ""}
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => router.push(`/league/${league.id}`)}
+                          className="shrink-0 sm:ml-6 border border-white/60 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-white hover:text-[#0a2342] transition"
+                        >
+                          View Standings
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {inProgressLeagues.length === 0 && (
+                    <p className="text-white/70">No leagues in progress right now.</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-lg font-extrabold mb-4">Completed</p>
+
+                <div className="flex flex-col gap-4">
+                  {completedLeagues.slice(0, 3).map((league) => (
+                    <div
+                      key={league.id}
+                      className="bg-white/10 border border-white/10 rounded-xl p-5"
+                    >
+                      <div className="flex flex-col gap-4 sm:gap-0 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-2xl font-extrabold leading-tight break-words">
+                            {league.name}
+                          </p>
+                          <p className="mt-2 text-sm sm:text-base text-white/80">
+                            {league.curling_events?.year} {league.curling_events?.name}
+                            {league.curling_events?.location ? ` • ${league.curling_events.location}` : ""}
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => router.push(`/league/${league.id}`)}
+                          className="shrink-0 sm:ml-6 border border-white/60 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-white hover:text-[#0a2342] transition"
+                        >
+                          View Results
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {completedLeagues.length === 0 && (
+                    <p className="text-white/70">No completed leagues yet.</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* FINAL CTA */}
-        <section className="w-full py-20 flex justify-center">
-          <div className="max-w-3xl text-center px-6">
+      <section className="px-4 pb-24">
+        <div className="mx-auto w-full max-w-6xl">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-8 sm:p-12 text-center">
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-[#1f4785]">Ready to Build Your Rink?</h2>
 
-            <h2 className="text-4xl font-bold text-[#1f4785] mb-6">
-              Ready to Build Your Rink?
-            </h2>
-
-            <p className="text-gray-700 text-lg mb-6">
-              Draft teams, compete in leagues, and
-              track real‑world performance all season long.
+            <p className="mt-4 text-gray-700 text-base sm:text-lg max-w-3xl mx-auto">
+              Draft teams, compete in leagues, and track real-world performance all season long.
             </p>
 
-            <a
-              href="/signup"
-              className="inline-block bg-[#ac0000] text-white text-xl font-semibold py-4 px-10 rounded-xl hover:bg-[#8a0000] transition"
-              >Get Started</a>
-
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+              <a
+                href="/signup"
+                className="inline-flex justify-center bg-[#ac0000] text-white text-lg font-semibold py-3 px-8 rounded-xl hover:bg-[#8a0000] transition"
+              >
+                Get Started
+              </a>
+              <a
+                href="/howitworks"
+                className="inline-flex justify-center border border-[#1f4785] text-[#1f4785] text-lg font-semibold py-3 px-8 rounded-xl hover:bg-[#1f4785] hover:text-white transition"
+              >
+                See How It Works
+              </a>
+            </div>
           </div>
-        </section>
-      </main>
-      <BottomBar />
-    </>
-  )
+        </div>
+      </section>
+    </main>
+
+    <BottomBar />
+  </>
+)
+
 }
