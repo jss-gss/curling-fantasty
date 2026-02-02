@@ -346,7 +346,7 @@ export default function LandingPage() {
                               {league.curling_events?.location ? ` • ${league.curling_events.location}` : ""}
                             </p>
                           </div>
-                          <div className="mt-3 space-y-1 text-sm sm:text-base text-white/80">
+                          <div className="space-y-1 text-sm sm:text-base text-white/80">
                             <div>
                               <span className="font-semibold">Participants:</span>{" "}
                               {league.fantasy_event_users?.length ?? 0}
