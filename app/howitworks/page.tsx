@@ -3,7 +3,12 @@ export const metadata = {
 }
 
 import HowClient from "./HowClient"
+import { Suspense } from "react"
 
 export default function Page() {
-  return <HowClient />
+  return(
+    <Suspense fallback={<div>Loading...</div>}>
+      <HowClient />
+    </Suspense>
+  )
 }
