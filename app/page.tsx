@@ -91,23 +91,36 @@ export default function LandingPage() {
                 <p className="mt-4 max-w-md text-sm sm:text-md md:text-lg text-white/90">
                   The first fantasy curling platform to draft players for national and international competitions.
                 </p>
-
                 <div className="mt-7 flex w-full max-w-xl flex-col sm:flex-row gap-3 sm:gap-4">
                   <button
                     onClick={() => router.push("/signup")}
-                    className="w-full bg-[#ac0000] text-white py-4 rounded-2xl text-lg font-semibold hover:bg-[#8a0000] transition shadow-lg"
+                    className="
+                      w-full
+                      bg-[#ac0000] text-white
+                      py-3 text-base
+                      sm:py-4 sm:text-lg
+                      rounded-2xl font-semibold
+                      hover:bg-[#8a0000] transition shadow-lg
+                    "
                   >
                     Take Your Shot
                   </button>
 
                   <button
                     onClick={() => router.push("/login")}
-                    className="w-full py-4 rounded-2xl text-lg font-semibold border border-white/70 text-white hover:bg-white hover:text-[#0a2342] transition shadow-lg"
+                    className="
+                      w-full
+                      py-3 text-base
+                      sm:py-4 sm:text-lg
+                      rounded-2xl font-semibold
+                      border border-white/70 text-white
+                      hover:bg-white hover:text-[#0a2342]
+                      transition shadow-lg
+                    "
                   >
                     Return to Your Rink
                   </button>
                 </div>
-
                 <p className="mt-5 text-xs sm:text-sm text-white/80">
                   Pick your curlers • Sweep the leaderboard • Hit the button
                 </p>
@@ -118,8 +131,8 @@ export default function LandingPage() {
       </header>
 
       <main className="w-full">
-        <section className="px-4">
-          <div className="mx-auto w-full max-w-6xl py-12 sm:py-16">
+        <section className="px-4 mt-20 pb-15">
+          <div className="mx-auto w-full max-w-6xl">
             <div className="text-center">
               <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1f4785]">
                 Step into the Hack and Play Fantasy Curling
@@ -198,8 +211,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="px-4">
-          <div className="mx-auto w-full max-w-6xl pb-12">
+        <section className="px-4 pb-15">
+          <div className="mx-auto w-full max-w-6xl">
             <div className="bg-[#0a2342] text-white rounded-2xl shadow-inner px-6 sm:px-10 py-10 sm:py-12">
               <h2 className="text-2xl sm:text-4xl font-extrabold text-center">How Scoring Works</h2>
 
@@ -243,8 +256,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="px-4">
-          <div className="mx-auto w-full max-w-6xl py-12">
+        <section className="px-4 pb-15">
+          <div className="mx-auto w-full max-w-6xl">
             <div className="text-center">
               <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1f4785]">
                 Collect Pins to Show Your Status
@@ -318,7 +331,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="px-4 pb-10">
+        <section className="px-4 pb-15">
           <div className="mx-auto w-full max-w-6xl">
             <div className="bg-[#0a2342] text-white rounded-2xl shadow-inner px-6 sm:px-10 py-10">
               <div className="flex flex-col gap-2">
@@ -462,7 +475,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="px-4 pb-24">
+        <section className="px-4 pb-15">
           <div className="mx-auto w-full max-w-6xl">
             <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-8 sm:p-12 text-center">
               <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1f4785]">Ready to Build Your Rink?</h2>

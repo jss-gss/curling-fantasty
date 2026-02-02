@@ -502,7 +502,7 @@ export default function ThePinClient() {
 
   return (
     <>
-      <div className="relative w-full min-h-screen overflow-x-hidden">
+      <div className="relative w-full min-h-[100dvh] overflow-x-hidden overscroll-none">
         <div className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat pointer-events-none" style={{ backgroundImage: "url('/webpage/pin-page.png')" }} />
           {showModal && (
             <WelcomeModal

@@ -118,7 +118,7 @@ return (
           />
         </div>
 
-        <h1 className="text-3xl font-bold text-[#234C6A] text-center mb-4">
+        <h1 className="text-2xl font-bold text-[#234C6A] text-center mb-4">
           Create Your Account
         </h1>
 
