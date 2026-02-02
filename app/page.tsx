@@ -108,15 +108,7 @@ export default function LandingPage() {
 
                   <button
                     onClick={() => router.push("/login")}
-                    className="
-                      w-full
-                      py-3 text-base
-                      sm:py-4 sm:text-lg
-                      rounded-2xl font-semibold
-                      border border-white/70 text-white
-                      hover:bg-white hover:text-[#0a2342]
-                      transition shadow-lg
-                    "
+                    className="w-full py-3 text-base sm:py-4 sm:text-lg rounded-2xl font-semibold border border-white/70 text-white hover:bg-white hover:text-[#0a2342] transition shadow-lg"
                   >
                     Return to Your Rink
                   </button>
@@ -131,7 +123,7 @@ export default function LandingPage() {
       </header>
 
       <main className="w-full">
-        <section className="px-4 mt-20 pb-15">
+        <section className="px-4 sm:mt-18 mt-12 pb-15">
           <div className="mx-auto w-full max-w-6xl">
             <div className="text-center">
               <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1f4785]">
@@ -484,16 +476,35 @@ export default function LandingPage() {
                 Draft teams, compete in leagues, and track real-world performance all season long.
               </p>
 
-              <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+              <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
                 <a
                   href="/signup"
-                  className="shrink-0 sm:ml-6 px-6 py-2.5 inline-flex justify-center bg-[#ac0000] text-white text-lg font-semibold rounded-xl hover:bg-[#8a0000] transition"
+                  className="
+                    inline-flex items-center justify-center
+                    rounded-xl font-semibold
+                    px-6 py-3 text-base
+                    sm:w-56 sm:px-0 sm:py-3 sm:text-lg
+                    bg-[#ac0000] text-white
+                    hover:bg-[#8a0000]
+                    transition
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ac0000] focus-visible:ring-offset-2
+                  "
                 >
                   Get Started
                 </a>
+
                 <a
                   href="/howitworks"
-                  className="shrink-0 sm:ml-6 px-6 py-2.5 inline-flex justify-center border border-[#1f4785] text-[#1f4785] text-lg font-semibold rounded-xl hover:bg-[#1f4785] hover:text-white transition"
+                  className="
+                    inline-flex items-center justify-center
+                    rounded-xl font-semibold
+                    px-6 py-3 text-base
+                    sm:w-56 sm:px-0 sm:py-3 sm:text-lg
+                    border border-[#1f4785] text-[#1f4785]
+                    hover:bg-[#1f4785] hover:text-white
+                    transition
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4785] focus-visible:ring-offset-2
+                  "
                 >
                   See How It Works
                 </a>
