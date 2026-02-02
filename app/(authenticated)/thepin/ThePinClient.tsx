@@ -503,11 +503,11 @@ export default function ThePinClient() {
 
   return (
     <>
-    <div className="relative w-full h-[100dvh] overflow-hidden">
+    <div className="relative w-full h-[100dvh] overflow-hidden overscroll-none">
       <div
         className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat pointer-events-none"
         style={{ backgroundImage: "url('/webpage/pin-page.png')" }} />
-      <div className="h-full overflow-y-auto overscroll-contain">
+      <div className="h-full overflow-y-auto overscroll-contain pb-24">
         <div className="w-full min-h-full overflow-x-hidden">
           {showModal && (
             <WelcomeModal
@@ -768,7 +768,7 @@ export default function ThePinClient() {
                           <p>
                             <span className="text-gray-600">Ready for your upcoming draft? Review </span>
                             <a href="/howitworks?section=beforedrafting" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#ac0000] hover:underline">
-                               draft rules and guidelines
+                              draft rules and guidelines
                             </a>.
                           </p>
                         )}
