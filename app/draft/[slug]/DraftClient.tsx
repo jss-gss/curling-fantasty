@@ -131,7 +131,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
 
     const mine = picks.filter(p => p.user_id === userId).length
     if (mine >= 4) {
-      router.push("/myrinks")
+      router.push(`/myrinks?recent=${event.id}`)
     }
   }, [picks, userId, event?.id, router])
 
@@ -488,7 +488,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
       .eq("user_id", userId)
 
     if ((myPicks?.length ?? 0) >= 4) {
-      router.push("/myrinks")
+      router.push(`/myrinks?recent=${event.id}`)
     }
   }
 

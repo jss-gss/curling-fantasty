@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import type { User } from "@supabase/supabase-js"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import type { AchievementId } from "@/lib/achievementIcons"
 import { getAchievementIcon } from "@/lib/getAchievementIcon"
 import AchievementModal from "@/components/AchievementModal"
@@ -62,6 +62,10 @@ export default function PicksPage() {
   const achievementFromDB = achievements.find(a => a.code === achievementModal)
   const player_pos_order: Record<string, number> = { Lead: 1, Second: 2, "Vice Skip": 3, Skip: 4, }
   const hasRunCleanSweep = useRef(false)
+
+  const searchParams = useSearchParams()
+  const recentId = searchParams.get("recent")
+  const eventRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const enqueueModal = (code: AchievementId) => {
     setModalQueue(prev => [...prev, code])
@@ -321,9 +325,25 @@ export default function PicksPage() {
       closedEvents
   ])
 
+  useEffect(() => {
+    if (loading) return
+    if (!recentId) return
+
+    const el = eventRefs.current[String(recentId)]
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" })
+  }, [loading, recentId])
+
   return (
     <>
       <div className="w-full px-3 sm:px-6 py-6 sm:py-10 flex flex-col items-center gap-6 sm:gap-10">
+        
+        {loading && (
+          <p className="w-full flex justify-center mt-10 sm:mt-20 text-gray-600">
+            {" "}
+            Loading...
+          </p>
+        )}
+        
         {completedLeagues.length > 0 && (
           <main className="w-full max-w-screen-xl bg-white shadow-md p-4 sm:p-8 rounded-lg">
             <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
@@ -522,13 +542,6 @@ export default function PicksPage() {
           </main>
         )}
 
-        {loading && (
-          <p className="w-full flex justify-center mt-10 sm:mt-20 text-gray-600">
-            {" "}
-            Loading...
-          </p>
-        )}
-
         {!loading && closedEvents.length > 0 && (
           <main className="w-full max-w-screen-xl bg-white shadow-md p-4 sm:p-8 rounded-lg">
             <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Current Rinks</h1>
@@ -539,9 +552,15 @@ export default function PicksPage() {
                 const totalPoints = pointsByEvent[ev.id] ?? 0
                 const rank = ranksByEvent[ev.id] ?? "-"
                 const isCommissioner = ev.created_by === user?.id
+                const isRecent = recentId && String(ev.id) === String(recentId)
 
                 return (
-                  <div key={ev.id} className="space-y-4">
+                  <div key={ev.id}
+                    ref={(el) => {
+                      eventRefs.current[String(ev.id)] = el
+                    }}
+                    className={`space-y-4 rounded-lg ${isRecent ? "ring-2 ring-green-300/60 shadow-[0_0_0.75rem_rgba(34,197,94,0.55)] p-4" : ""}`}
+                  >
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
@@ -764,7 +783,6 @@ export default function PicksPage() {
             </div>
           </main>
         )}
-
       </div>
 
       {achievementModal && (

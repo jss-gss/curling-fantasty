@@ -92,7 +92,7 @@ export default function HowItWorksPage() {
     requestAnimationFrame(() => {
       const el = document.getElementById(section)
       if (!el) return
-      el.scrollIntoView({ behavior: "smooth", block: "start" })
+      el.scrollIntoView({ behavior: "smooth", block: "center" })
     })
   }, [searchParams])
 

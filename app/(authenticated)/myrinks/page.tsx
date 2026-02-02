@@ -3,7 +3,12 @@ export const metadata = {
 }
 
 import MyRinksClient from "./MyRinksClient"
+import { Suspense } from "react"
 
 export default function Page() {
-  return <MyRinksClient />
+  return (
+    <Suspense fallback={null}>
+      <MyRinksClient />
+    </Suspense>
+  )
 }
