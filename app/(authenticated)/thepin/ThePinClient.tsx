@@ -500,15 +500,10 @@ export default function ThePinClient() {
       .sort((a, b) => (a.my_rank ?? 9999) - (b.my_rank ?? 9999))
   }, [lockedRows])
 
-
   return (
     <>
-    <div className="relative w-full h-[100dvh] overflow-hidden overscroll-none">
-      <div
-        className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat pointer-events-none"
-        style={{ backgroundImage: "url('/webpage/pin-page.png')" }} />
-      <div className="h-full overflow-y-auto overscroll-contain pb-24">
-        <div className="w-full min-h-full overflow-x-hidden">
+      <div className="relative w-full min-h-screen overflow-x-hidden">
+        <div className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat pointer-events-none" style={{ backgroundImage: "url('/webpage/pin-page.png')" }} />
           {showModal && (
             <WelcomeModal
               onClose={() => setShowModal(false)}
@@ -768,7 +763,7 @@ export default function ThePinClient() {
                           <p>
                             <span className="text-gray-600">Ready for your upcoming draft? Review </span>
                             <a href="/howitworks?section=beforedrafting" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#ac0000] hover:underline">
-                              draft rules and guidelines
+                               draft rules and guidelines
                             </a>.
                           </p>
                         )}
@@ -953,8 +948,6 @@ export default function ThePinClient() {
           icon={getAchievementIcon(achievementModal as AchievementId)}
         />
       )}
-      </div>
-    </div>
     </>
   )
 }

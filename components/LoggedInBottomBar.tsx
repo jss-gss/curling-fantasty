@@ -16,7 +16,6 @@ export default function BottomNav() {
 
   return (
     <footer className="w-full bg-[#234C6A]">
-      {/* Mobile */}
       <div className="lg:hidden h-10 flex items-center px-2" ref={menuRef}>
         <nav className="w-full flex items-center justify-between">
           <FooterTab label="How It Works" href="/howitworks" />
@@ -26,7 +25,6 @@ export default function BottomNav() {
         </nav>
       </div>
 
-      {/* Desktop*/}
       <div className="hidden lg:flex h-10 items-center px-8">
         <div className="flex items-center gap-3">
           <img src="/logos/button-main-logo.png" alt="Logo" className="h-4 w-auto" />

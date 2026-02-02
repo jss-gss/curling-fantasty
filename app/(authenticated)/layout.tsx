@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import NavBar from "@/components/LoggedInNavBar";
-import BottomBar from "@/components/LoggedInBottomBar";
+import NavBar from "@/components/LoggedInNavBar"
+import BottomBar from "@/components/LoggedInBottomBar"
 
 export default function AuthenticatedLayout({
   children,
@@ -18,5 +18,5 @@ export default function AuthenticatedLayout({
 
       <BottomBar />
     </div>
-  );
+  )
 }

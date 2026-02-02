@@ -1,12 +1,10 @@
 @import "tailwindcss";
 
-/* Global light theme */
 :root {
   --background: #eff3f7;
   --foreground: #1f4785;
 }
 
-/* Apply globally */
 body {
   background: var(--background);
   color: var(--foreground);
