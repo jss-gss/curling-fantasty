@@ -25,6 +25,7 @@ export default function ProfilePublicClient({ username }: { username: string }) 
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [totalLeagues, setTotalLeagues] = useState(0)
+  const [totalCommissioned, setCommissioned] = useState(0)
   const [bestRank, setBestRank] = useState<number | null>(null)
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -98,9 +99,19 @@ export default function ProfilePublicClient({ username }: { username: string }) 
         .from("fantasy_event_users")
         .select("rank, fantasy_events!inner(draft_status)")
         .eq("user_id", data.id)
-        .eq("fantasy_events.draft_status", ["completed", "archived"])
+        .in("fantasy_events.draft_status", ["completed", "archived"])
         .order("rank", { ascending: true })
         .limit(1)
+
+      setBestRank(best?.[0]?.rank ?? null)
+
+      const { data: commissioned } = await supabase
+        .from("fantasy_events")
+        .select("id", { count: "exact"})
+        .eq("created_by", data.id)
+        .in("draft_status", ["locked", "completed", "archived"])
+
+      setCommissioned(commissioned?.length ?? 0)
 
       const { data: achievementsData } = await supabase
         .from("user_achievements")
@@ -133,7 +144,6 @@ export default function ProfilePublicClient({ username }: { username: string }) 
         })
       )
 
-      setBestRank(best?.[0]?.rank ?? null)
       setLoading(false)
     }
 
@@ -230,17 +240,34 @@ export default function ProfilePublicClient({ username }: { username: string }) 
           </div>
 
           <div className="mt-8 border-t pt-6">
-            <h2 className="text-xl font-semibold text-[#234C6A] mb-3">
+            <h2 className="text-xl font-semibold text-[#234C6A] mb-2">
               Fantasy Stats
             </h2>
 
-            <p className="text-gray-700">Leagues played in: {totalLeagues}</p>
+            <div className="w-full sm:w-auto">
+              <div className="p-3 sm:p-0 sm:border-0 sm:bg-transparent">
+                <div className="grid grid-cols-3 mt-2 sm:mt-6 gap-3 sm:gap-6">
+                  <div className="flex flex-col items-center">
+                    <div className="text-gray-500 text-sm">Leagues Played</div>
+                    <div className="text-xl font-bold">{totalLeagues}</div>
+                  </div>
 
-            {bestRank !== null && (
-              <p className="text-gray-700">
-                Best finish in an event: {bestRank}
-              </p>
-            )}
+                  <div className="flex flex-col items-center">
+                    <div className="text-gray-500 text-sm">Commissioned</div>
+                    <div className="text-xl font-bold">{totalCommissioned}</div>
+                  </div>
+
+                  <div className="flex flex-col items-center">
+                    <div className="text-gray-500 text-sm">Best Finish</div>
+                    <div className="text-xl font-bold">{bestRank}
+                      <span>
+                        {bestRank === null ? "-" : bestRank === 1 ? "st" : bestRank === 2 ? "nd" : bestRank === 3 ? "rd" : "th"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           
           {achievements.some(a => a.achievements.code && achievementIcons[a.achievements.code]) && (
