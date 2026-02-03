@@ -672,10 +672,10 @@ export default function LeagueLeaderboardPage() {
               {!loadingTop && (
                 <div className="w-full flex justify-center mt-10">
                   <Link
-                    href="/eventarchives"
+                    href="/playerarchives"
                     className="text-sm hover:underline"
                   >
-                    View events archive
+                    View player archive
                   </Link>
                 </div>
               )}

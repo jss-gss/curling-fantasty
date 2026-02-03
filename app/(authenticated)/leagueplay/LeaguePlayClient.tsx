@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import CreateLeagueModal from "@/components/CreateLeagueModal"
+import Link from "next/link"
 
 export default function LeaguesPage() {
   const router = useRouter()
@@ -95,7 +96,11 @@ export default function LeaguesPage() {
     }
   }, [shouldOpenCreate])
 
-  const commissionedLeagues = leagues.filter(l => l.created_by === userId)
+  const commissionedLeagues = leagues.filter(
+    l =>
+      (l.created_by === userId) &&
+      l.draft_status !== "archived"
+  )
 
   const privateInvites = leagues.filter(
     l =>
@@ -716,13 +721,13 @@ export default function LeaguesPage() {
               <h1 className="text-2xl sm:text-3xl font-bold mb-6">League Play</h1>
 
               <button
-                disabled={activeLeagueCount >= 2}
+                disabled={!isOwner && activeLeagueCount >= 2}
                 onClick={() => {
                   setEditingLeague(null)
                   setShowModal(true)
                 }}
                 className={`sm:hidden w-10 h-10 flex items-center justify-center rounded-full text-white text-2xl shadow-md transition ${
-                  activeLeagueCount >= 2
+                  !isOwner && activeLeagueCount >= 2
                     ? "bg-gray-300 cursor-not-allowed"
                     : "bg-[#1f4785] hover:bg-[#163766]"
                 }`}
@@ -827,6 +832,17 @@ export default function LeaguesPage() {
                   <p className="text-gray-600">You haven't created any leagues yet.</p>
                 )}
               </div>
+              
+              {!loading && (
+                <div className="w-full flex justify-center mt-10">
+                  <Link
+                    href="/fantasyleaguearchives"
+                    className="text-sm hover:underline"
+                  >
+                    View fantasy league archive
+                  </Link>
+                </div>
+              )}
             </>
           )}
 
