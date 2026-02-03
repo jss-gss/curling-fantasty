@@ -259,15 +259,20 @@ export default function FantasyLeagueArchivesClient() {
 
             <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Filter</label>
+                <div className="relative">
                 <select
-                value={roleFilter}
-                onChange={e => setRoleFilter(e.target.value as RoleFilter)}
-                className="w-full px-3 py-2 border border-gray-300 text-sm appearance-none pr-8 rounded-md"
-                disabled={loading}
+                  value={roleFilter}
+                  onChange={e => setRoleFilter(e.target.value as RoleFilter)}
+                  className="w-full px-3 py-2 border border-gray-300 text-sm appearance-none pr-8 rounded-md"
+                  disabled={loading}
                 >
-                <option value="ALL">All leagues</option>
-                <option value="DRAFT_MASTER">Draw Master</option>
+                  <option value="ALL">All leagues</option>
+                  <option value="DRAFT_MASTER">Draw Master</option>
                 </select>
+                <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  ⌵
+                </div>
+              </div>
             </div>
 
             <div className="sm:col-span-2 sm:mt-0">
@@ -313,15 +318,15 @@ export default function FantasyLeagueArchivesClient() {
             </div>
             </div>
             <div className="rounded-lg overflow-x-auto">
-              <table className="min-w-[980px] w-full border-collapse table-fixed sm:table-auto text-xs sm:text-sm">
+              <table className="w-full border-collapse table-fixed sm:min-w-[980px] sm:table-auto text-xs sm:text-sm">
                 <thead className="bg-gray-100 text-gray-700">
                   <tr>
-                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[100px] sm:w-[240px]">League</th>
-                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[120px] sm:w-[180px]">Event</th>
-                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[45px] sm:w-[120px]"></th>
-                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[45px] sm:w-[120px]"></th>
-                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-right w-[45px] sm:w-[90px]">Points</th>
-                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-right w-[45px] sm:w-[90px]">Rank</th>
+                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[160px] sm:w-[240px]">League</th>
+                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[160px] sm:w-[180px]">Event</th>
+                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[80px] sm:w-[120px]"></th>
+                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[100px] sm:w-[120px]"></th>
+                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-right w-[60px] sm:w-[90px]">Points</th>
+                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-right w-[60px] sm:w-[90px]">Rank</th>
                   </tr>
                 </thead>
 
