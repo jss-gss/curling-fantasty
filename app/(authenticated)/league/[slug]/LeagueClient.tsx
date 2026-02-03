@@ -1058,16 +1058,10 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                         </span>
                         )}
 
-                        {league.draft_status === "completed" && (
+                        {league.draft_status === "completed" || league.draft_status === "archived" && (
                         <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
                             completed
                         </span>
-                        )}
-
-                        {league.draft_status === "archived" && (
-                         <span className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
-                            archived
-                        </span>                           
                         )}
                     </div>
                     </div>

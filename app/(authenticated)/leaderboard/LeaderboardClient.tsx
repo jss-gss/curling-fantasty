@@ -407,7 +407,7 @@ export default function LeagueLeaderboardPage() {
                                     </div>
 
                                     {league.curling_events && (
-                                      <p className="text-gray-700 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                      <p className="text-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                         {league.curling_events.year} {league.curling_events.name} in{" "}
                                         {league.curling_events.location}
                                       </p>
@@ -670,12 +670,12 @@ export default function LeagueLeaderboardPage() {
               }
 
               {!loadingTop && (
-                <div className="w-full flex justify-center mt-10">
+                <div className="w-full flex justify-center mt-10 mb-4">
                   <Link
                     href="/playerarchives"
                     className="text-sm hover:underline"
                   >
-                    View player archive
+                    View Player Archives
                   </Link>
                 </div>
               )}

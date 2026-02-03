@@ -180,14 +180,6 @@ export default function FantasyLeagueArchivesClient() {
       setRows(built)
       setLoading(false)
     } catch (e: any) {
-      console.error("League Archives boot failed", {
-        name: e?.name,
-        message: e?.message,
-        details: e?.details,
-        hint: e?.hint,
-        code: e?.code,
-        raw: e,
-      })
       setEvents([])
       setRows([])
       setLoading(false)
@@ -229,7 +221,7 @@ export default function FantasyLeagueArchivesClient() {
   return (
     <div className="w-full px-3 sm:px-6 py-6 sm:py-10">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6">League Archives</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6">Fantasy League Archives</h1>
 
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 sm:p-6">
           <div className="grid grid-cols-1 gap-3 sm:gap-4">
@@ -270,7 +262,7 @@ export default function FantasyLeagueArchivesClient() {
                 <select
                 value={roleFilter}
                 onChange={e => setRoleFilter(e.target.value as RoleFilter)}
-                className="w-full px-3 py-2 border border-gray-300 text-sm rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 text-sm appearance-none pr-8 rounded-md"
                 disabled={loading}
                 >
                 <option value="ALL">All leagues</option>
@@ -301,7 +293,7 @@ export default function FantasyLeagueArchivesClient() {
                     type="checkbox"
                     checked={showPublic}
                     onChange={e => setShowPublic(e.target.checked)}
-                    className="h-4 w-4 accent-green-600"
+                    className="h-4 w-4 accent-blue-600"
                     disabled={loading}
                     />
                     Public
@@ -312,7 +304,7 @@ export default function FantasyLeagueArchivesClient() {
                     type="checkbox"
                     checked={showPrivate}
                     onChange={e => setShowPrivate(e.target.checked)}
-                    className="h-4 w-4 accent-green-600"
+                    className="h-4 w-4 accent-blue-600"
                     disabled={loading}
                     />
                     Private
@@ -324,12 +316,12 @@ export default function FantasyLeagueArchivesClient() {
               <table className="min-w-[980px] w-full border-collapse table-fixed sm:table-auto text-xs sm:text-sm">
                 <thead className="bg-gray-100 text-gray-700">
                   <tr>
-                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[180px] sm:w-[240px]">League</th>
-                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[180px] sm:w-[180px]">Event</th>
-                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[80px] sm:w-[120px]"></th>
-                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[80px] sm:w-[120px]"></th>
-                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-right w-[60px] sm:w-[90px]">Points</th>
-                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-right w-[60px] sm:w-[90px]">Rank</th>
+                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[100px] sm:w-[240px]">League</th>
+                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[120px] sm:w-[180px]">Event</th>
+                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[45px] sm:w-[120px]"></th>
+                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-left w-[45px] sm:w-[120px]"></th>
+                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-right w-[45px] sm:w-[90px]">Points</th>
+                    <th className="py-1 px-1 sm:py-2 sm:px-3 text-right w-[45px] sm:w-[90px]">Rank</th>
                   </tr>
                 </thead>
 

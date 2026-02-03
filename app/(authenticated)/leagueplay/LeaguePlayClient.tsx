@@ -834,12 +834,12 @@ export default function LeaguesPage() {
               </div>
               
               {!loading && (
-                <div className="w-full flex justify-center mt-10">
+                <div className="w-full flex justify-center mt-10 mb-4">
                   <Link
                     href="/fantasyleaguearchives"
                     className="text-sm hover:underline"
                   >
-                    View fantasy league archive
+                    View Past Fantasy Leagues
                   </Link>
                 </div>
               )}

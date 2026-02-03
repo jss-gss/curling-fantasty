@@ -1002,7 +1002,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
                               type="checkbox"
                               checked={availableOnly}
                               onChange={(e) => setAvailableOnly(e.target.checked)}
-                              className="h-4 w-4 accent-green-600"
+                              className="h-4 w-4 accent-blue-600"
                             />
                             <span className="font-semibold whitespace-nowrap">Available only</span>
                           </label>
