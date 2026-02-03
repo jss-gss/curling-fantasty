@@ -409,20 +409,20 @@ export default function ProfileClient() {
 
                 <div className="w-full sm:w-auto">
                   <div className="p-3 sm:p-0 sm:border-0 sm:bg-transparent">
-                    <div className="grid grid-cols-3 mt-2 sm:mt-6 gap-3 sm:gap-6">
+                    <div className="grid grid-cols-3 mt-2 sm:mt-6 sm:gap-6">
                       <div className="flex flex-col items-center">
-                        <div className="text-gray-500 text-sm">Leagues Played</div>
-                        <div className="text-xl font-bold">{totalLeagues}</div>
+                        <div className="text-gray-500 text-xs sm:text-sm">Leagues Played</div>
+                        <div className="text-lg sm:text-xl font-bold">{totalLeagues}</div>
                       </div>
 
                       <div className="flex flex-col items-center">
-                        <div className="text-gray-500 text-sm">Commissioned</div>
-                        <div className="text-xl font-bold">{totalCommissioned}</div>
+                        <div className="text-gray-500 text-xs sm:text-sm">Commissioned</div>
+                        <div className="text-lg sm:text-xl font-bold">{totalCommissioned}</div>
                       </div>
 
                       <div className="flex flex-col items-center">
-                        <div className="text-gray-500 text-sm">Best Finish</div>
-                        <div className="text-xl font-bold">{bestRank}
+                        <div className="text-gray-500 text-xs sm:text-sm">Best Finish</div>
+                        <div className="text-lg sm:text-xl font-bold">{bestRank}
                           <span>
                             {bestRank === null ? "-" : bestRank === 1 ? "st" : bestRank === 2 ? "nd" : bestRank === 3 ? "rd" : "th"}
                           </span>
