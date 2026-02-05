@@ -949,7 +949,7 @@ export default function ThePinClient() {
           onClose={() => setAchievementModal(null)}
           title={achievementFromDB.name}
           description={achievementFromDB.description}
-          icon={getAchievementIcon(achievementModal as AchievementId)}
+          iconSrc={achievementModal ? getAchievementIcon(achievementModal) : null}
         />
       )}
     </>

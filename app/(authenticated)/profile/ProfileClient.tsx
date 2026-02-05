@@ -183,13 +183,19 @@ export default function ProfileClient() {
   }, [isEditing])
 
   useEffect(() => {
-    if (!isEditing) {
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-      })
-    }
-  }, [!isEditing])
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [isEditing])
+
+  useEffect(() => {
+    achievements.forEach((a) => {
+      const code = a.achievements.code
+      if (!code) return
+      const src = achievementIcons[code]
+      const img = new window.Image()
+      img.src = src
+      if (img.decode) img.decode().catch(() => {})
+    })
+  }, [achievements])
 
   async function saveProfileChanges() {
     if (!user) return
@@ -389,7 +395,7 @@ export default function ProfileClient() {
                   <p className="text-lg font-semibold">
                     <strong>{profile?.username}</strong>
                   </p>
-                  <p className="">
+                  <p> 
                     {profile?.first_name} {profile?.last_name}
                   </p>
                   <p className="text-sm text-gray-500">Joined on:{" "}
@@ -777,17 +783,8 @@ export default function ProfileClient() {
               onClose={() => setModalOpen(false)}
               title={selectedAchievement?.title ?? ""}
               description={selectedAchievement?.description ?? ""}
-              icon={
-                selectedAchievement?.icon ? (
-                  <Image
-                    src={selectedAchievement.icon}
-                    alt={selectedAchievement.title ?? ""}
-                    width={160}
-                    height={160}
-                  />
-                ) : null
-              }
-              viewOnly={true}
+              iconSrc={selectedAchievement?.icon ?? null}
+              viewOnly
               earnedAt={selectedAchievement?.earnedAt ?? null}
             />
           )}

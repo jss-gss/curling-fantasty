@@ -756,7 +756,7 @@ export default function PicksPage() {
           onClose={() => setAchievementModal(null)}
           title={achievementFromDB?.name ?? ""}
           description={achievementFromDB?.description ?? ""}
-          icon={getAchievementIcon(achievementFromDB?.code)}
+          iconSrc={achievementModal ? getAchievementIcon(achievementModal) : null}
         />
       )}
     </>

@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, ReactNode } from "react"
+import { useEffect, useState } from "react"
+import Image from "next/image"
 import confetti from "canvas-confetti"
 
 interface AchievementModalProps {
@@ -8,7 +9,7 @@ interface AchievementModalProps {
   onClose: () => void
   title: string
   description?: string | null
-  icon: ReactNode
+  iconSrc?: string | null
   viewOnly?: boolean
   earnedAt?: string | null
 }
@@ -18,10 +19,16 @@ export default function AchievementModal({
   onClose,
   title,
   description,
-  icon,
+  iconSrc,
   viewOnly = false,
   earnedAt
 }: AchievementModalProps) {
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    if (open) setLoaded(false)
+  }, [open, iconSrc])
+
   useEffect(() => {
     if (open && !viewOnly) {
       confetti({
@@ -35,9 +42,9 @@ export default function AchievementModal({
   if (!open) return null
 
   function formatDate(dateString: string) {
-    const cleaned = dateString.replace("T", " ").split(" ")[0]; 
-    const [year, month, day] = cleaned.split("-");
-    return `${month}/${day}/${year}`;
+    const cleaned = dateString.replace("T", " ").split(" ")[0]
+    const [year, month, day] = cleaned.split("-")
+    return `${month}/${day}/${year}`
   }
 
   return (
@@ -63,20 +70,37 @@ export default function AchievementModal({
         )}
 
         <div className="flex justify-center mb-4">
-          {icon}
+          <div className="relative h-[160px] w-[160px]">
+            {!loaded && (
+              <div className="absolute inset-0 rounded-full bg-gray-200 animate-pulse" />
+            )}
+
+            {iconSrc && (
+              <Image
+                src={iconSrc}
+                alt={title}
+                width={160}
+                height={160}
+                onLoad={() => setLoaded(true)}
+                unoptimized
+                className="animate-pin-breath"
+              />
+            )}
+          </div>
         </div>
 
-        <p className="text-xl font-semibold text-[#234C6A] mb-6">
-          {title}
-        </p>
+        <p className="text-xl font-semibold text-[#234C6A] mb-6">{title}</p>
 
-        {description && (
-          <p className="text-gray-600 mb-4">{description}</p>
+        {description && <p className="text-gray-600 mb-4">{description}</p>}
+        
+        {!viewOnly && (
+          <p className="text-xs text-gray-500 italic mb-4">
+            You're really sweeping up the milestones.
+          </p>
         )}
-
         {viewOnly && earnedAt && (
           <p className="text-xs text-gray-500 italic mb-4">
-          Earned on {formatDate(earnedAt)}
+            Earned on {formatDate(earnedAt)}
           </p>
         )}
       </div>

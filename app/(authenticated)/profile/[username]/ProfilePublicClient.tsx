@@ -150,6 +150,17 @@ export default function ProfilePublicClient({ username }: { username: string }) 
     loadProfile()
   }, [username, router])
 
+  useEffect(() => {
+    achievements.forEach((a) => {
+      const code = a.achievements.code
+      if (!code) return
+      const src = achievementIcons[code]
+      const img = new window.Image()
+      img.src = src
+      if (img.decode) img.decode().catch(() => {})
+    })
+  }, [achievements])
+
   if (loading)
     return (
       <div className="w-full flex justify-center mt-20 text-gray-600">
@@ -180,17 +191,8 @@ export default function ProfilePublicClient({ username }: { username: string }) 
             onClose={() => setModalOpen(false)}
             title={selectedAchievement?.title ?? ""}
             description={selectedAchievement?.description ?? ""}
-            icon={
-              selectedAchievement?.icon ? (
-                <Image
-                  src={selectedAchievement.icon}
-                  alt={selectedAchievement.title ?? ""}
-                  width={160}
-                  height={160}
-                />
-              ) : null
-            }
-            viewOnly={true}
+            iconSrc={selectedAchievement?.icon ?? null}
+            viewOnly
             earnedAt={selectedAchievement?.earnedAt ?? null}
           />
         )}

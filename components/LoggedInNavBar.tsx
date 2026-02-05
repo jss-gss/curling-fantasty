@@ -101,14 +101,7 @@ export default function NavBar() {
           open={true}
           onClose={() => setModal(null)}
           title="Found the Button!"
-          icon={
-            <Image
-              src={achievementIcons.FOUND_THE_BUTTON}
-              alt="Found the Button"
-              width={160}
-              height={160}
-            />
-          }
+          iconSrc={achievementIcons.FOUND_THE_BUTTON}
         />
       )
     }
@@ -136,7 +129,7 @@ export default function NavBar() {
         </button>
 
         <div className="hidden lg:flex items-center gap-15 text-lg font-medium ml-auto">
-          {[...tabs, ...(user ? [{ name: displayName || "Account", href: "/profile" }] : [])].map(
+          {[...tabs, ...(user ? [{ name: displayName || "Profile", href: "/profile" }] : [])].map(
             (tab) => {
               const active = pathname === tab.href
               return (

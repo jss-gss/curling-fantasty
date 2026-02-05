@@ -100,6 +100,7 @@ export default function DraftClient({ slug }: DraftClientProps) {
   const currentRound = overallPick > 0 ? Math.floor((overallPick - 1) / totalDrafters) + 1 : 1
   const pickInRound = overallPick > 0 ? ((overallPick - 1) % totalDrafters) + 1 : 1
   const roundsTotal = 4
+  const iconSrc = achievementModal ? getAchievementIcon(achievementModal) : null
   const picksUntilMyTurn = useMemo(() => {
     const n = users?.length ?? 0
     if (!n) return null
@@ -1182,17 +1183,13 @@ export default function DraftClient({ slug }: DraftClientProps) {
           </div>
         )}
 
-        {achievementModal && (
-          <AchievementModal
-            open={true}
-            onClose={() => {
-              setAchievementModal(null)
-            }}
-            title={achievementFromDB?.name ?? "Homan Warrior"}
-            description={achievementFromDB?.description ?? "You drafted Rachel Homan!"}
-            icon={getAchievementIcon(achievementModal)}
-          />
-        )}
+        <AchievementModal
+          open={!!achievementModal}
+          onClose={() => setAchievementModal(null)}
+          title={achievementFromDB?.name ?? "Homan Warrior"}
+          description={achievementFromDB?.description ?? "You drafted Rachel Homan!"}
+          iconSrc={achievementModal ? getAchievementIcon(achievementModal) : null}
+        />
       </div>
     </>
   )
