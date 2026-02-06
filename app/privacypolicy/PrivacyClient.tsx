@@ -17,9 +17,8 @@ export default function PrivacyPage() {
             <p>
               We collect only the information needed to run the app and improve your
               experience. This includes account information you provide (like your
-              email), fantasy league activity (picks, scores, achievements), and basic
-              device and usage data. We do not sell your data or share your personal
-              information with advertisers.
+              email) and fantasy league activity (picks, scores, achievements). We do 
+              not sell your data or share your personal information with advertisers.
             </p>
           </section>
 
