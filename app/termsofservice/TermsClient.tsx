@@ -69,7 +69,7 @@ export default function TermsPage() {
               Contact
             </h2>
             <p>
-              If you have questions about these terms, reach out anytime.
+              If you have questions about these terms, please reach out to <span className="underline text-[#ac0000]">creator@drawtothebutton.com</span>.
             </p>
           </section>
         </div>

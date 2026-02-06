@@ -69,7 +69,7 @@ export default function PrivacyPage() {
               Contact
             </h2>
             <p>
-              If you have questions about this policy or your data, reach out anytime.
+              If you have questions about this policy or your data, please reach out to <span className="underline text-[#ac0000]">creator@drawtothebutton.com</span>.
             </p>
           </section>
 

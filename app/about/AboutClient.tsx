@@ -59,11 +59,11 @@ export default function AboutPage() {
               Thank You
             </h2>
             <p>
-              Special thanks to Spencer Tuskowski for the name. "Button" reflects the real
-              fantasy of curling - like hitting it. 
+              A special thank-you to Spencer T. for inspiring the name. "BUTTON" captures 
+              the real fantasy of curling — hitting a shot. 
             </p>
-            <p>
-              And thank you to Brett Mullenix for providing pin ideas and inspiration. 
+            <p className="mt-2">
+              And thanks to Brett M. for pin ideas and creative concepts. 
             </p>
           </section>
         </div>
