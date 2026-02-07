@@ -50,9 +50,18 @@ export default function AvatarCropModal({ open, imageSrc, onClose, onSave }: Pro
           />
         </div>
 
-        <div className="mt-4">
-          <label className="text-sm text-gray-600">Zoom</label>
+        <div className="mt-4 hidden lg:block">
+        <label className="text-sm text-gray-600">Zoom</label>
 
+        <input
+            type="range"
+            min={1}
+            max={3}
+            step={0.01}
+            value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))}
+            className="w-full"
+        />
         </div>
 
         <div className="mt-4 flex justify-end gap-2">
