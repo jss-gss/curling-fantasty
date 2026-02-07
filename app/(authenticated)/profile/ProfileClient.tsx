@@ -8,6 +8,7 @@ import type { User } from "@supabase/supabase-js"
 import type { AchievementId } from "@/lib/achievementIcons"
 import Image from "next/image"
 import AchievementModal from "@/components/AchievementModal"
+import AvatarCropModal from "@/components/AvatarCropModal"
 
 type UserAchievement = {
   achievement_id: string
@@ -36,7 +37,8 @@ export default function ProfileClient() {
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
   const [modalOpen, setModalOpen] = useState(false)
-  
+  const [cropOpen, setCropOpen] = useState(false)
+  const [pendingImageSrc, setPendingImageSrc] = useState<string | null>(null)
   const [selectedAchievement, setSelectedAchievement] = useState<{
     title: string | null
     description: string | null
@@ -215,12 +217,6 @@ export default function ProfileClient() {
         if (oldFileName) {
           await supabase.storage.from("avatars").remove([oldFileName])
         }
-      }
-
-      if (avatarFile.size > 2 * 1024 * 1024) {
-        setErrorMsg("Image must be under 2MB.")
-        setSaving(false)
-        return
       }
 
       const ext = avatarFile.name.split(".").pop()
@@ -633,7 +629,22 @@ export default function ProfileClient() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      if (!file) return
+
+                      if (file.size > 2 * 1024 * 1024) {
+                        setErrorMsg("Image must be under 2MB.")
+                        return
+                      }
+
+                      const reader = new FileReader()
+                      reader.onload = () => {
+                        setPendingImageSrc(reader.result as string)
+                        setCropOpen(true)
+                      }
+                      reader.readAsDataURL(file)
+                    }}
                     className="absolute inset-0 z-10 opacity-0 cursor-pointer"
                   />
 
@@ -788,6 +799,15 @@ export default function ProfileClient() {
               earnedAt={selectedAchievement?.earnedAt ?? null}
             />
           )}
+
+          <AvatarCropModal
+            open={cropOpen}
+            imageSrc={pendingImageSrc}
+            onClose={() => setCropOpen(false)}
+            onSave={(croppedFile) => {
+              setAvatarFile(croppedFile)
+            }}
+          />
         </div>
       </div>
       </div>
