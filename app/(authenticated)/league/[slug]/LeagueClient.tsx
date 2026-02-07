@@ -485,41 +485,49 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
         return `${month}/${day}/${year}`
     }
 
-    function InvitedRow({ userId, index }: { userId: string; index: number }) {
-        const [profile, setProfile] = useState<any>(null)
+    function InvitedRow({
+    userId,
+    index,
+    rowClassName,
+    }: {
+    userId: string
+    index: number
+    rowClassName: string
+    }) {
+    const [profile, setProfile] = useState<any>(null)
 
-        useEffect(() => {
-            supabase
-            .from("profiles")
-            .select("id, username, avatar_url, is_public")
-            .eq("id", userId)
-            .maybeSingle()
-            .then(res => setProfile(res.data))
-        }, [userId])
+    useEffect(() => {
+        supabase
+        .from("profiles")
+        .select("id, username, avatar_url, is_public")
+        .eq("id", userId)
+        .maybeSingle()
+        .then((res) => setProfile(res.data))
+    }, [userId])
 
-        if (!profile) return null
+    if (!profile) return null
 
-        return (
-            <tr className="bg-gray-50">
-                <td className="px-2 py-1.5 sm:px-3 sm:py-2 text-gray-700 font-medium">{index}</td>
+    return (
+        <tr className={rowClassName}>
+        <td className="px-3 py-2 text-gray-700 font-medium">{index}</td>
 
-                <td className="py-2 px-3">
-                {profile.avatar_url ? (
-                    <img
-                    src={profile.avatar_url}
-                    alt={profile.username}
-                    className="w-8 h-8 rounded-full object-cover border border-gray-300"
-                    />
-                ) : (
-                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
-                    {profile.username.charAt(0).toUpperCase()}
-                    </div>
-                )}
-                </td>
+        <td className="py-2 px-3">
+            {profile.avatar_url ? (
+            <img
+                src={profile.avatar_url}
+                alt={profile.username}
+                className="w-8 h-8 rounded-full object-cover border border-gray-300"
+            />
+            ) : (
+            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                {profile.username.charAt(0).toUpperCase()}
+            </div>
+            )}
+        </td>
 
-                <td className="py-2 px-3">{profile.username}</td>
-            </tr>
-        )
+        <td className="py-2 px-3">{profile.username}</td>
+        </tr>
+    )
     }
 
     function OpenLeagueView({ league }: { league: League }) {
@@ -539,7 +547,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
             <div>
                 <h2 className="text-lg font-semibold mb-3">Players</h2>
                 <div className="overflow-x-auto rounded-lg">
-                <table className="w-full text-left text-sm border-collapse">
+                <table className="w-full table-fixed text-left text-sm border-collapse">
                     <thead className="bg-gray-100 text-gray-700">
                     <tr>
                         <th className="py-2 px-3">#</th>
@@ -593,7 +601,7 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                 <div>
                 <h2 className="text-lg font-semibold mb-3">Invited Players</h2>
                 <div className="overflow-x-auto rounded-lg">
-                    <table className="w-full text-left text-sm border-collapse">
+                <table className="w-full table-fixed text-left text-sm border-collapse">
                     <thead className="bg-gray-100 text-gray-700">
                         <tr>
                         <th className="py-2 px-3">#</th>
@@ -601,17 +609,17 @@ export default function LeagueClient({ params }: { params: ParamsPromise }) {
                         <th className="py-2 px-3">Username</th>
                         </tr>
                     </thead>
-
                     <tbody>
-                    {invited.map((inv, index) => (
-                        <InvitedRow
-                        key={inv.user_id}
-                        userId={inv.user_id}
-                        index={index + 1}
-                        />
-                    ))}
+                        {invited.map((inv, idx) => (
+                            <InvitedRow
+                            key={inv.user_id}
+                            userId={inv.user_id}
+                            index={idx + 1}
+                            rowClassName={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                            />
+                        ))}
                     </tbody>
-                    </table>
+                </table>
                 </div>
                 </div>
             )}

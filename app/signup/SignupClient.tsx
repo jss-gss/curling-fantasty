@@ -84,11 +84,16 @@ export default function SignupPage() {
       return
     }
 
+    const normalizedUsername = username
+      .trim()
+      .replace(/^@/, "")
+      .toLowerCase()
+
     const { error: profileError } = await supabase.from("profiles").insert({
       id: user.id,
       first_name: firstName,
       last_name: lastName,
-      username: username,
+      username: normalizedUsername,
     })
 
     if (profileError) {

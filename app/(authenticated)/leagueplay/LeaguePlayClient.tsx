@@ -277,9 +277,8 @@ export default function LeaguesPage() {
         league.draft_status === "open" &&
         !league.is_public &&
         !league.enrolled &&
-        league.fantasy_event_users?.some((u: any) => u.user_id === user?.id)
+        league.invited
       )
-
 
     const isOpen = league.draft_status === "open"
     const isComplete = league.draft_status === "completed"
@@ -641,7 +640,6 @@ export default function LeaguesPage() {
         name,
         description,
         draft_date: utcDraftDate,
-        is_public: isPublic,
         max_users: maxUsers,
         slug
       })
